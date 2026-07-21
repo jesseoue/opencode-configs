@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/z-ai/glm-5.2-exacto",
+  "small_model": "openrouter/deepseek/deepseek-v4-flash",
+  "default_agent": "sisyphus",
+  "instructions": [
+    "../AGENTS.md",
+    "../prompts/core.md",
+    "../prompts/profiles/research.md"
+  ],
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 48000,
+    "tail_turns": 3,
+    "preserve_recent_tokens": 16000
+  },
+  "tool_output": {
+    "max_lines": 300,
+    "max_bytes": 12000
+  }
+}

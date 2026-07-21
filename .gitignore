@@ -1,0 +1,72 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+**/secrets*.json
+
+# ── Install / runtime (OpenCode may drop these into this config dir) ──
+# Keep the repo config-only. Prefer unslashed names so files AND dirs match.
+# cleanup.sh / fix.sh / doctor.sh delete these if they reappear.
+node_modules
+**/node_modules
+package.json
+package-lock.json
+npm-shrinkwrap.json
+yarn.lock
+pnpm-lock.yaml
+bun.lock
+bun.lockb
+.omo
+.sisyphus
+.cache
+.codegraph
+command
+.opencode
+.npm
+.turbo
+
+# Editor / IDE (project-local junk — this repo is config-only)
+.cursor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+
+# Python (validate/doctor/models helpers)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# OS junk
+.DS_Store
+**/.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Backups, logs, temp
+*.bak.*
+*.bak
+*.tmp
+*.temp
+*.log
+log/
+tmp/
+.tmp/
+.bash_history

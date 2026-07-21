@@ -1,0 +1,617 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/v4.19.0/assets/oh-my-opencode.schema.json",
+  "hashline_edit": true,
+  "telemetry": false,
+  "default_run_agent": "sisyphus",
+  "auto_update": false,
+  "model_fallback": true,
+  "websearch": {
+    "provider": "exa"
+  },
+  "agent_order": [
+    "sisyphus",
+    "hephaestus",
+    "prometheus",
+    "atlas",
+    "content-aware-research"
+  ],
+  "agents": {
+    "sisyphus": {
+      "model": "openrouter/z-ai/glm-5.2-exacto",
+      "mode": "primary",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8"
+      ],
+      "ultrawork": {
+        "model": "openrouter/anthropic/claude-fable-5",
+        "variant": "max"
+      },
+      "temperature": 0.25,
+      "reasoningEffort": "low",
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus.md",
+      "variant": "low",
+      "color": "#00F0FF"
+    },
+    "hephaestus": {
+      "model": "openai/gpt-5.6-sol",
+      "mode": "primary",
+      "variant": "high",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/openai/gpt-5.6-terra",
+        "openrouter/openai/gpt-5.5"
+      ],
+      "temperature": 0.2,
+      "reasoningEffort": "high",
+      "maxTokens": 32768,
+      "permission": {
+        "teammate": "allow"
+      },
+      "prompt_append": "file://~/.config/opencode/prompts/agents/hephaestus.md",
+      "color": "#FF5C00"
+    },
+    "prometheus": {
+      "model": "openrouter/z-ai/glm-5.2-exacto",
+      "mode": "primary",
+      "variant": "low",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8"
+      ],
+      "temperature": 0.25,
+      "reasoningEffort": "low",
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/prometheus.md",
+      "color": "#B967FF"
+    },
+    "atlas": {
+      "model": "openrouter/z-ai/glm-5.2-exacto",
+      "mode": "primary",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/anthropic/claude-sonnet-5"
+      ],
+      "temperature": 0.2,
+      "reasoningEffort": "low",
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/atlas.md",
+      "variant": "low",
+      "color": "#39FF14"
+    },
+    "oracle": {
+      "model": "openai/gpt-5.6-sol",
+      "mode": "subagent",
+      "variant": "high",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/openai/gpt-5.6-terra",
+        "openrouter/openai/gpt-5.5",
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "temperature": 0.2,
+      "reasoningEffort": "high",
+      "maxTokens": 32768,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/oracle.md",
+      "color": "#6C63FF"
+    },
+    "librarian": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "mode": "subagent",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "temperature": 0.1,
+      "reasoningEffort": "low",
+      "variant": "low",
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/librarian.md",
+      "color": "#00FFD1"
+    },
+    "explore": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "mode": "subagent",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "temperature": 0.1,
+      "reasoningEffort": "low",
+      "variant": "low",
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/explore.md",
+      "color": "#FFD400"
+    },
+    "multimodal-looker": {
+      "model": "openrouter/anthropic/claude-sonnet-5",
+      "mode": "subagent",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openai/gpt-5.6-sol",
+        "openrouter/google/gemini-3.5-flash"
+      ],
+      "maxTokens": 24576,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/multimodal-looker.md",
+      "color": "#FF2D95"
+    },
+    "metis": {
+      "model": "openrouter/anthropic/claude-sonnet-5",
+      "mode": "subagent",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "reasoningEffort": "medium",
+      "maxTokens": 16384,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/metis.md",
+      "color": "#9DFFFF",
+      "variant": "medium"
+    },
+    "momus": {
+      "model": "openai/gpt-5.6-sol",
+      "mode": "subagent",
+      "variant": "max",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/openai/gpt-5.6-terra",
+        "openrouter/openai/gpt-5.5",
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/anthropic/claude-fable-5",
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/deepseek/deepseek-v4-pro"
+      ],
+      "temperature": 0.2,
+      "reasoningEffort": "xhigh",
+      "maxTokens": 32768,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/momus.md",
+      "color": "#FF8A3D"
+    },
+    "sisyphus-junior": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "mode": "subagent",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "temperature": 0.2,
+      "maxTokens": 8192,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-junior.md",
+      "color": "#7A8BFF",
+      "variant": "low",
+      "reasoningEffort": "low"
+    },
+    "content-aware-research": {
+      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "mode": "primary",
+      "variant": "high",
+      "fallback_models": [
+        "openrouter/moonshotai/kimi-k3",
+        "openai/gpt-5.6-sol",
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3"
+      ],
+      "temperature": 0.2,
+      "reasoningEffort": "high",
+      "maxTokens": 32768,
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "doom_loop": "allow",
+        "external_directory": "allow",
+        "bash": "allow",
+        "task": "allow"
+      },
+      "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-research.md",
+      "color": "#FF1744",
+      "description": "Content-aware research \u2014 full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills."
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "openrouter/google/gemini-3.1-pro-preview",
+      "variant": "high",
+      "fallback_models": [
+        "openrouter/google/gemini-3.5-flash",
+        "openrouter/anthropic/claude-sonnet-5",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "is_unstable_agent": true,
+      "prompt_append": "file://~/.config/opencode/prompts/categories/visual-engineering.md",
+      "color": "#FF2D95"
+    },
+    "ultrabrain": {
+      "model": "openai/gpt-5.6-sol",
+      "variant": "max",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/anthropic/claude-fable-5",
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/deepseek/deepseek-v4-pro"
+      ],
+      "reasoningEffort": "xhigh",
+      "prompt_append": "file://~/.config/opencode/prompts/categories/ultrabrain.md",
+      "color": "#B967FF"
+    },
+    "deep": {
+      "model": "openai/gpt-5.6-sol",
+      "variant": "high",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "reasoningEffort": "high",
+      "prompt_append": "file://~/.config/opencode/prompts/categories/deep.md",
+      "color": "#00F0FF"
+    },
+    "artistry": {
+      "model": "openrouter/moonshotai/kimi-k3",
+      "variant": "max",
+      "is_unstable_agent": true,
+      "prompt_append": "file://~/.config/opencode/prompts/categories/artistry.md",
+      "color": "#FF5C00"
+    },
+    "quick": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "fallback_models": [
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/quick.md",
+      "color": "#39FF14",
+      "variant": "low",
+      "reasoningEffort": "low",
+      "maxTokens": 8192
+    },
+    "unspecified-low": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "fallback_models": [
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/unspecified-low.md",
+      "color": "#6B7A99",
+      "variant": "low",
+      "reasoningEffort": "low",
+      "maxTokens": 8192
+    },
+    "unspecified-high": {
+      "model": "openrouter/anthropic/claude-fable-5",
+      "variant": "max",
+      "fallback_models": [
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8",
+        "openai/gpt-5.6-sol",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/unspecified-high.md",
+      "color": "#9DFFFF"
+    },
+    "writing": {
+      "model": "openrouter/google/gemini-3.5-flash",
+      "fallback_models": [
+        "openrouter/google/gemini-3-flash-preview",
+        "openrouter/deepseek/deepseek-v4-flash"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/writing.md",
+      "variant": "medium",
+      "reasoningEffort": "medium",
+      "color": "#00FFD1"
+    },
+    "bug-hunt": {
+      "description": "Reproduce \u2192 root cause \u2192 minimal fix \u2192 verify. Cite file:line.",
+      "model": "openrouter/z-ai/glm-5.2-exacto",
+      "fallback_models": [
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openai/gpt-5.6-sol",
+        "openrouter/minimax/minimax-m3"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/bug-hunt.md",
+      "variant": "low",
+      "color": "#FFD400",
+      "reasoningEffort": "low",
+      "maxTokens": 8192
+    },
+    "refactor-safe": {
+      "description": "Tests-first, behavior-preserving refactors. Small steps only.",
+      "model": "openrouter/z-ai/glm-5.2-exacto",
+      "fallback_models": [
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/minimax/minimax-m3"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/refactor-safe.md",
+      "variant": "low",
+      "color": "#3DDC97",
+      "reasoningEffort": "low",
+      "maxTokens": 8192
+    },
+    "arch-review": {
+      "description": "Coupling, cohesion, blast radius, security. Severity + fix per finding.",
+      "model": "openai/gpt-5.6-sol",
+      "variant": "high",
+      "fallback_models": [
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.5",
+        "openrouter/openai/gpt-5.6-sol",
+        "openrouter/anthropic/claude-opus-4.8-fast",
+        "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/deepseek/deepseek-v4-pro"
+      ],
+      "reasoningEffort": "high",
+      "prompt_append": "file://~/.config/opencode/prompts/categories/arch-review.md",
+      "color": "#6C63FF"
+    },
+    "content-aware-fast": {
+      "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "fallback_models": [
+        "openrouter/minimax/minimax-m3",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-fast.md",
+      "color": "#FF1744",
+      "variant": "low",
+      "reasoningEffort": "low",
+      "maxTokens": 8192
+    },
+    "content-aware-deep": {
+      "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "fallback_models": [
+        "openai/gpt-5.6-sol",
+        "openrouter/z-ai/glm-5.2-exacto"
+      ],
+      "reasoningEffort": "high",
+      "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-deep.md",
+      "color": "#C51162"
+    }
+  },
+  "background_task": {
+    "defaultConcurrency": 4,
+    "providerConcurrency": {
+      "openrouter": 6,
+      "openai": 4,
+      "anthropic": 2
+    },
+    "modelConcurrency": {
+      "openai/gpt-5.5": 3,
+      "openai/gpt-5.6-sol": 3,
+      "openai/gpt-5.6-terra": 3,
+      "openrouter/anthropic/claude-fable-5": 1,
+      "openrouter/anthropic/claude-opus-4.8": 1,
+      "openrouter/anthropic/claude-opus-4.8-fast": 1,
+      "openrouter/anthropic/claude-sonnet-5": 2,
+      "openrouter/deepseek/deepseek-v4-flash": 4,
+      "openrouter/deepseek/deepseek-v4-pro": 2,
+      "openrouter/google/gemini-3-flash-preview": 4,
+      "openrouter/google/gemini-3.1-pro-preview": 2,
+      "openrouter/google/gemini-3.5-flash": 4,
+      "openrouter/minimax/minimax-m3": 3,
+      "openrouter/moonshotai/kimi-k3": 2,
+      "openrouter/openai/gpt-5.5": 3,
+      "openrouter/openai/gpt-5.6-sol": 3,
+      "openrouter/openai/gpt-5.6-terra": 3,
+      "openrouter/z-ai/glm-5.2-exacto": 3
+    },
+    "maxDepth": 2,
+    "staleTimeoutMs": 180000,
+    "sessionGoneTimeoutMs": 30000,
+    "taskCleanupDelayMs": 60000,
+    "syncPollTimeoutMs": 60000,
+    "maxToolCalls": 400,
+    "circuitBreaker": {
+      "enabled": true,
+      "maxToolCalls": 400,
+      "consecutiveThreshold": 8
+    },
+    "messageStalenessTimeoutMs": 180000,
+    "taskTtlMs": 1800000
+  },
+  "team_mode": {
+    "enabled": true,
+    "max_parallel_members": 4,
+    "max_members": 5,
+    "max_wall_clock_minutes": 60,
+    "mailbox_poll_interval_ms": 500,
+    "base_dir": "~/.omo"
+  },
+  "runtime_fallback": {
+    "enabled": true,
+    "retry_on_errors": [
+      400,
+      402,
+      403,
+      404,
+      408,
+      409,
+      429,
+      500,
+      502,
+      503,
+      504
+    ],
+    "max_fallback_attempts": 5,
+    "cooldown_seconds": 10,
+    "timeout_seconds": 45,
+    "notify_on_fallback": true,
+    "restore_primary_after_cooldown": true
+  },
+  "sisyphus_agent": {
+    "disabled": false,
+    "default_builder_enabled": false,
+    "planner_enabled": true,
+    "replace_plan": true,
+    "tdd": true
+  },
+  "sisyphus": {
+    "tasks": {
+      "storage_path": ".sisyphus/tasks",
+      "claude_code_compat": false
+    }
+  },
+  "ralph_loop": {
+    "enabled": true,
+    "default_max_iterations": 8,
+    "default_strategy": "continue",
+    "state_dir": "~/.omo/ralph-loop"
+  },
+  "git_master": {
+    "commit_footer": false,
+    "include_co_authored_by": false
+  },
+  "codegraph": {
+    "enabled": true,
+    "auto_init": false,
+    "auto_provision": false,
+    "telemetry": false
+  },
+  "model_capabilities": {
+    "enabled": true,
+    "auto_refresh_on_start": false,
+    "source_url": "https://openrouter.ai/api/v1/models"
+  },
+  "keyword_detector": {
+    "enabled_expansions": [
+      "ultrawork",
+      "team",
+      "hyperplan",
+      "hyperplan-ultrawork"
+    ]
+  },
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical",
+    "isolation": "inline"
+  },
+  "browser_automation_engine": {
+    "provider": "playwright"
+  },
+  "notification": {
+    "force_enable": true
+  },
+  "start_work": {
+    "auto_commit": false
+  },
+  "babysitting": {
+    "timeout_ms": 180000
+  },
+  "experimental": {
+    "task_system": true,
+    "preemptive_compaction": true,
+    "model_fallback_title": true,
+    "disable_omo_env": true,
+    "max_tools": 48,
+    "dynamic_context_pruning": {
+      "enabled": true,
+      "notification": "minimal",
+      "turn_protection": {
+        "enabled": true,
+        "turns": 2
+      },
+      "strategies": {
+        "deduplication": {
+          "enabled": true
+        },
+        "supersede_writes": {
+          "enabled": true
+        },
+        "purge_errors": {
+          "enabled": true,
+          "turns": 2
+        }
+      }
+    },
+    "aggressive_truncation": true,
+    "truncate_all_tool_outputs": true,
+    "safe_hook_creation": true,
+    "plugin_load_timeout_ms": 120000
+  },
+  "claude_code": {
+    "mcp": false,
+    "commands": false,
+    "skills": false,
+    "agents": false,
+    "hooks": false,
+    "plugins": false,
+    "anthropic_provider": "openrouter"
+  },
+  "disabled_skills": [
+    "security-research",
+    "security-review"
+  ],
+  "disabled_agents": [
+    "build"
+  ],
+  "disabled_mcps": [
+    "agentmemory:agentmemory",
+    "playwright:playwright",
+    "posthog:posthog",
+    "vercel:vercel",
+    "sentry:sentry",
+    "slack:slack",
+    "stripe:stripe",
+    "supabase:supabase",
+    "clerk:clerk",
+    "axiom:axiom"
+  ],
+  "skills": {
+    "sources": [
+      "./skills"
+    ]
+  },
+  "disabled_tools": [
+    "interactive_bash",
+    "look_at",
+    "monitor_start",
+    "monitor_stop",
+    "monitor_output",
+    "monitor_list",
+    "session_list",
+    "session_search"
+  ],
+  "goal": {
+    "enabled": true,
+    "auto_start": false,
+    "default_max_iterations": 24
+  },
+  "mcp_env_allowlist": [
+    "CONTEXT7_API_KEY",
+    "EXA_API_KEY",
+    "OPENAI_API_KEY",
+    "OPENROUTER_API_KEY"
+  ]
+}

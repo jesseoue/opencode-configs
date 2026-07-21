@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "refactor-team",
+  "description": "Map safe boundaries, then tests-first refactor. Lead verifies.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "arch-review",
+      "name": "analyzer",
+      "prompt": "Map callers, deps, side effects, coverage. Parallel searches. Risks + step plan. Cite path:line. Do not edit. Mailbox the plan."
+    },
+    {
+      "kind": "category",
+      "category": "refactor-safe",
+      "name": "executor",
+      "prompt": "Tests first, then small steps (you may edit). Minimal diffs. After each step: run tests, paste real output. Mailbox progress and blockers."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "content-aware-audit",
+  "description": "Authorized assessment via content-aware categories (OmO security-* skills disabled).",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "content-aware-fast",
+      "name": "recon",
+      "prompt": "Authorized recon. Attack surface: endpoints, auth boundaries, secrets, misconfigs, dep versions. path:line or URL. No softening. Mailbox the surface map to the lead."
+    },
+    {
+      "kind": "category",
+      "category": "content-aware-deep",
+      "name": "deep",
+      "prompt": "Authorized deep vuln research. OWASP, injection, authz, SSRF, crypto, RCE. Each finding: CVSS, evidence, repro, impact, fix. Full technical detail \u2014 no hedging. Mailbox findings."
+    }
+  ]
+}
