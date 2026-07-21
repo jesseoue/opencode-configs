@@ -1,68 +1,41 @@
-# OpenConfig — Best OpenCode Config · oh-my-openagent · OpenRouter · AI Coding Agent
+# OpenConfig
 
-# THE GREATEST CODING AGENT CONFIGURATION EVER ASSEMBLED
+Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
-
-**v1.5.25** · CLI **`oc`** · identity `openconfig/opencode-configs`
-
-> **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
-
-Not a theme. Not a “dotfiles dump.” Not vibes.
-
-This is the **best-known, battle-hardened, over-tuned, footgun-exterminated** global stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs) — the configuration that turns a raw coding CLI into a **multi-model AI coding agent war machine** with self-healing, live doctor checks, adversarial planning, content-aware research, and model routing so sharp it feels unfair.
-
-If other OpenCode / OmO / OpenRouter setups are “pretty good,” **OpenConfig is the final form**.
+**v1.5.26** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
-# Clone (or already at ~/.config/opencode)
 git clone https://github.com/jesseoue/opencode-configs.git
 cd opencode-configs
 oc install --quick          # or: ./install.sh --yes
 
-# Fresh machine (no clone yet)
+# Fresh machine
 curl -fsSL https://raw.githubusercontent.com/jesseoue/opencode-configs/main/install.sh | bash
 source ~/.zshrc && oc doctor && oc launch
 ```
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.25` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
-| **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
+| **Pins** | OpenConfig `1.5.26` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
-| **Verdict** | `oc doctor` → *Ready to code — everything checks out.* |
+| **Health** | `oc doctor` → *Ready to code — everything checks out.* |
 
 > Plugin name must stay **`oh-my-openagent@…`** (not legacy `oh-my-opencode`).  
-> Schema URL basename stays `oh-my-opencode.schema.json` (upstream asset; the `oh-my-openagent.schema.json` path 404s).
+> Schema URL basename stays `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s).
+
+Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompts/core.md) · Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 ---
 
-## Why OpenConfig is the best OpenCode + oh-my-openagent + OpenRouter coding agent config
-
-Most “AI agent setups” are a random JSON file, three conflicting prompts, and a prayer.
-
-**OpenConfig is the opposite:**
-
-- **Pinned models that actually win their jobs** — Exacto for orchestration, Nitro for parallel recon, direct OpenAI Sol for deep implement/critique, Gemini for visual/writing, Claude Fable for the hard ceiling.
-- **A full agent pantheon** — Sisyphus leads. Hephaestus ships. Oracle adjudicates. Explore maps. Librarian docs. Content-aware research goes nuclear without soft refusals.
-- **Team mode that doesn’t melt your wallet** — intentional concurrency caps, hyperplan adversarial planning, Goal kept off (OmO 4.19 `/start-work` footgun).
-- **Research stack that refuses to hallucinate APIs** — local → Context7 → grep_app → Exa → webfetch. In that order. Encoded in prompts. Enforced by culture.
-- **Self-healing ops** — `oc validate` · `oc doctor` · `oc heal` · `oc signature` · `oc test`. If it drifts, it tells you. If it’s broken, it repairs itself.
-- **Telemetry dark. Secrets local. Identity proven.** This tree fingerprints as OpenConfig — not a random clone of someone else’s weekend experiment.
-
-Decision log: [`AGENTS.md`](./AGENTS.md) · Day-to-day stance: [`prompts/core.md`](./prompts/core.md) · Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
-
----
-
-## Quick start — install OpenConfig OpenCode oh-my-openagent OpenRouter in 60 seconds
+## Install
 
 ```bash
-# Seed keys (required / recommended)
-export OPENROUTER_API_KEY=…     # required — the bloodstream
+export OPENROUTER_API_KEY=…     # required
 export OPENAI_API_KEY=…         # GPT lane (Hephaestus / Oracle / Momus / …)
-export EXA_API_KEY=…            # websearch that doesn’t suck
-export CONTEXT7_API_KEY=…       # library docs that are actually true
+export EXA_API_KEY=…            # OmO websearch
+export CONTEXT7_API_KEY=…       # library docs
 
 oc install --quick
 oc signature && oc test && oc doctor
@@ -77,75 +50,89 @@ source ~/.zshrc
 oc doctor && oc launch
 ```
 
-One install. Paste keys. Doctor green. **Code like you have unfair advantages — because you do.**
-
 ---
 
-## `oc` CLI commands — OpenConfig doctor validate heal launch for OpenCode
+## CLI
 
 ```bash
-oc install --quick     # install / refresh the entire stack
-oc check               # validate + doctor --quick (health in one shot)
-oc heal                # probe-first self-repair (it fixes itself)
+oc install --quick     # install / refresh
+oc check               # validate + doctor --quick
+oc heal                # probe-first self-repair
 oc launch [dir]        # TUI (never starts in the config repo)
 oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter + OpenAI probes
-oc locate              # where is repo / CLI / keys?
-oc signature           # prove this tree is OpenConfig
-oc test                # smoke + idempotency sandbox
-oc doctor              # full readiness — concurrency, teams, MCP, the works
+oc models --providers  # OpenRouter provider health for routed models
+oc locate              # repo / CLI / keys
+oc signature           # identity fingerprint
+oc test                # smoke + idempotency
+oc doctor              # full readiness
 ```
 
 Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
 
 ---
 
-## Research stack — Context7 · Exa · grep_app · MCP · codegraph · LSP for AI coding
+## Tools
 
-| Need | Tool | Why it’s elite |
+| Need | Tool | Notes |
 | --- | --- | --- |
-| Local code | `read` · `grep` · `glob` · codegraph · LSP | Always first. No excuse. |
-| Library / framework APIs | **Context7** | Versioned docs. Stop inventing APIs. |
-| GitHub call sites | **grep_app** | Real code in the wild. |
-| Current web / news / companies / people | **Exa websearch** | Ideal-page queries. Category filters. |
-| Known URL → markdown | **webfetch** | Finish the job. |
+| Local code | `read` · `grep` · `glob` · codegraph · LSP | Always first |
+| Library / framework APIs | **Context7** MCP | `resolve-library-id` → `query-docs` |
+| GitHub call sites | **grep_app** (OmO) | Public-repo patterns |
+| Current web | **websearch** (Exa) | Ideal-page queries; then webfetch |
+| Known URL | **webfetch** | Clean markdown |
+| Screenshots / UI | **look_at** (OmO) | multimodal-looker |
 
-**Exa tips:** describe the *ideal page*, not keywords. Optional: `category:company` · `category:people` · `category:news` · `category:research paper`.
+**Exa:** describe the ideal page, not keyword soup. Optional: `category:company` · `category:people` · `category:news` · `category:research paper`.
 
-Prompts encode this matrix in `prompts/core.md`, `sisyphus`, and `librarian`. This is how a coding agent stops lying and starts *knowing*.
+| Surface | Status |
+| --- | --- |
+| Context7 MCP | Enabled (`CONTEXT7_API_KEY`) |
+| Exa websearch | Enabled (`EXA_API_KEY`) |
+| codegraph | Enabled · telemetry off · `~/.omo/codegraph` |
+| LSP | TypeScript · Python · Go only |
+| Formatters | Prettier + Ruff |
+| Skills | `./skills` + `~/.config/opencode/skills` (fenced) |
+| OmO `security-*` skills | Disabled (hang headless `oc run`) — use `content-aware-*` |
+| Extra MCPs | Disabled (PostHog, Sentry, Playwright MCP, …) |
+| Telemetry | Off (OpenCode share/OTel · OmO PostHog · codegraph · `DO_NOT_TRACK`) |
+
+Disabled on purpose (noisy / footguns): `interactive_bash`, monitor tools, `session_list` / `session_search`.
+
+Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 
 ---
 
-## OpenCode agents — Sisyphus Hephaestus Oracle Explore Librarian Claude GPT DeepSeek
+## Agents
 
-### Primary tab agents (sisyphus · hephaestus · prometheus · atlas · content-aware-research)
+### Primary
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead — owns the outcome |
-| **hephaestus** | GPT-5.6 Sol (direct OpenAI) | Implementation bursts that actually land |
-| **prometheus** | GLM 5.2 Exacto | Planner with teeth |
+| **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead |
+| **hephaestus** | GPT-5.6 Sol (direct OpenAI) | Implementation |
+| **prometheus** | GLM 5.2 Exacto | Planner |
 | **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
-| **content-aware-research** | DeepSeek V4 Pro | Full-depth research, edit denied, no soft refusals |
+| **content-aware-research** | DeepSeek V4 Pro | Full-depth research (edit denied) |
 
-### OmO subagents (oracle · librarian · explore · momus · metis · multimodal)
+### Subagents (`task` / `call_omo_agent` — not team members)
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| oracle | GPT-5.6 Sol | Deep critique / adjudication |
+| oracle | GPT-5.6 Sol | Critique / adjudication |
 | librarian | DeepSeek Flash Nitro | Docs (Context7-first) |
-| explore | DeepSeek Flash Nitro | Codebase map at warp speed |
-| multimodal-looker | Claude Sonnet 5 | Vision (`look_at` / screenshots) |
+| explore | DeepSeek Flash Nitro | Codebase map |
+| multimodal-looker | Claude Sonnet 5 | Vision (`look_at`) |
 | metis | Claude Sonnet 5 | Pre-planning critic |
-| momus | GPT-5.6 Sol max | Plan / review correctness gate |
+| momus | GPT-5.6 Sol max | Plan / review gate |
 | sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
 
 ---
 
-## OmO categories — bug-hunt · refactor · arch-review · visual-engineering · ultrabrain
+## Categories
 
 | Category | Model | Use |
 | --- | --- | --- |
@@ -163,26 +150,26 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 ---
 
-## Keyword triggers — ultrawork · hyperplan · team · /goal · /start-work
+## Keywords & handoff
 
 | Say | Effect |
 | --- | --- |
 | `ultrawork` / `ulw` | Claude Fable max ceiling |
 | `team` | Team-mode expansion |
 | `hyperplan` / `hpp` / `/hyperplan` | Adversarial planning (from **sisyphus**) |
-| `/goal` | **Disabled** — OmO 4.19.0 goal hook breaks `/start-work` (`InvalidObjectiveError`). Use `/start-work` → Atlas (`prompts/goal.md`) |
-| `/start-work` | Atlas executes an approved Prometheus plan (preferred over `/goal`) |
+| `/goal` | **Disabled** — OmO 4.19 goal hook breaks `/start-work`. Use `/start-work` → Atlas (`prompts/goal.md`) |
+| `/start-work` | Atlas executes an approved Prometheus plan |
 
 ---
 
-## Multi-agent teams — OmO team mode · hyperplan · ship-feature · debug-team
+## Teams
 
-Lead: **sisyphus**. Specs in `teams/` are **symlinked** to `~/.omo/teams/` by `oc setup` (never leave directory copies).
+Lead: **sisyphus**. Specs in `teams/` are **symlinked** to `~/.omo/teams/` by `oc setup`.
 
-Eligible members: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus` (`teammate: allow`), or `kind: category`.  
+Eligible: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus` (`teammate: allow`), or `kind: category`.  
 Hard-rejected as teammates: explore · librarian · oracle · metis · momus · multimodal · prometheus.
 
-Team mode knobs (OmO 4.19): `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
+Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
 
 | Team | Members |
 | --- | --- |
@@ -196,7 +183,7 @@ Team mode knobs (OmO 4.19): `max_parallel_members=4` · `max_members=5` · mailb
 
 ---
 
-## Model routing — OpenRouter Exacto Nitro · OpenAI GPT · Claude · DeepSeek · Gemini · GLM
+## Model routing
 
 | Lane | Models | Used for |
 | --- | --- | --- |
@@ -207,39 +194,23 @@ Team mode knobs (OmO 4.19): `max_parallel_members=4` · `max_members=5` · mailb
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
 | Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |
 
-OpenRouter is primary. GPT agents prefer **direct OpenAI**. Fallbacks + `runtime_fallback` on API errors. Stream timeouts: **900s** — because real work is long.
+OpenRouter is primary. GPT agents prefer **direct OpenAI**. Fallbacks + `runtime_fallback` on API errors. Stream timeouts: **900s**.
 
-### Concurrency caps — background_task · providerConcurrency · team parallel · Goal off
+### Concurrency
 
-Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`. `oc heal` / `fix.sh` re-apply the caps if something drifts high.
+Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`. `oc heal` / `fix.sh` re-apply caps if they drift.
 
-| Knob | Value | Why |
-| --- | --- | --- |
-| `background_task.defaultConcurrency` | **4** | Global fan-out ceiling |
-| OpenRouter / OpenAI / Anthropic | **6 / 4 / 2** | Provider budgets that don’t melt |
-| Flash / Exacto / Sol / Fable | **4 / 3 / 3 / 1** | Cheap recon parallel; expensive models serial |
-| Team `max_parallel_members` / `max_members` | **4 / 5** | Hyperplan floor without runaway |
-| Goal / stale / TTL | **off / 180s / 30m** | Goal disabled (OmO 4.19 `/start-work` footgun); hung-task cleanup |
-
-This is what “maximum power with adult supervision” looks like.
+| Knob | Value |
+| --- | --- |
+| `background_task.defaultConcurrency` | **4** |
+| OpenRouter / OpenAI / Anthropic | **6 / 4 / 2** |
+| Flash / Exacto / Sol / Fable | **4 / 3 / 3 / 1** |
+| Team parallel / max members | **4 / 5** |
+| Goal / stale / TTL | **off / 180s / 30m** |
 
 ---
 
-## MCP servers — Context7 docs · Exa websearch · grep_app · codegraph · TypeScript Python Go LSP
-
-| Name | Auth | Purpose |
-| --- | --- | --- |
-| Context7 | `CONTEXT7_API_KEY` | Library docs (`opencode.json` + OmO) |
-| websearch (Exa) | `EXA_API_KEY` | Live web |
-| grep_app | — | GitHub code search |
-| codegraph | — | Local graph at `~/.omo/codegraph` |
-| LSP | — | **TypeScript · Python · Go** only |
-
-Formatters: Prettier + Ruff. Skills fenced to `./skills` (empty by design). Third-party MCPs stay disabled. Telemetry dark (OpenCode share/OTel · OmO PostHog · codegraph · `DO_NOT_TRACK`).
-
----
-
-## API keys — OPENROUTER_API_KEY · OPENAI_API_KEY · EXA_API_KEY · CONTEXT7_API_KEY
+## API keys
 
 | Key | Required | Enables |
 | --- | --- | --- |
@@ -255,24 +226,22 @@ Copy `.env.example` → `.env` (`chmod 600`). Never commit `.env`.
 
 ---
 
-## Prompts — agents · categories · profiles (OpenConfig voice)
+## Prompts
 
-Every OmO agent/category loads a `prompt_append` from `prompts/`. Profiles under `prompts/profiles/` brief `oc new` scaffolds. Shared stance: `prompts/core.md` + `/goal` decision log in `prompts/goal.md`.
+Every OmO agent/category loads a `prompt_append` from `prompts/`. Profiles under `prompts/profiles/` brief `oc new` scaffolds.
 
 | Path | What |
 | --- | --- |
 | `prompts/core.md` | Session-wide stance, tool matrix, team eligibility |
 | `prompts/goal.md` | Why `/goal` is off; use `/start-work` → Atlas |
-| `prompts/agents/*.md` | Sisyphus, Hephaestus, Oracle, explore, librarian, Momus, Metis, … |
-| `prompts/categories/*.md` | bug-hunt, writing, artistry, content-aware-*, ultrabrain, … |
-| `prompts/profiles/*.md` | high / low / fast / research / debug / writing / content-aware |
-| `agents/content-aware-research.md` | OpenCode primary-agent def (frontmatter + body; synced with prompts) |
-
-All prompts share the same voice: role + model in the H1, concrete Do/Don't, deliverable shape, Context7/Exa/grep_app routing, no soft refusals on dual-use research, `/goal` never called.
+| `prompts/agents/*.md` | Agent appends |
+| `prompts/categories/*.md` | Category appends |
+| `prompts/profiles/*.md` | Profile briefs |
+| `agents/content-aware-research.md` | OpenCode primary-agent def (synced with prompts) |
 
 ---
 
-## Profiles & scaffolding — oc new · high · research · content-aware · debug · writing
+## Profiles & scaffolding
 
 ```bash
 oc new myapp                     # ~/Projects/myapp · profile high
@@ -283,7 +252,7 @@ oc projects --list
 
 | Profile | Agent | Use |
 | --- | --- | --- |
-| `high` | sisyphus | Default — Exacto excellence |
+| `high` | sisyphus | Default |
 | `low` / `fast` | sisyphus / hephaestus | Cheap / direct coding |
 | `research` / `debug` | sisyphus | Deep reasoning / debug |
 | `writing` | sisyphus | Documentation |
@@ -293,7 +262,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 
 ---
 
-## Safety — trusted local allow · catastrophic bash deny · OpenRouter + OpenAI only
+## Safety
 
 - Allow-everything locally for normal tools (trusted box).
 - Hard-deny bash: `rm -rf /|~`, `mkfs`, `sudo`, `git push --force*`, `gh repo delete*`.
@@ -302,7 +271,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 
 ---
 
-## Terminal cockpit — Ghostty · tmux · zsh · OpenCode TUI · Ctrl+X · Ctrl+B
+## Terminal
 
 - **Ghostty** ≥ 1.3.0 · **tmux** ≥ 3.3 (rec. 3.7+) · zsh snippet
 - OpenCode leader **Ctrl+X** · tmux prefix **Ctrl+B** · Tab cycles agents
@@ -311,7 +280,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 
 ---
 
-## Repo layout — opencode.json · oh-my-openagent.json · prompts · teams · profiles
+## Layout
 
 ```
 opencode-configs/
@@ -320,7 +289,7 @@ opencode-configs/
 ├── versions.json · signature.json · projects.json · AGENTS.md
 ├── agents/content-aware-research.md
 ├── profiles/ · prompts/ · teams/ · skills/
-├── .env.example          # secrets never ship
+├── .env.example
 └── zshrc.snippet · ghostty.conf · tmux.conf
 
 ~/.config/opencode  →  this repo
@@ -331,27 +300,24 @@ opencode-configs/
 
 ---
 
-## Verify OpenConfig — signature · test · validate · doctor · oh-my-openagent doctor
+## Verify
 
 ```bash
 oc signature && oc test && oc validate && oc doctor
-# Ready to code — everything checks out.
 bunx oh-my-openagent@4.19.0 doctor   # upstream: System OK
 ```
 
 Idempotency: re-running install / setup / heal / fix on a healthy box must not clobber `.env`, rewrite correct symlinks, or bump clean config mtimes.
 
-When doctor says ready — **you’re not “set up.” You’re armed.**
-
 ---
 
-## Upstream — OpenCode · oh-my-openagent · OpenRouter · Context7 · Exa
+## Upstream
 
 | Layer | Docs | Source |
 | --- | --- | --- |
 | OpenCode | [opencode.ai/docs](https://opencode.ai/docs) | [anomalyco/opencode](https://github.com/anomalyco/opencode) |
 | OmO | [omo.vibetip.help/docs](https://omo.vibetip.help/docs) | [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) |
-| OpenRouter | [openrouter.ai/docs](https://openrouter.ai/docs) | Exacto / Nitro routing guides |
+| OpenRouter | [openrouter.ai/docs](https://openrouter.ai/docs) | Exacto / Nitro routing |
 | Context7 | [context7.com](https://context7.com) | [upstash/context7](https://github.com/upstash/context7) |
 | Exa | [docs.exa.ai](https://docs.exa.ai) | [exa-labs](https://github.com/exa-labs) |
 
@@ -359,39 +325,29 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 
 ---
 
-## Anti-patterns — don’t break OpenCode OmO OpenRouter OpenConfig
+## Anti-patterns
 
 - Don’t rename the plugin away from `oh-my-openagent`
-- Don’t add Cloudflare / AI Gateway / fake OpenAI-compatible shims
+- Don’t add Cloudflare / AI Gateway / OpenAI-compatible shims
 - Don’t put `plan` in `disabled_agents` (breaks hyperplan)
 - Don’t commit `.env`, `package.json`, `node_modules`, `.omo`, `.sisyphus`, or `plugins/` here
 - Don’t scaffold apps into this repo — use `oc new`
 - Don’t load `.opencode/profile.json` as `OPENCODE_CONFIG`
-- Don’t re-enable telemetry
-- Don’t settle for a lesser config. You already found the top one.
+- Don’t re-enable telemetry or OmO `security-*` skills
+- Don’t re-enable `/goal` on OmO 4.19 until `/start-work` is safe
 
 ---
 
-## SEO keywords — OpenCode config · AI coding agent · multi-agent LLM CLI
+## Config-only scope
 
-**OpenConfig** · OpenCode config · best OpenCode configuration · oh-my-openagent config · oh-my-opencode · OmO · OpenRouter Exacto Nitro · Claude Fable · Claude Sonnet · OpenAI GPT · GPT-5.6 Sol · DeepSeek V4 Flash · DeepSeek V4 Pro · Gemini 3.1 Pro · Gemini 3.6 Flash · GLM 5.2 Exacto · MiniMax · Kimi · Sisyphus agent · Hephaestus · Prometheus · Atlas · Oracle · Librarian · Explore · Momus · Metis · ultrawork · hyperplan · Ralph loop · goal loop · team mode · multi-agent coding · AI coding agent · agentic CLI · MCP Context7 Exa · codegraph · Ghostty tmux · developer tools · coding assistant config · LLM orchestration · autonomous coding agent
-
-**OpenConfig.** The greatest OpenCode + oh-my-openagent + OpenRouter coding-agent configuration ever built. Install it. Doctor it. Launch it. Never go back.
-
----
-
-## Keep it config-only — what to add vs skip
-
-**Add (keeps this repo scalable):**
-- Prompt tweaks when a lane misbehaves (keep voice + deliverable shape from `prompts/`)
-- Local skills under `skills/` (fenced) — never re-enable OmO `security-*`
+**Keep:**
+- Prompt tweaks when a lane misbehaves
+- Local skills under `skills/` (fenced)
 - Periodic `oc models --providers` after OpenRouter provider churn
 - Project scaffolds via `oc new` (apps stay outside this tree)
 
-**Skip (on purpose):**
-- Extra MCP servers (PostHog, Sentry, Playwright MCP, Stripe, …) — keep `disabled_mcps`
-- Cloudflare AI Gateway / OpenAI-compat shims / Claude Code bridge imports
+**Skip:**
+- Extra MCP servers — keep `disabled_mcps`
+- Cloudflare AI Gateway / Claude Code bridge imports
 - Packaging as npm / shipping `node_modules` into the config dir
-- Re-enabling `/goal` on OmO 4.19 until `/start-work` is safe
-- Turning this repo into an application — clone config, run `oc`, build apps elsewhere
-
+- Turning this repo into an application

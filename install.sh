@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh — 1-step OpenConfig (oc) installer
 #
-# Best-known config for OpenCode · OpenRouter · oh-my-openagent (OmO).
+# Pinned stack for OpenCode · OpenRouter · oh-my-openagent (OmO).
 #
 # Preferred (already cloned):
 #   ./install.sh [--dir PATH] [--skip-cli] [--yes] [--lazy|--full]
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 install.sh — OpenConfig (oc) installer
 
-  Best-known config for OpenCode · OpenRouter · oh-my-openagent (OmO).
+  Pinned stack for OpenCode · OpenRouter · oh-my-openagent (OmO).
 
   ./install.sh [--dir PATH] [--log PATH] [--skip-cli] [--yes] [--lazy|--full]
 
@@ -201,7 +201,7 @@ _install_banner() {
 ASCII
   printf '%b' "${c_0}"
   printf '  %bOpenConfig%b  %boc%b\n' "${c_p}" "${c_0}" "${c_bold}" "${c_0}"
-  printf '  %bBest-known config for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
+  printf '  %bPinned stack for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
   printf '  %bSources:%b OpenCode ← opencode.ai/install · OmO ← npm oh-my-openagent · config ← OpenConfig (identity openconfig/opencode-configs)\n\n' "${c_dim}" "${c_0}"
 }
 
@@ -826,7 +826,7 @@ _log_section "done"
 printf '%b\n' "${c_g}✓ OpenConfig installed${c_0}"
 _log "OK" "OpenConfig installation complete"
 echo ""
-echo "  OpenConfig (oc) — best-known config for OpenCode · OpenRouter · OmO"
+echo "  OpenConfig (oc) — pinned stack for OpenCode · OpenRouter · OmO"
 echo ""
 echo "Safety notes:"
 echo "  • Sessions left untouched: $OC_SESSIONS_DIR"

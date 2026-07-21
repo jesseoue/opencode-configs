@@ -279,7 +279,7 @@ ASCII
   if [[ -n "$tagline" ]]; then
     printf '  %b%s%b\n' "${c_dim}" "$tagline" "${c_0}"
   else
-    printf '  %bBest-known config for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
+    printf '  %bPinned stack for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
   fi
   printf '\n'
 }
@@ -1659,6 +1659,8 @@ if os.path.isfile(ver_path):
         v = json.load(open(ver_path, encoding="utf-8"))
         if v.get("opencode_configs"):
             sig["version"] = str(v["opencode_configs"])
+        if v.get("tagline"):
+            sig["tagline"] = str(v["tagline"])
     except Exception:
         pass
 with open(path, "w", encoding="utf-8") as f:
