@@ -27,6 +27,7 @@ bun.lockb
 .codegraph
 command
 .opencode
+plugins
 .npm
 .turbo
 

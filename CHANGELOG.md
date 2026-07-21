@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.17] — 2026-07-21
+
+### Doctor / hygiene
+- Fix doctor Concurrency Python `tip()` NameError that aborted the rest of the section (MCP/provider timeouts never ran after goal)
+- Doctor now verifies `prompts/goal.md` is in `instructions` and that Prometheus/Sisyphus/Atlas/core know the 2000-char `/goal` cap
+- Scrub `plugins/` as config-dir runtime stray (Herdr/etc.) — gitignore + `OC_CONFIG_STRAYS` + validate purity
+- Hephaestus prompt: same `/goal` objective guardrail
+
 ## [1.5.16] — 2026-07-21
 
 ### Goal loop (Prometheus footgun)
@@ -9,7 +17,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - Add `prompts/goal.md` and load it via `opencode.json` `instructions`
 - Prometheus / Sisyphus / Atlas / core: never paste `.omo/plans/*.md` into `/goal`; ≤1800 chars; no re-read loop after `InvalidObjectiveError`
 - Prometheus handoff stays `/start-work` → Atlas (not plan-stuffed `/goal`)
-- Doctor tip when goal is enabled; README `/goal` row documents the cap
+- README `/goal` row documents the cap
 
 ## [1.5.15] — 2026-07-21
 

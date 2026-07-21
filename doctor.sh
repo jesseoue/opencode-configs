@@ -89,7 +89,7 @@ done
 if [[ ${#_strays[@]} -gt 0 ]]; then
   opt "config dir has install/runtime strays: ${_strays[*]} — run ./cleanup.sh (repo is config-only)"
 else
-  ok "config dir is clean (no node_modules/package.json/.omo/.sisyphus/command)"
+  ok "config dir is clean (no node_modules/package.json/.omo/.sisyphus/command/plugins)"
 fi
 
 # Project identity (OpenConfig — not a random clone)
@@ -719,6 +719,7 @@ exp = omo.get("experimental") or {}
 def bad(m): print("BAD|" + m)
 def ok(m): print("OK|" + m)
 def opt(m): print("OPT|" + m)
+def tip(m): print("TIP|" + m)
 
 dc = bt.get("defaultConcurrency")
 if not isinstance(dc, int) or dc < 1:
@@ -776,13 +777,39 @@ if rl.get("enabled") is True:
 else:
     opt("ralph_loop disabled")
 
+# Goal loop + OmO 2000-char objective hard cap (not configurable)
+oc = json.load(open(os.path.join(repo, "opencode.json")))
+goal_md = os.path.join(repo, "prompts", "goal.md")
+oc_instr = oc.get("instructions") or []
 if goal.get("enabled") is True:
     gmi = goal.get("default_max_iterations", 24)
     auto = goal.get("auto_start")
     ok("goal enabled (max %s, auto_start=%s)" % (gmi, auto))
-    tip("OmO /goal objective hard-cap is 2000 chars — keep ≤1800; never paste .omo/plans/*.md (prompts/goal.md)")
     if auto is True:
         opt("goal.auto_start=true — prefer false so /goal is explicit")
+    if not os.path.isfile(goal_md):
+        bad("prompts/goal.md missing — required while goal.enabled (OmO 2000-char objective hard cap)")
+    elif "prompts/goal.md" not in oc_instr:
+        bad("opencode.json instructions[] missing prompts/goal.md while goal.enabled")
+    else:
+        ok("goal objective cap documented (prompts/goal.md in instructions)")
+        tip("OmO /goal objective hard-cap is 2000 chars — keep ≤1800; never paste .omo/plans/*.md")
+    # Agent prompts that set/execute goals must know the cap
+    for rel in (
+        "prompts/agents/prometheus.md",
+        "prompts/agents/sisyphus.md",
+        "prompts/agents/atlas.md",
+        "prompts/core.md",
+    ):
+        path = os.path.join(repo, rel)
+        if not os.path.isfile(path):
+            bad("%s missing" % rel)
+            continue
+        text = open(path, encoding="utf-8").read()
+        if "2000" not in text and "1800" not in text and "InvalidObjectiveError" not in text:
+            bad("%s missing /goal 2000-char objective guardrail" % rel)
+        else:
+            ok("%s knows /goal objective cap" % rel)
 else:
     opt("goal disabled")
 
@@ -793,7 +820,6 @@ elif isinstance(mt, int):
     opt("experimental.max_tools=%s (high; 48 is the OpenConfig default)" % mt)
 
 # MCP / stream timeouts (opencode.json)
-oc = json.load(open(os.path.join(repo, "opencode.json")))
 mcp_t = (oc.get("experimental") or {}).get("mcp_timeout")
 if isinstance(mcp_t, (int, float)) and mcp_t >= 12000:
     ok("experimental.mcp_timeout=%sms" % int(mcp_t))
@@ -813,7 +839,13 @@ if [[ -z "$conc_report" ]]; then
 else
   while IFS='|' read -r kind msg; do
     [[ -z "$kind" ]] && continue
-    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings" ;; *) info "$msg" ;; esac
+    case "$kind" in
+      OK) ok "$msg" ;;
+      OPT) opt "$msg" ;;
+      TIP) tip "$msg" ;;
+      BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings" ;;
+      *) info "$msg" ;;
+    esac
   done <<< "$conc_report"
 fi
 

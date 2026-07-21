@@ -247,6 +247,7 @@ OC_CONFIG_STRAYS=(
   .codegraph
   command
   .opencode
+  plugins
 )
 
 # ── Branding (OpenConfig — `oc`) ─────────────────────────────────────

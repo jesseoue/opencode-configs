@@ -70,5 +70,15 @@ for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure
   fi
 done
 
+# /goal objective hard-cap wiring (OmO 2000-char InvalidObjectiveError)
+if [[ -f "$REPO/prompts/goal.md" ]] \
+  && grep -q 'prompts/goal.md' "$REPO/opencode.json" \
+  && grep -q 'plugins' "$REPO/.gitignore" \
+  && grep -q 'plugins' "$REPO/lib/common.sh"; then
+  ok "goal.md wired + plugins scrubbed"
+else
+  bad "goal.md / plugins hygiene incomplete"
+fi
+
 printf "\n${c_bold}Result:${c_0} %d passed · %d failed\n\n" "$pass" "$fail"
 [[ $fail -eq 0 ]]
