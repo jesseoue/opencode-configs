@@ -251,11 +251,13 @@ if omo.get("auto_update") is not False:
 cg = omo.setdefault("codegraph", {})
 if isinstance(cg, dict) and cg.get("telemetry") is not False:
     cg["telemetry"] = False; changes.append("codegraph.telemetry -> false")
-# Team mode must stay on for team_* tools + hyperplan
+# Team mode must stay on for team_* tools + hyperplan (full OmO 4.19 schema)
 tm = omo.setdefault("team_mode", {})
 if isinstance(tm, dict):
     if tm.get("enabled") is not True:
         tm["enabled"] = True; changes.append("team_mode.enabled -> true")
+    if "tmux_visualization" not in tm:
+        tm["tmux_visualization"] = False; changes.append("team_mode.tmux_visualization -> false")
     # Cap fan-out: hyperplan needs ≥5 members; keep parallel low so teams can't runaway.
     if not isinstance(tm.get("max_parallel_members"), int) or tm.get("max_parallel_members") < 1:
         tm["max_parallel_members"] = 4; changes.append("team_mode.max_parallel_members -> 4")
@@ -265,6 +267,35 @@ if isinstance(tm, dict):
         tm["max_members"] = 5; changes.append("team_mode.max_members -> 5 (hyperplan floor)")
     elif tm.get("max_members") > 6:
         tm["max_members"] = 6; changes.append("team_mode.max_members capped -> 6")
+    for key, default in (
+        ("max_messages_per_run", 10000),
+        ("max_wall_clock_minutes", 60),
+        ("max_member_turns", 500),
+        ("message_payload_max_bytes", 32768),
+        ("recipient_unread_max_bytes", 262144),
+        ("mailbox_poll_interval_ms", 1000),
+    ):
+        if not isinstance(tm.get(key), int) or tm.get(key) < 1:
+            tm[key] = default; changes.append(f"team_mode.{key} -> {default}")
+    if tm.get("mailbox_poll_interval_ms", 0) < 500:
+        tm["mailbox_poll_interval_ms"] = 1000; changes.append("team_mode.mailbox_poll_interval_ms floor -> 1000")
+    if not isinstance(tm.get("base_dir"), str) or not tm.get("base_dir"):
+        tm["base_dir"] = "~/.omo"; changes.append("team_mode.base_dir -> ~/.omo")
+# OmO tmux pane layout for team sessions
+tx = omo.setdefault("tmux", {})
+if isinstance(tx, dict):
+    if tx.get("enabled") is not True:
+        tx["enabled"] = True; changes.append("tmux.enabled -> true")
+    if tx.get("layout") not in ("main-vertical", "main-horizontal", "tiled", "even-horizontal", "even-vertical"):
+        tx["layout"] = "main-vertical"; changes.append("tmux.layout -> main-vertical")
+    if tx.get("isolation") not in ("inline", "window", "session"):
+        tx["isolation"] = "inline"; changes.append("tmux.isolation -> inline")
+    if not isinstance(tx.get("main_pane_size"), (int, float)):
+        tx["main_pane_size"] = 60; changes.append("tmux.main_pane_size -> 60")
+    if not isinstance(tx.get("main_pane_min_width"), (int, float)):
+        tx["main_pane_min_width"] = 120; changes.append("tmux.main_pane_min_width -> 120")
+    if not isinstance(tx.get("agent_pane_min_width"), (int, float)):
+        tx["agent_pane_min_width"] = 40; changes.append("tmux.agent_pane_min_width -> 40")
 
 # Background-task runaway guard — keep concurrency / tool budgets bounded
 bt = omo.setdefault("background_task", {})

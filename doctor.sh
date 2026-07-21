@@ -652,7 +652,7 @@ if heph and (heph.get("permission") or {}).get("teammate") != "allow":
     print("BAD|hephaestus lacks permission.teammate=allow — cannot be a team member — run: oc fix")
 else:
     print("OK|hephaestus.permission.teammate = allow")
-# declared specs
+# declared specs — must be symlinks into the repo (not stale directory copies)
 base = (tm.get("base_dir") or "~/.omo").replace("~", os.path.expanduser("~"))
 tracked = []
 tdir = os.path.join(repo, "teams")
@@ -661,12 +661,48 @@ if os.path.isdir(tdir):
 live = []
 ldir = os.path.join(base, "teams")
 if os.path.isdir(ldir):
-    live = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json"))]
+    live = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json")) or os.path.islink(os.path.join(ldir, d))]
 if tracked: print("OK|%d team spec(s) tracked in repo/teams: %s" % (len(tracked), ", ".join(sorted(tracked))))
 else: print("OPT|no team specs in repo/teams — nothing for team_create to spawn")
 missing = [t for t in tracked if t not in live]
-if missing: print("OPT|tracked but not provisioned to %s/teams: %s — symlink them: ln -sfn $REPO/teams/{name} %s/teams/{name}" % (base, ", ".join(sorted(missing)), base))
-elif tracked: print("OK|specs provisioned to %s/teams" % base)
+if missing:
+    print("OPT|tracked but not provisioned to %s/teams: %s — run: oc setup" % (base, ", ".join(sorted(missing))))
+copies = []
+wrong = []
+for t in tracked:
+    link = os.path.join(ldir, t)
+    want = os.path.join(tdir, t)
+    if not os.path.lexists(link):
+        continue
+    if not os.path.islink(link):
+        copies.append(t)
+        continue
+    try:
+        got = os.path.realpath(link)
+        if got != os.path.realpath(want):
+            wrong.append(t)
+    except OSError:
+        wrong.append(t)
+if copies:
+    print("BAD|team specs are directory copies (not symlinks): %s — run: oc setup" % ", ".join(sorted(copies)))
+elif wrong:
+    print("BAD|team symlinks point elsewhere: %s — run: oc setup" % ", ".join(sorted(wrong)))
+elif tracked and not missing:
+    print("OK|all %d team specs symlinked into %s/teams" % (len(tracked), base))
+# schema completeness (OmO 4.19 team_mode)
+for key in (
+    "tmux_visualization", "max_messages_per_run", "max_member_turns",
+    "message_payload_max_bytes", "recipient_unread_max_bytes", "mailbox_poll_interval_ms",
+):
+    if key not in tm:
+        print("OPT|team_mode.%s missing — run: oc fix" % key)
+if isinstance(tm.get("mailbox_poll_interval_ms"), int) and tm["mailbox_poll_interval_ms"] >= 500:
+    print("OK|team_mode.mailbox_poll_interval_ms=%s" % tm["mailbox_poll_interval_ms"])
+tx = omo.get("tmux") or {}
+if tx.get("enabled") is True and tx.get("layout") == "main-vertical":
+    print("OK|tmux enabled (layout=%s isolation=%s)" % (tx.get("layout"), tx.get("isolation")))
+else:
+    print("OPT|tmux not fully configured for team panes — want enabled + main-vertical")
 
 # hyperplan readiness (inline team — no repo team spec; uses category members + plan handoff)
 kd = (omo.get("keyword_detector") or {}).get("enabled_expansions") or []

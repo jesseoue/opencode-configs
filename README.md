@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.18** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.19** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.18` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.19` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -176,10 +176,12 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 ## Multi-agent teams — OmO team mode · hyperplan · ship-feature · debug-team
 
-Lead: **sisyphus**. Specs in `teams/` → `~/.omo/teams/`.
+Lead: **sisyphus**. Specs in `teams/` are **symlinked** to `~/.omo/teams/` by `oc setup` (never leave directory copies).
 
-Eligible members: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus`, or `kind: category`.  
+Eligible members: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus` (`teammate: allow`), or `kind: category`.  
 Hard-rejected as teammates: explore · librarian · oracle · metis · momus · multimodal · prometheus.
+
+Team mode knobs (OmO 4.19): `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
 
 | Team | Members |
 | --- | --- |

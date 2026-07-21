@@ -81,5 +81,43 @@ else
   bad "goal/plugins hygiene incomplete (goal must be disabled)"
 fi
 
+# Team mode schema + ~/.omo/teams symlinks (not directory copies)
+if python3 - "$REPO" <<'PY'
+import json, os, sys
+repo = sys.argv[1]
+omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
+tm = omo.get("team_mode") or {}
+need = [
+    "enabled", "tmux_visualization", "max_parallel_members", "max_members",
+    "max_messages_per_run", "max_wall_clock_minutes", "max_member_turns",
+    "base_dir", "message_payload_max_bytes", "recipient_unread_max_bytes",
+    "mailbox_poll_interval_ms",
+]
+if tm.get("enabled") is not True or any(k not in tm for k in need):
+    sys.exit(1)
+tx = omo.get("tmux") or {}
+if tx.get("enabled") is not True or tx.get("layout") != "main-vertical":
+    sys.exit(2)
+base = tm.get("base_dir") or "~/.omo"
+if base.startswith("~/"):
+    base = os.path.join(os.path.expanduser("~"), base[2:])
+ldir = os.path.join(base, "teams")
+tdir = os.path.join(repo, "teams")
+for name in os.listdir(tdir):
+    if not os.path.isfile(os.path.join(tdir, name, "config.json")):
+        continue
+    link = os.path.join(ldir, name)
+    if not os.path.islink(link):
+        sys.exit(3)
+    if os.path.realpath(link) != os.path.realpath(os.path.join(tdir, name)):
+        sys.exit(4)
+sys.exit(0)
+PY
+then
+  ok "team mode schema + ~/.omo/teams symlinks"
+else
+  bad "team mode incomplete — run: oc fix && oc setup"
+fi
+
 printf "\n${c_bold}Result:${c_0} %d passed · %d failed\n\n" "$pass" "$fail"
 [[ $fail -eq 0 ]]

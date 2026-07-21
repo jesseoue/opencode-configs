@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.19] — 2026-07-21
+
+### Team mode hardened
+- Pin full OmO 4.19 `team_mode` schema (`tmux_visualization`, message/turn/payload caps, `mailbox_poll_interval_ms=1000`)
+- Complete `tmux` pane sizing (`main_pane_size` / min widths) for team layouts
+- `oc setup` replaces directory *copies* under `~/.omo/teams` with symlinks (macOS `ln -sfn` nests inside dirs)
+- Doctor/validate fail on team provision drift; smoke tests symlink health
+- `oc fix` backfills missing team_mode / tmux keys
+
 ## [1.5.18] — 2026-07-21
 
 ### Critical — disable OmO `/goal` (unblocks `/start-work`)

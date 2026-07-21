@@ -1,7 +1,7 @@
 {
   "product": "OpenConfig",
   "cli": "oc",
-  "opencode_configs": "1.5.18",
+  "opencode_configs": "1.5.19",
   "tagline": "The greatest coding-agent configuration ever assembled",
   "opencode": {
     "min": "1.18.4",
