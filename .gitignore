@@ -1,3 +1,50 @@
+# OpenConfig — config-only repo.
+# Deny everything at the root, then allowlist what belongs in git.
+# Anything outside this allowlist (logs, secrets, runtime junk, personal
+# scratch) stays untracked forever. cleanup.sh / oc_scrub_config_strays
+# delete known OpenCode install strays if they reappear on disk.
+
+# ── Default deny (root) ─────────────────────────────────────────────
+/*
+
+# ── Allowlist: identity / docs ──────────────────────────────────────
+!.gitignore
+!.env.example
+!AGENTS.md
+!CHANGELOG.md
+!README.md
+!bunfig.toml
+!ghostty.conf
+!projects.json
+!versions.json
+!signature.json
+!tui.json
+!tmux.conf
+!zshrc.snippet
+!opencode.json
+!oh-my-openagent.json
+!oc
+
+# ── Allowlist: scripts ──────────────────────────────────────────────
+!*.sh
+
+# ── Allowlist: trees (dir + contents) ───────────────────────────────
+!agents/
+!agents/**
+!lib/
+!lib/**
+!profiles/
+!profiles/**
+!prompts/
+!prompts/**
+!skills/
+!skills/**
+!teams/
+!teams/**
+!tests/
+!tests/**
+
+# ── Never track — even inside allowlisted trees ─────────────────────
 # Secrets
 .env
 .env.*
@@ -9,9 +56,7 @@
 credentials.json
 **/secrets*.json
 
-# ── Install / runtime (OpenCode may drop these into this config dir) ──
-# Keep the repo config-only. Prefer unslashed names so files AND dirs match.
-# cleanup.sh / fix.sh / doctor.sh delete these if they reappear.
+# OpenCode / OmO / bun install strays (also in OC_CONFIG_STRAYS)
 node_modules
 **/node_modules
 package.json
@@ -31,7 +76,7 @@ plugins
 .npm
 .turbo
 
-# Editor / IDE (project-local junk — this repo is config-only)
+# Editor / IDE
 .cursor
 .vscode
 .idea
@@ -41,7 +86,7 @@ plugins
 *.orig
 *.rej
 
-# Python (validate/doctor/models helpers)
+# Python helper caches
 __pycache__/
 *.py[cod]
 *$py.class
@@ -61,13 +106,20 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Backups, logs, temp
+# Backups, logs, temp, personal dumps
 *.bak.*
 *.bak
 *.tmp
 *.temp
 *.log
+*.out
+*.dump
 log/
+logs/
 tmp/
 .tmp/
 .bash_history
+*.session
+*.session.json
+transcripts/
+**/opencode.log

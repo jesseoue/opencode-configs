@@ -159,11 +159,15 @@ for pat, val in BASH_DENY.items():
         bash[pat] = val
         changes.append(f"permission.bash[{pat!r}] -> {val}")
 
-# lock skills to the repo — no loading from ~/.claude, ~/.agents, or other external dirs
+# Skills: global OpenConfig skills (any cwd — orca, Projects, …) + project-local ./skills.
+# Drop ~/.claude / ~/.agents imports; keep ~/.config/opencode/skills (the config symlink).
+ALLOWED_SKILL_PATHS = ["~/.config/opencode/skills", "./skills"]
 sk = oc.setdefault("skills", {})
-ext = [p for p in sk.get("paths", []) if str(p).startswith(("~", "/")) or ".claude" in str(p) or ".agents" in str(p)]
-if ext:
-    sk["paths"] = ["./skills"]; changes.append("skills.paths -> ['./skills'] (dropped external skill dirs %s)" % ext)
+paths = [str(p) for p in (sk.get("paths") or [])]
+bad = [p for p in paths if p not in ALLOWED_SKILL_PATHS and (".claude" in p or ".agents" in p or (p.startswith(("~", "/")) and "opencode/skills" not in p))]
+if bad or paths != ALLOWED_SKILL_PATHS:
+    sk["paths"] = list(ALLOWED_SKILL_PATHS)
+    changes.append("skills.paths -> %s (global OpenConfig + project ./skills)" % ALLOWED_SKILL_PATHS)
 
 # Goal footgun doc must load every session
 instr = oc.get("instructions")
@@ -235,21 +239,21 @@ if isinstance(srv, dict):
     if srv.get("hostname") not in ("127.0.0.1", "localhost"):
         srv["hostname"] = "127.0.0.1"; changes.append("server.hostname -> 127.0.0.1")
 
-# ─── No OpenCode / agent attribution on OpenRouter requests ───────────────────
+# ─── OpenRouter app attribution (OpenConfig — not generic CLI / OpenCode) ─────
 or_opts = oc.setdefault("provider", {}).setdefault("openrouter", {}).setdefault("options", {})
 if isinstance(or_opts, dict):
     hdrs = or_opts.setdefault("headers", {})
     if isinstance(hdrs, dict):
         want_hdrs = {
-            "HTTP-Referer": "https://openrouter.ai",
-            "X-Title": "CLI",
-            "X-OpenRouter-Title": "CLI",
-            "X-OpenRouter-Categories": "cli",
+            "HTTP-Referer": "https://github.com/jesseoue/opencode-configs",
+            "X-Title": "OpenConfig",
+            "X-OpenRouter-Title": "OpenConfig",
+            "X-OpenRouter-Categories": "cli,agent",
         }
         for hk, hv in want_hdrs.items():
             if hdrs.get(hk) != hv:
                 hdrs[hk] = hv
-                changes.append(f"openrouter.headers.{hk} -> {hv} (no OpenCode attribution)")
+                changes.append(f"openrouter.headers.{hk} -> {hv} (OpenConfig attribution)")
 
 # ─── oh-my-openagent.json ─────────────────────────────────────────────────────
 omo = load("oh-my-openagent.json"); ombefore = copy.deepcopy(omo)
@@ -456,15 +460,15 @@ for n, a in omo.get("categories", {}).items():
             del a["color"]
             changes.append(f"category {n}: removed non-hex color '{c}'")
 
-# lock omo skills to the repo (mirror opencode.json)
-osk = omo.get("skills")
-osk_ext = isinstance(osk, dict) and any(
-    str(s).startswith(("~", "/")) or ".claude" in str(s) or ".agents" in str(s)
-    for s in (osk.get("sources") or [])
-)
-if osk_ext or (isinstance(osk, dict) and osk.get("sources") not in (["./skills"], None) and any(
-        (s.get("path") if isinstance(s, dict) else s) not in ("./skills",) for s in (osk.get("sources") or []))):
-    omo["skills"] = {"sources": ["./skills"]}; changes.append("omo skills.sources -> ['./skills']")
+# OmO skills sources — mirror opencode.json (global config + project ./skills)
+ALLOWED_SKILL_SOURCES = ["~/.config/opencode/skills", "./skills"]
+osk = omo.setdefault("skills", {})
+srcs = []
+for s in (osk.get("sources") or []):
+    srcs.append(s.get("path") if isinstance(s, dict) else str(s))
+if srcs != ALLOWED_SKILL_SOURCES:
+    omo["skills"] = {"sources": list(ALLOWED_SKILL_SOURCES)}
+    changes.append("omo skills.sources -> %s" % ALLOWED_SKILL_SOURCES)
 
 # disable the Claude Code bridge — no external MCP/commands/skills/hooks/agents/plugins imports
 cc = omo.get("claude_code")

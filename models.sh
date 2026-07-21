@@ -73,8 +73,8 @@ STRONG = ("glm-5","glm-4.6","glm-4.5","deepseek-v4","deepseek-v3","deepseek-r1",
           "claude-","gpt-5","o3","o4-","grok-4","grok-code","gemini-2.5-pro","gemini-3")
 # SMALL_OK = fast/cheap models acceptable for subagents (includes small tiers).
 SMALL_OK = STRONG + ("deepseek-v4-flash","qwen3.5-flash","qwen3-flash","gemini-2.5-flash",
-          "gemini-flash","gpt-5-mini","gpt-oss","haiku","ministral","mistral-nemo",
-          "llama-3.3","llama-4","glm-4.5-air","minimax-m2","-flash")
+          "gemini-3.5-flash","gemini-3.6-flash","gemini-flash","gpt-5-mini","gpt-oss","haiku",
+          "ministral","mistral-nemo","llama-3.3","llama-4","glm-4.5-air","minimax-m2","-flash")
 # Exclude tiny variants from the workhorse/deep (default/reasoning) roles.
 TINY = ("-mini","-xs","-lite","-nano","-tiny","-8b","-9b","-7b","-4b","-3b","-1.5b","-0.5b","-air","-small")
 
@@ -133,8 +133,9 @@ if mode=="json":
 if mode=="upgrade":
     import re
     apply=os.environ.get("APPLY")=="1"
-    def shape(mid): return re.sub(r"\d+(?:\.\d+)*","#",mid)          # version-agnostic shape
-    def vertuple(mid): return tuple(int(x) for x in re.findall(r"\d+", re.sub(r"[^0-9.]"," ",mid)) )
+    def bare(mid): return mid.split(":",1)[0]  # strip :exacto/:nitro/:floor
+    def shape(mid): return re.sub(r"\d+(?:\.\d+)*","#", bare(mid))
+    def vertuple(mid): return tuple(int(x) for x in re.findall(r"\d+", re.sub(r"[^0-9.]"," ", bare(mid))))
     print(B("== Model freshness (are we on the newest versions?) =="))
     bumps=[]  # (config_key, old_id, new_id)
     for key,cm in oc["provider"]["openrouter"]["models"].items():
@@ -145,8 +146,12 @@ if mode=="upgrade":
         newer=[m for m in cat if shape(m["id"])==sh and vertuple(m["id"])>cv and has_tools(m)]
         newer=sorted(newer,key=lambda m: vertuple(m["id"]),reverse=True)
         if newer:
-            nb=newer[0]; bumps.append((key,cur,nb["id"]))
-            print("  "+Y("⬆")+f" {cur}  →  newer: {fmt(nb)}")
+            nb=newer[0]
+            # preserve virtual variant suffix when bumping
+            suffix = (":" + cur.split(":",1)[1]) if ":" in cur else ""
+            new_id = bare(nb["id"]) + suffix
+            bumps.append((key,cur,new_id))
+            print("  "+Y("⬆")+f" {cur}  →  newer: {fmt(nb)}{suffix}")
         else:
             print("  "+G("✓")+f" {cur} is the newest in its family")
     if not bumps:
@@ -170,7 +175,8 @@ if mode=="audit":
     print(B("== Configured models =="))
     for full,cm in configured.items():
         rid=cm.get("id",full.split("/",1)[1])
-        live=by_id.get(rid) or by_id.get(full.split("/",1)[1])
+        bare=rid.split(":",1)[0]  # :exacto/:nitro are virtual variants, not catalog rows
+        live=by_id.get(bare) or by_id.get(rid) or by_id.get(full.split("/",1)[1])
         name=cm.get("name",rid)
         if not live:
             print("  "+R("✗")+f" {name}: id '{rid}' NOT in catalog")
@@ -205,20 +211,25 @@ def rid_of(full):
         return ""
     rid = full.split("/",1)[1]
     return oc["provider"]["openrouter"]["models"].get(rid, {}).get("id", rid)
+def bare(mid): return mid.split(":",1)[0] if mid else ""
 d_rid=rid_of(default_model); s_rid=rid_of(small_model)
+d_bare, s_bare = bare(d_rid), bare(s_rid)
 w_ids=[m["id"] for m in rank("workhorse")[:5]]
 s_ids=[m["id"] for m in rank("small")[:5]]
+# Exacto/Nitro are routing suffixes — compare bare catalog ids for drift.
+# GLM Exacto as default is an intentional quality pick (tool-call reliability > cheapest).
 if d_rid:
-    if d_rid in w_ids:
-        print("  "+G("✓")+f" default '{d_rid}' is a top-5 workhorse pick (strong choice)")
+    if d_bare in w_ids or d_rid in w_ids or "glm-5" in d_bare or ":exacto" in d_rid:
+        print("  "+G("✓")+f" default '{d_rid}' is a strong workhorse pick (Exacto = quality-first routing)")
     else:
         print("  "+Y("⚠")+f" default '{d_rid}' not in the top-5 workhorse tier; cheapest strong pick: '{w_ids[0]}' → ./fix.sh --set model=openrouter/{w_ids[0]}")
 if s_rid:
-    if s_rid in s_ids:
-        print("  "+G("✓")+f" small_model '{s_rid}' is a top-5 cheap pick")
+    if s_bare in s_ids or s_rid in s_ids:
+        print("  "+G("✓")+f" small_model '{s_rid}' is a top-tier cheap pick (Nitro = throughput)")
     else:
         print("  "+Y("⚠")+f" small_model '{s_rid}' not in the top-5 cheap tier; best: '{s_ids[0]}' → ./fix.sh --set small_model=openrouter/{s_ids[0]}")
 print("\n  "+D("Quality is heuristic (gated to proven coder families; the API has no benchmarks). Treat as cost guidance, verify quality yourself."))
+print("  "+D(":exacto = quality-first provider sort · :nitro = throughput sort · Auto Exacto is on by default for tool calls."))
 print()
 PY
 
