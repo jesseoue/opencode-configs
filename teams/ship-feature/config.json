@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "ship-feature",
+  "description": "Implement in parallel; bug-hunt verifies before done.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "subagent_type",
+      "subagent_type": "hephaestus",
+      "name": "forge",
+      "prompt": "Implement assigned steps (GPT Sol direct). Read call sites first; minimal diffs. Context7 before guessing library APIs. Parallel tools. Verify LSP + tests; paste real output. Claim/update tasks; mailbox the lead when blocked or done."
+    },
+    {
+      "kind": "subagent_type",
+      "subagent_type": "sisyphus-junior",
+      "name": "junior",
+      "prompt": "Small assigned units only (Flash Nitro). No re-delegation. Minimal diffs. Verify before done with real output. Claim/update tasks; mailbox the lead."
+    },
+    {
+      "kind": "category",
+      "category": "bug-hunt",
+      "name": "verifier",
+      "prompt": "Regression-only verifier. Exercise changed paths for regressions and edges. Failures with repro + path:line. Real output. Do not edit product code and do not add features. Mailbox findings to the lead."
+    }
+  ]
+}

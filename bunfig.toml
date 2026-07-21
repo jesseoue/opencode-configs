@@ -1,0 +1,6 @@
+# Allow package lifecycle scripts when installing into the OpenCode plugin cache.
+# oh-my-openagent: optional; setup.sh pre-installs the platform package instead of
+# running postinstall.mjs (that script deletes the plugin cache).
+# @code-yeongyu/comment-checker: downloads its native binary in postinstall.
+[install]
+trustedDependencies = ["oh-my-openagent", "@code-yeongyu/comment-checker"]

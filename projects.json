@@ -1,0 +1,6 @@
+{
+  "projects_dir": "~/Projects",
+  "default_workspace": "workspace",
+  "default_profile": "high",
+  "description": "Home for oc new scaffolds. oc launch uses projects_dir/default_workspace (never the config repo or bare projects home)."
+}

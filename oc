@@ -1,0 +1,1021 @@
+#!/usr/bin/env bash
+# oc — OpenConfig CLI (`oc`)
+#
+# Dispatcher for the OpenConfig stack (repo: opencode-configs).
+# Best-known config for OpenCode + OpenRouter + oh-my-openagent (OmO).
+# Zero dependencies — just bash. Add ~/.config/opencode to PATH
+# (zshrc.snippet does this) and `oc` works from anywhere.
+#
+# Usage:
+#   oc <command> [args...]
+#
+# Commands:
+#   setup [--check|--force|--sync-env]    Idempotent installer
+#   doctor [--quick|--fix|--harden|--ai-fix]
+#   validate [--quiet]                    Config validator + footgun detector
+#   signature [--refresh|--json]          Project identity verify / refresh
+#   locate [--json|--search]              Discover paths (read-only)
+#   test [smoke|idempotency]              Self-test suite
+#   fix [--dry-run|--set k=v]             Auto-repair configs
+#   cleanup [--dry-run|--yes]             Reconcile to known-good state
+#   maintain [--check|--clean|--plans]    Clean sessions, caches, logs
+#   models [--catalog|--json|--upgrade]   OpenRouter catalog analyzer
+#   run "<msg>" [-a agent] [-d dir]       Headless runner (run to completion)
+#   admin [status|health|ratelimit|...]   OpenRouter account admin
+#   launch [dir]                          Launch OpenCode (terminal-safe)
+#   new <name> [--profile] [--dir|--here] Scaffold under projects dir
+#   projects [--list|--ensure]            Show / ensure projects directory
+#   install                               1-step installer (curl | bash)
+#   diagnose [--no-ai|--fix|--agent-fix]  AI-assisted diagnostics
+#   help                                  Show this help
+#   version                               Print version
+
+set -uo pipefail
+
+# ── Resolve repo location (works from PATH or direct invocation) ──
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=lib/common.sh
+source "$REPO/lib/common.sh"
+
+OC_VERSION="$(oc_versions_get opencode_configs 2>/dev/null || echo "1.5.0")"
+
+# ── Colors (respect non-tty) ──
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"; c_p="\033[35m"
+  c_bold="\033[1m"; c_dim="\033[2m"; c_0="\033[0m"
+else
+  c_g=""; c_y=""; c_r=""; c_b=""; c_p=""; c_bold=""; c_dim=""; c_0=""
+fi
+
+# ── Helpers ──
+ok(){   printf "  ${c_g}✓${c_0} %s\n" "$*"; }
+info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
+bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
+
+header() {
+  oc_banner "$OC_VERSION" "Best-known config for OpenCode · OpenRouter · OmO"
+  printf "  ${c_dim}%s${c_0}\n\n" "$REPO"
+}
+
+# ── Require a script exists before dispatching ──
+dispatch() {
+  local script="$1"; shift
+  if [[ ! -x "$REPO/$script" ]]; then
+    bad "$script not found or not executable"
+    echo "  Run: chmod +x \"$REPO/$script\""
+    exit 1
+  fi
+  exec "$REPO/$script" "$@"
+}
+
+# ── Help text ──
+show_help() {
+  cat <<HELP
+${c_bold}OpenConfig${c_0} (${c_p}oc${c_0}) — best-known config for OpenCode · OpenRouter · OmO
+
+${c_bold}Usage:${c_0}  oc <command> [args...]
+
+${c_bold}Install & self-heal (start here):${c_0}
+  ${c_g}install${c_0}   [--quick|--yes|--full]       Full-stack install / refresh
+  ${c_g}check${c_0}     [--fix]                      validate + doctor --quick
+  ${c_g}heal${c_0}      [--ai|--no-ai]                 Unattended self-repair (AI when needed)
+  ${c_g}locate${c_0}    [--json|--search]             Where is everything? (read-only)
+  ${c_g}signature${c_0} [--refresh|--json]           Prove this is the OpenConfig repo
+  ${c_g}test${c_0}      [smoke|idempotency]           Self-test suite (safe)
+
+${c_bold}Setup & Health:${c_0}
+  ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams, LSP, projects)
+  ${c_g}doctor${c_0}    [--quick|--fix|--harden|--ai-fix]
+                                         Full readiness (keys, concurrency, teams, MCP, …)
+  ${c_g}validate${c_0}  [--quiet]                      Config validator + footgun detector
+  ${c_g}diagnose${c_0}  [--no-ai|--fix|--agent-fix]    AI-assisted deep diagnostics
+
+${c_bold}Repair & Clean:${c_0}
+  ${c_g}fix${c_0}       [--dry-run|--set k=v]          Auto-repair configs (incl. agent/category colors)
+  ${c_g}cleanup${c_0}   [--dry-run|--yes]              Reconcile to known-good state
+  ${c_g}maintain${c_0}  [--check|--clean|--plans]      Clean sessions, caches, logs
+
+${c_bold}Models & Admin:${c_0}
+  ${c_g}models${c_0}    [--catalog|--json|--upgrade]   OpenRouter catalog analyzer
+  ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter + direct OpenAI admin
+
+${c_bold}Run & Launch:${c_0}
+  ${c_g}run${c_0}       "<msg>" [-a agent] [-d dir]    Headless runner (run to completion)
+  ${c_g}launch${c_0}    [dir] [--here]                 Launch OpenCode (never config repo)
+  ${c_g}opencode${c_0}  [dir]                          Same as oc launch (opencode.sh)
+  ${c_g}env${c_0}       [--check|--scrub]               .env allowlist hygiene (never prints values)
+
+${c_bold}Scaffold:${c_0}
+  ${c_g}new${c_0}       <name> [--profile|--dir|--here|--launch]
+                                         Scaffold under projects home (~/Projects)
+  ${c_g}projects${c_0}  [--list|--ensure]               Show / ensure projects directory
+
+${c_bold}Admin subcommands:${c_0}
+  status       Account overview (credits, keys, spend)
+  health       Live probe all models + rate limits
+  ratelimit    Check rate limit headers
+  credits      Credit balance + usage
+  keys         List API keys with usage
+  models       Show configured models with routing
+  whoami       Account identity + plan
+  alert [N]    Check if credits below \$N (default 50)
+
+${c_bold}Examples:${c_0}
+  oc install --quick             Full stack, non-interactive, then validate + doctor
+  oc install                     Interactive lazy install (Enter = defaults)
+  oc install --full              Wizard (dir, keys, terminals, projects)
+  oc check                       validate + doctor --quick
+  oc check --fix                  Unattended repair if unhealthy
+  oc heal                        Self-troubleshoot (probe-first; skips clean steps)
+  oc heal --ai                   Same + agent fix if still broken
+  oc locate                      Where is repo / CLI / keys / leftovers?
+  oc signature                   Verify project identity fingerprint
+  oc signature --refresh         Recompute fingerprint after intentional edits
+  oc test                        Smoke + idempotency self-tests
+  oc doctor                       Full health (OpenRouter latency, prompts, keys, …)
+  oc doctor --fix                 Repair configs + re-check
+  oc fix                         Restore agent colors + footguns
+  oc validate                    Structural / footgun checks
+  oc run "Fix the failing tests" Headless: run to completion
+  oc admin health                Live OpenRouter + OpenAI probes
+  oc launch                      Launch OpenCode (cwd, or ~/Projects if config repo)
+  oc new myapp                   Scaffold → ~/Projects/myapp
+  oc projects --list             List projects home
+
+${c_bold}One-liner (fresh machine):${c_0}
+  curl -fsSL "\$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3MvbWFpbi9pbnN0YWxsLnNo' | base64 -d)" | bash
+  # Prefer after clone:  oc install --quick
+
+${c_bold}Auto/non-interactive:${c_0}
+  oc install --quick · oc heal · oc locate · oc test · oc check --fix
+
+HELP
+}
+
+# ── Terminal-safe launch (thin wrapper → opencode.sh) ──
+do_launch() {
+  # Help stays here so `oc launch --help` matches the oc UX; body lives once in opencode.sh.
+  if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    cat <<'LAUNCHHELP'
+oc launch — Start OpenCode in a project directory (terminal-safe)
+
+Usage:
+  oc launch [dir]
+  oc launch --here [dir]
+
+Defaults to the current working directory, but never starts inside the
+OpenConfig config repo or the bare projects home (~/Projects). In those
+cases it creates/uses ~/Projects/workspace (see projects.json
+default_workspace) — a clean subdirectory with AGENTS.md + opencode.json.
+
+Options:
+  --here, --force-cwd   Allow starting inside the config repo (not recommended)
+  -h, --help            Show this help
+
+Examples:
+  oc launch                 # cwd, or ~/Projects/workspace if config/projects home
+  oc launch ~/Projects/app  # explicit project
+  oc launch --here          # force cwd even if config repo
+
+Same as: oc opencode […]  (both exec opencode.sh)
+LAUNCHHELP
+    return 0
+  fi
+  dispatch opencode.sh "$@"
+}
+
+# ── .env allowlist hygiene (never prints values) ──
+do_env() {
+  local mode="check"
+  for a in "$@"; do
+    case "$a" in
+      --scrub) mode="scrub" ;;
+      --check) mode="check" ;;
+      -h|--help)
+        cat <<'ENVHELP'
+oc env — OpenConfig .env hygiene (never prints secret values)
+
+  oc env           Report allowlisted vs foreign key counts
+  oc env --check   Same
+  oc env --scrub   Rewrite .env to allowlisted keys only (copy-backup first)
+
+Foreign keys (company vault dumps) must not live in this public config tree.
+Use Infisical/Doppler for those; `oc setup --sync-env` imports allowlisted keys only.
+ENVHELP
+        return 0 ;;
+      *) bad "unknown flag: $a"; return 2 ;;
+    esac
+  done
+  local envf="$REPO/.env"
+  if [[ ! -f "$envf" ]]; then
+    bad ".env missing at $envf"
+    tip "copy: cp .env.example .env && chmod 600 .env"
+    return 1
+  fi
+  local foreign
+  foreign="$(oc_env_foreign_key_count "$envf")"
+  if [[ "$mode" == "scrub" ]]; then
+    local out
+    out="$(oc_scrub_env_to_allowlist "$envf")"
+    ok "scrubbed .env ($out)"
+    tip "full prior copy under ~/.opencode-backups/env-scrub-*/"
+    return 0
+  fi
+  if [[ "${foreign:-0}" -gt 0 ]]; then
+    opt ".env has $foreign non-allowlisted key(s)"
+    tip "scrub: oc env --scrub"
+    return 1
+  fi
+  ok ".env allowlist-clean"
+  return 0
+}
+
+# ── Projects directory (keeps cwd / config repo clean) ──
+do_projects() {
+  local list=0 ensure=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --list|-l) list=1; shift ;;
+      --ensure|-e) ensure=1; shift ;;
+      -h|--help)
+        cat <<'PROJHELP'
+oc projects — Show the projects directory used by `oc new`
+
+Usage:
+  oc projects [--list] [--ensure]
+
+Options:
+  --list, -l     List project directories under the projects home
+  --ensure, -e   Create the projects directory if missing
+  -h, --help     Show this help
+
+Resolution order for the path:
+  1. OC_PROJECTS_DIR env
+  2. OC_PROJECTS_DIR in ~/.config/opencode/.env
+  3. projects.json → projects_dir (default ~/Projects)
+
+Examples:
+  oc projects
+  oc projects --ensure
+  oc projects --list
+PROJHELP
+        exit 0 ;;
+      -*) echo "Unknown flag: $1"; exit 2 ;;
+      *) echo "Unexpected arg: $1"; exit 2 ;;
+    esac
+  done
+
+  local dir
+  if [[ $ensure -eq 1 ]]; then
+    dir="$(oc_ensure_projects_dir)"
+  else
+    dir="$(oc_projects_dir)"
+  fi
+
+  printf "%s\n" "$dir"
+  if [[ $list -eq 1 ]]; then
+    if [[ -d "$dir" ]]; then
+      # shellcheck disable=SC2012
+      local entries
+      entries="$(ls -1 "$dir" 2>/dev/null | head -n 200 || true)"
+      if [[ -n "$entries" ]]; then
+        printf "\n${c_dim}Projects:${c_0}\n"
+        while IFS= read -r name; do
+          [[ -d "$dir/$name" ]] && printf "  %s\n" "$name"
+        done <<<"$entries"
+      else
+        info "(empty)"
+      fi
+    else
+      info "does not exist yet — run: oc projects --ensure"
+    fi
+  fi
+}
+
+# ── Scaffold a new project with base OpenCode config ──
+do_new() {
+  local project_name=""
+  local base_dir=""
+  local use_here=0
+  local profile=""
+  local launch_after=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --profile) profile="$2"; shift 2 ;;
+      --dir)     base_dir="$2"; shift 2 ;;
+      --here)    use_here=1; shift ;;
+      --launch)  launch_after=1; shift ;;
+      -h|--help)
+        cat <<NEWHELP
+oc new — Scaffold a project under the projects directory
+
+Usage:
+  oc new <name> [options]
+
+Options:
+  --profile <p>   Profile for project opencode.json (default: $(oc_default_profile))
+                  Available: high, low, fast, research, debug, writing, content-aware
+  --dir <d>       Parent directory (default: projects dir — see \`oc projects\`)
+  --here          Parent = current working directory (ignore projects dir)
+  --launch        Launch OpenCode in the new project after creation
+  -h, --help      Show this help
+
+What it creates:
+  <projects>/<name>/
+  ├── .git/
+  ├── .gitignore
+  ├── .omo/plans/
+  ├── opencode.json          Project config (profile defaults + local AGENTS.md)
+  ├── .opencode/profile.json Symlink → global profiles/<p>.json (reference)
+  ├── AGENTS.md
+  └── README.md
+
+Projects directory (keeps cwd clean):
+  $(oc_projects_dir)
+  Override: OC_PROJECTS_DIR, .env, or projects.json
+
+Examples:
+  oc new myapp
+  oc new myapp --here
+  oc new myapp --profile research
+  oc new myapp --dir ~/work --launch
+NEWHELP
+        exit 0 ;;
+      -*) echo "Unknown flag: $1"; exit 2 ;;
+      *)  project_name="$1"; shift ;;
+    esac
+  done
+
+  if [[ -z "$project_name" ]]; then
+    bad "Project name required"
+    echo "  Usage: oc new <name> [--profile <p>] [--dir <d>|--here] [--launch]"
+    exit 1
+  fi
+
+  if [[ $use_here -eq 1 && -n "$base_dir" ]]; then
+    bad "Use either --here or --dir, not both"
+    exit 1
+  fi
+
+  # Validate project name
+  if [[ ! "$project_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+    bad "Invalid project name: $project_name"
+    echo "  Use letters, numbers, dots, dashes, underscores (must start alphanumeric)"
+    exit 1
+  fi
+
+  # Default profile from projects.json / env
+  [[ -n "$profile" ]] || profile="$(oc_default_profile)"
+
+  if [[ ! -f "$REPO/profiles/$profile.json" ]]; then
+    bad "Profile '$profile' not found"
+    echo "  Available profiles:"
+    for f in "$REPO"/profiles/*.json; do
+      [[ -f "$f" ]] && echo "    $(basename "$f" .json)"
+    done
+    exit 1
+  fi
+
+  # Resolve parent: --dir > --here (cwd) > projects dir
+  local parent
+  if [[ -n "$base_dir" ]]; then
+    parent="$(oc_expand_path "$base_dir")"
+  elif [[ $use_here -eq 1 ]]; then
+    parent="$(pwd -P)"
+  else
+    parent="$(oc_ensure_projects_dir)"
+  fi
+  mkdir -p "$parent"
+
+  local target_dir="$parent/$project_name"
+
+  if [[ -e "$target_dir" ]]; then
+    bad "$target_dir already exists"
+    exit 1
+  fi
+
+  printf "${c_b}${c_bold}== Creating project: ${project_name} ==${c_0}\n\n"
+  info "parent: $parent"
+  info "profile: $profile"
+
+  mkdir -p "$target_dir/.omo/plans" "$target_dir/.opencode" "$target_dir/skills"
+  : >"$target_dir/skills/.gitkeep"
+  ok ".omo/plans/ + skills/ created"
+
+  ( cd "$target_dir" && git init --quiet )
+  ok "git initialized"
+
+  cat > "$target_dir/.gitignore" <<'GITIGNORE'
+# Dependencies
+node_modules/
+__pycache__/
+venv/
+.venv/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OpenCode runtime
+.omo/run-continuation/
+.omo/ralph-loop*
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+GITIGNORE
+  ok ".gitignore created"
+
+  cat > "$target_dir/AGENTS.md" <<AGENTSMARKDOWN
+# $project_name
+
+## Overview
+
+<!-- Describe what this project does -->
+
+## Tech Stack
+
+<!-- List languages, frameworks, key dependencies -->
+
+## Architecture
+
+<!-- Key directories, entry points, data flow -->
+
+## Conventions
+
+- Language: <!-- TypeScript / Python / Go / etc. -->
+- Testing: <!-- test command -->
+- Linting: <!-- lint command -->
+- Formatting: <!-- format command -->
+
+## OpenCode
+
+- Project config: \`opencode.json\` (profile: **$profile**)
+- Global stack: \`~/.config/opencode/\` (keys, agents, MCP)
+- Launch: \`oc launch\` from this directory, or \`oc launch $target_dir\`
+- Headless: \`oc run -d $target_dir "…"\`
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| opencode.json | Project model / agent / instructions |
+| AGENTS.md | Project context for agents |
+| <!-- entry --> | <!-- what --> |
+
+## Notes
+
+<!-- Anything else agents should know -->
+AGENTSMARKDOWN
+  ok "AGENTS.md created"
+
+  cat > "$target_dir/README.md" <<READMEMARKDOWN
+# $project_name
+
+Scaffolded with \`oc new\` (profile: \`$profile\`).
+
+## OpenCode
+
+\`\`\`bash
+oc launch          # from this directory
+oc run "…"         # headless
+\`\`\`
+
+Global config: \`~/.config/opencode/\` · Projects home: \`$(oc_projects_dir)\`
+
+## Install
+
+\`\`\`bash
+# TODO: add install instructions
+\`\`\`
+
+## Usage
+
+\`\`\`bash
+# TODO: add usage instructions
+\`\`\`
+READMEMARKDOWN
+  ok "README.md created"
+
+  # Project-local opencode.json with paths scoped for this directory
+  if ! oc_write_project_opencode_json "$profile" "$target_dir/opencode.json"; then
+    bad "failed to write opencode.json from profile '$profile'"
+    exit 1
+  fi
+  ok "opencode.json created (profile: $profile)"
+
+  # Reference symlink — global profile paths are relative to profiles/; do not
+  # load this as OPENCODE_CONFIG. Project overrides live in ./opencode.json.
+  ln -sfn "$REPO/profiles/$profile.json" "$target_dir/.opencode/profile.json"
+  ok "profile '$profile' linked → .opencode/profile.json (reference)"
+
+  ( cd "$target_dir" && git add -A && git commit --quiet -m "Initial commit" ) 2>/dev/null
+  ok "initial commit created"
+
+  printf "\n${c_g}✓ Project created: ${c_bold}%s${c_0}\n" "$target_dir"
+  printf "  ${c_dim}Next: cd \"%s\" && oc launch${c_0}\n\n" "$target_dir"
+
+  if [[ $launch_after -eq 1 ]]; then
+    cd "$target_dir" || exit 1
+    do_launch "$target_dir"
+  fi
+}
+
+
+# ── OpenConfig full-stack install (primary entrypoint) ──
+do_install() {
+  local quick=0 full=0 yes=0 skip_cli=0
+  local extra=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --quick|-q) quick=1; yes=1; shift ;;
+      --yes|-y) yes=1; shift ;;
+      --full|--wizard) full=1; shift ;;
+      --skip-cli) skip_cli=1; shift ;;
+      --dir|--prefix|--log)
+        extra+=("$1" "${2:-}"); shift 2 ;;
+      -h|--help)
+        cat <<'INSTHELP'
+oc install — OpenConfig full-stack installer
+
+The single command to install / refresh the entire stack:
+  OpenCode CLI · configs · keys · zsh · tmux · Ghostty · teams · LSP · doctor
+
+Usage:
+  oc install --quick      ★ One command — non-interactive full + validate + doctor (+ auto-heal)
+  oc install              Interactive lazy (Enter = defaults; ask for missing keys)
+  oc install --yes        Same as --quick
+  oc install --full       Interactive wizard (dir, terminals, keys, setup)
+
+Options:
+  --quick, -q     Fast path: --yes + post-checks (validate + doctor --quick)
+  --yes, -y       Non-interactive; accept defaults; seed keys from env
+  --full          Full interactive wizard
+  --dir PATH      Install/clone location
+  --skip-cli      Do not install OpenCode CLI
+  --log PATH      Install log path
+  -h, --help      Show this help
+
+Examples:
+  oc install --quick
+  OPENROUTER_API_KEY=sk-… OPENAI_API_KEY=sk-… oc install --yes
+  oc install --full
+
+After install:
+  source ~/.zshrc && oc launch
+  If anything breaks (unattended): oc heal
+INSTHELP
+        exit 0 ;;
+      -*)
+        # pass unknown flags through to install.sh
+        extra+=("$1"); shift ;;
+      *)
+        extra+=("$1"); shift ;;
+    esac
+  done
+
+  header
+  printf "  ${c_bold}Installing OpenConfig full stack…${c_0}\n\n"
+
+  local args=()
+  if [[ $yes -eq 1 ]]; then args+=(--yes); fi
+  if [[ $full -eq 1 ]]; then args+=(--full); fi
+  if [[ $skip_cli -eq 1 ]]; then args+=(--skip-cli); fi
+  # nounset-safe: empty "${extra[@]}" unbound-errors under `set -u`
+  if ((${#extra[@]})); then args+=("${extra[@]}"); fi
+
+  if [[ ! -x "$REPO/install.sh" ]]; then
+    bad "install.sh missing or not executable"
+    exit 1
+  fi
+
+  # Run installer (keep parent shell options — do not enable set -e here)
+  set +e
+  if ((${#args[@]})); then
+    "$REPO/install.sh" "${args[@]}"
+  else
+    "$REPO/install.sh"
+  fi
+  local rc=$?
+  set +e
+
+  if [[ $rc -ne 0 ]]; then
+    bad "install finished with exit $rc"
+    printf "  ${c_b}↳${c_0} ${c_dim}%s${c_0}\n" "auto-heal: oc heal   ·   re-run: oc install --quick"
+    exit "$rc"
+  fi
+
+  # Fast path: structural + readiness; auto-heal if validate fails
+  if [[ $quick -eq 1 || $yes -eq 1 ]]; then
+    printf "\n${c_b}${c_bold}== Post-install checks ==${c_0}\n"
+    local post_rc=0
+    if [[ -x "$REPO/validate.sh" ]]; then
+      if "$REPO/validate.sh" --quiet; then
+        ok "validate passed"
+      else
+        bad "validate failed — auto-healing"
+        post_rc=1
+      fi
+    fi
+    if [[ $post_rc -ne 0 ]]; then
+      # Unattended repair without re-entering install
+      do_heal
+      return
+    fi
+    if [[ -x "$REPO/doctor.sh" ]]; then
+      if ! "$REPO/doctor.sh" --quick; then
+        bad "doctor reported issues — auto-healing"
+        do_heal
+        return
+      fi
+    fi
+  fi
+
+  printf "\n${c_g}${c_bold}✓ OpenConfig ready${c_0}\n"
+  printf "  ${c_dim}Next: source ~/.zshrc && oc launch${c_0}\n"
+  printf "  ${c_dim}If anything breaks later: oc heal${c_0}\n\n"
+}
+
+# ── One-shot health (validate + doctor --quick) ──
+do_check() {
+  local fix=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --fix|-f) fix=1; shift ;;
+      -h|--help)
+        cat <<'CHKHELP'
+oc check — Validate + doctor (readiness)
+
+Usage:
+  oc check              validate + doctor --quick
+  oc check --fix         if unhealthy: auto-repair then re-check (unattended)
+
+Same as: oc heal   (when --fix)
+CHKHELP
+        exit 0 ;;
+      -*) echo "Unknown flag: $1"; exit 2 ;;
+      *) echo "Unexpected arg: $1"; exit 2 ;;
+    esac
+  done
+  if [[ $fix -eq 1 ]]; then
+    do_heal
+    return
+  fi
+  header
+  printf "  ${c_bold}OpenConfig check${c_0} — validate + doctor --quick\n\n"
+  local rc=0
+  if [[ -x "$REPO/validate.sh" ]]; then
+    "$REPO/validate.sh" || rc=1
+  else
+    bad "validate.sh missing"; rc=1
+  fi
+  echo ""
+  if [[ -x "$REPO/doctor.sh" ]]; then
+    "$REPO/doctor.sh" --quick || rc=1
+  else
+    bad "doctor.sh missing"; rc=1
+  fi
+  if [[ $rc -ne 0 ]]; then
+    printf "\n  ${c_y}Unhealthy.${c_0} ${c_dim}Auto-repair: oc check --fix   or   oc heal${c_0}\n\n"
+  fi
+  exit "$rc"
+}
+
+# ── Unattended self-troubleshoot / heal ──
+# Probe-first: skip fix/cleanup writes when dry-run says already clean.
+# Uses OpenRouter AI diagnose when still broken and a key is available.
+# --ai forces coding-agent fix; --no-ai skips all model calls.
+do_heal() {
+  local with_ai=auto   # auto | on | off
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --ai) with_ai=on; shift ;;
+      --no-ai) with_ai=off; shift ;;
+      -h|--help)
+        cat <<'HEALHELP'
+oc heal — Unattended self-repair for OpenConfig (idempotent)
+
+Probe-first — writes only when something is actually wrong:
+  1. signature + locate
+  2. validate → fix (if needed) → cleanup (if needed)
+  3. merge missing .env keys (never clobber values)
+  4. re-validate
+  5. if still broken → diagnose --yes --fix
+       · AI diagnosis when OPENROUTER_API_KEY is set (default)
+       · --no-ai skips the model
+  6. doctor --quick (--fix only if doctor fails)
+  7. if still broken + key → AI diagnose again; --ai → agent-fix
+
+Usage:
+  oc heal           Auto: structural + AI diagnose when needed (needs OpenRouter key)
+  oc heal --ai      Also dispatch coding-agent fix if still broken
+  oc heal --no-ai   Structural repair only (no model calls)
+  oc check --fix     Alias for oc heal
+
+Log: ~/.opencode-backups/logs/heal-latest.log
+HEALHELP
+        exit 0 ;;
+      -*) echo "Unknown flag: $1"; exit 2 ;;
+      *) echo "Unexpected arg: $1"; exit 2 ;;
+    esac
+  done
+
+  local log_dir="${OC_BACKUP_ROOT:-$HOME/.opencode-backups}/logs"
+  mkdir -p "$log_dir"
+  local log="$log_dir/heal-$(date +%Y%m%d-%H%M%S).log"
+  ln -sfn "$log" "$log_dir/heal-latest.log" 2>/dev/null || true
+
+  # Load keys into this process (OpenRouter for AI diagnose / agent-fix)
+  oc_export_env_file "$REPO/.env" 2>/dev/null || true
+  local or_key="${OPENROUTER_API_KEY:-}"
+  if [[ -z "$or_key" && -f "$REPO/.env" ]]; then
+    or_key="$(oc_get_env_key "$REPO/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
+    [[ -n "$or_key" ]] && export OPENROUTER_API_KEY="$or_key"
+  fi
+  local have_or=0
+  [[ -n "${OPENROUTER_API_KEY:-}" ]] && have_or=1
+
+  header
+  printf "  ${c_bold}OpenConfig heal${c_0} — unattended self-repair (probe-first)\n"
+  printf "  ${c_dim}log → %s${c_0}\n" "$log"
+  if [[ $have_or -eq 1 ]]; then
+    printf "  ${c_dim}OpenRouter key: ready (AI diagnose when needed)${c_0}\n\n"
+  else
+    printf "  ${c_y}OpenRouter key: missing${c_0} ${c_dim}— AI diagnose skipped; add OPENROUTER_API_KEY to .env${c_0}\n\n"
+  fi
+
+  _heal_run() {
+    local title="$1"; shift
+    printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$title" | tee -a "$log"
+    set +e
+    "$@" 2>&1 | tee -a "$log"
+    local step_rc=${PIPESTATUS[0]}
+    set +e
+    return "$step_rc"
+  }
+
+  local rc=0
+
+  # 0. Prove this is the OpenConfig tree (not a random clone)
+  if [[ -x "$REPO/signature.sh" ]]; then
+    if _heal_run "0/8 signature" "$REPO/signature.sh"; then
+      ok "project identity ok" | tee -a "$log"
+    else
+      bad "signature failed — refusing heal on wrong/unverified project" | tee -a "$log"
+      printf "  ${c_b}↳${c_0} ${c_dim}wrong tree? clone OpenConfig (see signature.json github_b64) or: oc signature --refresh${c_0}\n"
+      printf "  ${c_b}↳${c_0} ${c_dim}after intentional edits: oc signature --refresh${c_0}\n\n"
+      exit 1
+    fi
+  fi
+
+  # 0b. Discover where things are (read-only)
+  if [[ -x "$REPO/locate.sh" ]]; then
+    _heal_run "0b/8 locate" "$REPO/locate.sh" || true
+  fi
+
+  # 1. Baseline validate
+  _heal_run "1/8 validate (baseline)" "$REPO/validate.sh" --quiet || true
+
+  # 2. fix — only when dry-run finds work
+  if [[ -x "$REPO/fix.sh" ]]; then
+    local fix_dry
+    fix_dry="$("$REPO/fix.sh" --dry-run 2>&1 || true)"
+    printf '%s\n' "$fix_dry" | tee -a "$log" >/dev/null
+    if printf '%s' "$fix_dry" | grep -q "already clean"; then
+      ok "fix skipped (already clean)" | tee -a "$log"
+    else
+      _heal_run "2/8 fix.sh" "$REPO/fix.sh" || true
+    fi
+  else
+    bad "fix.sh missing" | tee -a "$log"
+    rc=1
+  fi
+
+  # 3. cleanup — only when dry-run finds drift
+  if [[ -x "$REPO/cleanup.sh" ]]; then
+    local clean_dry
+    clean_dry="$("$REPO/cleanup.sh" --dry-run 2>&1 || true)"
+    if printf '%s' "$clean_dry" | grep -qiE 'Already at known-good|no drift|0 drift'; then
+      ok "cleanup skipped (known-good)" | tee -a "$log"
+      printf '%s\n' "$clean_dry" | tail -5 | tee -a "$log" >/dev/null
+    else
+      _heal_run "3/8 cleanup --yes" "$REPO/cleanup.sh" --yes || true
+    fi
+  fi
+
+  # 4. .env: merge missing keys only (never overwrite values)
+  if [[ -f "$REPO/.env.example" ]]; then
+    local merged
+    merged="$(oc_ensure_env_keys_from_example "$REPO/.env" "$REPO/.env.example" 2>/dev/null || true)"
+    if [[ -n "$merged" ]]; then
+      ok "added missing .env keys: $merged" | tee -a "$log"
+    else
+      ok ".env keys complete (no overwrites)" | tee -a "$log"
+    fi
+  fi
+
+  # 4b. maintain --check only (report stale sessions/caches; never auto --clean)
+  if [[ -x "$REPO/maintain.sh" ]]; then
+    _heal_run "4b/8 maintain --check" "$REPO/maintain.sh" --check || true
+  fi
+
+  # 4c. .env allowlist hygiene (report only — never auto-scrub without ask)
+  if [[ -f "$REPO/.env" ]]; then
+    _foreign="$(oc_env_foreign_key_count "$REPO/.env" 2>/dev/null || echo 0)"
+    if [[ "${_foreign:-0}" -gt 0 ]]; then
+      opt ".env has $_foreign foreign key(s) — run: oc env --scrub" | tee -a "$log"
+    else
+      ok ".env allowlist-clean" | tee -a "$log"
+    fi
+  fi
+
+  # 5. Re-validate
+  if _heal_run "5/8 validate (after repair)" "$REPO/validate.sh" --quiet; then
+    ok "validate clean" | tee -a "$log"
+  else
+    bad "validate still failing" | tee -a "$log"
+    rc=1
+  fi
+
+  # 6. Diagnose — AI when key present (unless --no-ai)
+  if [[ $rc -ne 0 && -x "$REPO/diagnose.sh" ]]; then
+    if [[ "$with_ai" != "off" && $have_or -eq 1 ]]; then
+      _heal_run "6/8 diagnose --yes --fix (AI)" \
+        "$REPO/diagnose.sh" --yes --fix || true
+    else
+      _heal_run "6/8 diagnose --yes --no-ai --fix" \
+        "$REPO/diagnose.sh" --yes --no-ai --fix || true
+    fi
+    if _heal_run "6b/8 validate (after diagnose)" "$REPO/validate.sh" --quiet; then
+      ok "validate clean after diagnose" | tee -a "$log"
+      rc=0
+    else
+      bad "validate still failing after diagnose" | tee -a "$log"
+      rc=1
+    fi
+  fi
+
+  # 7. Doctor — only --fix when quick pass fails
+  if [[ -x "$REPO/doctor.sh" ]]; then
+    if _heal_run "7/8 doctor --quick" "$REPO/doctor.sh" --quick; then
+      ok "doctor clean" | tee -a "$log"
+    else
+      bad "doctor reported issues — repairing" | tee -a "$log"
+      _heal_run "7b/8 doctor --quick --fix" "$REPO/doctor.sh" --quick --fix || true
+      if _heal_run "7c/8 doctor --quick (verify)" "$REPO/doctor.sh" --quick; then
+        ok "doctor clean after fix" | tee -a "$log"
+        # Doctor warnings alone shouldn't fail heal if validate is clean
+        rc=0
+      else
+        bad "doctor still unhealthy" | tee -a "$log"
+        rc=1
+      fi
+    fi
+  else
+    bad "doctor.sh missing" | tee -a "$log"
+    rc=1
+  fi
+
+  # 8. Escalation: AI again + optional coding-agent when still broken
+  if [[ $rc -ne 0 && -x "$REPO/diagnose.sh" && "$with_ai" != "off" && $have_or -eq 1 ]]; then
+    _heal_run "8/8 diagnose --yes --fix (AI retry)" \
+      "$REPO/diagnose.sh" --yes --fix || true
+    if [[ "$with_ai" == "on" ]]; then
+      _heal_run "8b/8 diagnose --yes --agent-fix" \
+        "$REPO/diagnose.sh" --yes --agent-fix || true
+    fi
+    if _heal_run "8c/8 validate + doctor" bash -c "
+         '$REPO/validate.sh' --quiet && '$REPO/doctor.sh' --quick
+       "; then
+      ok "healthy after AI repair" | tee -a "$log"
+      rc=0
+    else
+      bad "still unhealthy after AI repair — see $log" | tee -a "$log"
+      rc=1
+    fi
+  fi
+
+  echo "" | tee -a "$log"
+  if [[ $rc -eq 0 ]]; then
+    printf "${c_g}${c_bold}✓ OpenConfig healthy${c_0}\n" | tee -a "$log"
+    printf "  ${c_dim}log: %s${c_0}\n\n" "$log"
+  else
+    printf "${c_r}${c_bold}✗ OpenConfig still unhealthy${c_0}\n" | tee -a "$log"
+    printf "  ${c_dim}log: %s${c_0}\n" "$log"
+    printf "  ${c_b}↳${c_0} ${c_dim}oc locate              # where is everything?${c_0}\n"
+    printf "  ${c_b}↳${c_0} ${c_dim}oc diagnose --yes     # AI deep diagnosis${c_0}\n"
+    if [[ "$with_ai" != "on" ]]; then
+      printf "  ${c_b}↳${c_0} ${c_dim}oc heal --ai          # coding-agent fix${c_0}\n"
+    fi
+    if [[ $have_or -eq 0 ]]; then
+      printf "  ${c_b}↳${c_0} ${c_dim}set OPENROUTER_API_KEY in .env then re-run${c_0}\n"
+    fi
+    printf "  ${c_b}↳${c_0} ${c_dim}oc install --quick    # full refresh${c_0}\n\n"
+  fi
+  exit "$rc"
+}
+
+# ── Test suite (smoke + idempotency) ──
+do_test() {
+  local which="all"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      smoke|idempotency|idempotent) which="$1"; shift ;;
+      -h|--help)
+        cat <<'TESTHELP'
+oc test — Verify OpenConfig can check itself
+
+Usage:
+  oc test                 smoke + idempotency
+  oc test smoke           validate, locate, dry-runs, setup --check
+  oc test idempotency     sandbox: .env/symlink never-clobber + fix no-op
+
+Safe: smoke is read-mostly; idempotency uses mktemp (never overwrites live .env).
+TESTHELP
+        exit 0 ;;
+      -*) echo "Unknown flag: $1"; exit 2 ;;
+      *) echo "Unexpected arg: $1"; exit 2 ;;
+    esac
+  done
+  header
+  printf "  ${c_bold}OpenConfig test${c_0}\n\n"
+  local rc=0
+  case "$which" in
+    all)
+      "$REPO/tests/smoke.sh" || rc=1
+      "$REPO/tests/idempotency.sh" || rc=1
+      ;;
+    smoke) "$REPO/tests/smoke.sh" || rc=1 ;;
+    idempotency|idempotent) "$REPO/tests/idempotency.sh" || rc=1 ;;
+  esac
+  exit "$rc"
+}
+
+# ── Main dispatch ──
+cmd="${1:-help}"
+[[ $# -gt 0 ]] && shift
+
+case "$cmd" in
+
+  setup)      dispatch setup.sh "$@" ;;
+  doctor)     dispatch doctor.sh "$@" ;;
+  validate)   dispatch validate.sh "$@" ;;
+  fix)        dispatch fix.sh "$@" ;;
+  cleanup)    dispatch cleanup.sh "$@" ;;
+  maintain)   dispatch maintain.sh "$@" ;;
+  models)     dispatch models.sh "$@" ;;
+  run)        dispatch run.sh "$@" ;;
+  diagnose)   dispatch diagnose.sh "$@" ;;
+  opencode)   dispatch opencode.sh "$@" ;;
+  install)    do_install "$@" ;;
+  check)      do_check "$@" ;;
+  heal)       do_heal "$@" ;;
+  test)       do_test "$@" ;;
+  locate|where|discover) dispatch locate.sh "$@" ;;
+  signature|sig) dispatch signature.sh "$@" ;;
+
+  admin)
+    # Default to 'status' if no subcommand given
+    dispatch openrouter-admin.sh "${@:-status}"
+    ;;
+
+  new)        do_new "$@" ;;
+  projects)   do_projects "$@" ;;
+  launch)
+    do_launch "$@"
+    ;;
+  env)
+    do_env "$@"
+    ;;
+
+  help|-h|--help)
+    header
+    show_help
+    ;;
+
+  version|-v|--version)
+    printf "OpenConfig (oc) %s\n" "$OC_VERSION"
+    printf "repo: %s\n" "$REPO"
+    printf "stack: OpenCode · OpenRouter · oh-my-openagent\n"
+    ;;
+
+  *)
+    header
+    printf "  ${c_r}Unknown command: %s${c_0}\n\n" "$cmd"
+    show_help
+    exit 1
+    ;;
+
+esac

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "debug-team",
+  "description": "Reproduce, then root-cause (ultrabrain = GPT Sol max). Lead synthesizes the fix.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "bug-hunt",
+      "name": "reproducer",
+      "prompt": "Reproduce only. Steps, expected vs actual, minimal failing case. Parallel tools. Real output. Prefer evidence collection over product edits. Mailbox the repro to the lead."
+    },
+    {
+      "kind": "category",
+      "category": "ultrabrain",
+      "name": "root-cause",
+      "prompt": "From the repro: WHY (GPT Sol max). Cite path:line. Minimal fix proposal with blast radius. Real evidence. Prefer analysis; leave the patch to the lead. Mailbox the verdict."
+    }
+  ]
+}

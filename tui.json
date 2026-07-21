@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/tui.json",
+  "theme": "tokyonight",
+  "leader_timeout": 500,
+  "keybinds": {
+    "leader": "ctrl+x",
+    "command_list": "ctrl+p",
+    "agent_cycle": "tab",
+    "variant_cycle": "ctrl+t",
+    "session_child_first": "<leader>down",
+    "session_child_cycle": "right",
+    "session_child_cycle_reverse": "left",
+    "session_parent": "up",
+    "session_list": false,
+    "which_key_toggle": "none"
+  },
+  "scroll_speed": 4,
+  "scroll_acceleration": {
+    "enabled": true
+  },
+  "diff_style": "auto",
+  "mouse": true,
+  "attention": {
+    "enabled": true,
+    "notifications": true,
+    "sound": false,
+    "volume": 0.4
+  },
+  "plugin": [
+    "oh-my-openagent@4.19.0"
+  ]
+}

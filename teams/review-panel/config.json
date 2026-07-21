@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "review-panel",
+  "description": "Multi-lens review. Propose findings only — lead aggregates.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "arch-review",
+      "name": "arch",
+      "prompt": "Coupling, cohesion, security. `severity path:line — issue + fix`. No softening. Do not edit. Mailbox findings."
+    },
+    {
+      "kind": "category",
+      "category": "bug-hunt",
+      "name": "bugs",
+      "prompt": "Correctness bugs (edges, nulls, races). `severity path:line — repro + fix`. No softening. Do not edit. Mailbox findings."
+    },
+    {
+      "kind": "category",
+      "category": "refactor-safe",
+      "name": "cleanup",
+      "prompt": "PROPOSALS ONLY — do not apply edits. Safe cleanups (duplication, dead code, simplifications). Cite path:line. No softening. Mailbox proposals for the lead to schedule."
+    }
+  ]
+}

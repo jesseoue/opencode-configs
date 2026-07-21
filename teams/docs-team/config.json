@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "docs-team",
+  "description": "Parallel docs via writing category (Gemini Nitro). Lead merges.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "writing",
+      "name": "api-docs",
+      "prompt": "API reference from source of truth: Context7 (resolve-library-id → query-docs) for libs, then local signatures/tests. Parallel reads. Markdown deliverable. Cite libraryId + source paths. Never invent APIs. No product-source edits unless the task is explicitly a docs file. Mailbox the draft."
+    },
+    {
+      "kind": "category",
+      "category": "writing",
+      "name": "guide",
+      "prompt": "Getting-started from entry points + tests. Context7 for external setup APIs. Parallel reads. Markdown deliverable. No fluff. Cite libraryId + source paths. Never invent APIs. Mailbox the draft."
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+# shellcheck shell=zsh
+# ── OpenConfig zshrc snippet ────────────────────────────────────────
+# Source this from ~/.zshrc:
+#   source ~/.config/opencode/zshrc.snippet
+#
+# OpenConfig (oc) — best-known config for OpenCode · OpenRouter · OmO
+# Provides: opencode launcher function, oc dispatcher on PATH, oradmin alias,
+# telemetry kill switches, terminal teardown fix, and allowlisted .env loading.
+#
+# Prefer sourcing this file over inlining opencode() — setup migrates stale
+# inlines (missing DO_NOT_TRACK / OMO_* / OTEL) automatically.
+
+# ── OpenCode launcher ────────────────────────────────────────────
+# Loads API keys from ~/.config/opencode/.env before launching.
+# Forces xterm-256color (Ghostty's xterm-ghostty causes slow Ink redraws).
+# Resets terminal modes on exit (fixes opencode v1.17 mouse tracking leak).
+# Never starts inside the OpenConfig config repo — uses ~/Projects instead
+# (override with: opencode --here  OR  oc launch --here).
+_oc_resolve_start_dir() {
+  local dir="${1:-}"
+  local cfg="$HOME/.config/opencode"
+  local real_cfg="" real_dir=""
+  local projects_home="${OC_PROJECTS_DIR:-$HOME/Projects}"
+  local workspace_name="${OC_DEFAULT_WORKSPACE:-workspace}"
+  [[ "$projects_home" == ~* ]] && projects_home="${projects_home/#\~/$HOME}"
+  [[ -d "$HOME/Projects" ]] && projects_home="$HOME/Projects"
+  workspace_name="${workspace_name:t}"  # basename
+  [[ -n "$workspace_name" ]] || workspace_name="workspace"
+  local workspace="${projects_home}/${workspace_name}"
+
+  if [[ -z "$dir" ]]; then
+    real_dir="$(pwd -P)"
+  else
+    real_dir="$(cd "$dir" 2>/dev/null && pwd -P || printf '%s' "$dir")"
+  fi
+  [[ -e "$cfg" ]] && real_cfg="$(cd "$cfg" 2>/dev/null && pwd -P || true)"
+
+  local need_workspace=0
+  if [[ -n "$real_cfg" && ( "$real_dir" == "$real_cfg" || "$real_dir" == "$real_cfg"/* ) ]]; then
+    need_workspace=1
+  fi
+  # Bare projects home is not a project
+  if [[ "$real_dir" == "$projects_home" ]]; then
+    need_workspace=1
+  fi
+  # Hard denylist: known empty/meta dirs that must never host OpenCode
+  case "$real_dir" in
+    /Users/Shared/lm-agents|/Users/Shared/lm-agents/*)
+      need_workspace=1
+      ;;
+  esac
+  # Empty / sidecar-only dirs (only .omo/.codegraph/.claude/.git/…) are not
+  # real projects — launching there feels broken/slow (CodeGraph on nothing).
+  if (( !need_workspace )) && [[ -d "$real_dir" ]]; then
+    local _oc_real_count
+    _oc_real_count="$(find "$real_dir" -mindepth 1 -maxdepth 1 \
+      ! -name '.omo' ! -name '.codegraph' ! -name '.claude' ! -name '.opencode' \
+      ! -name '.git' ! -name '.DS_Store' ! -name '.gitignore' \
+      ! -name '.metadata_never_index' ! -name 'README.md' \
+      2>/dev/null | wc -l | tr -d ' ')"
+    if [[ "${_oc_real_count:-0}" -eq 0 ]]; then
+      need_workspace=1
+    fi
+  fi
+  # Prefer a known speed-test workspace when present and cwd was empty
+  if (( need_workspace )) && [[ -d /Users/Shared/test-speed && -f /Users/Shared/test-speed/AGENTS.md ]]; then
+    workspace="/Users/Shared/test-speed"
+  fi
+  if (( need_workspace )); then
+    mkdir -p "$workspace" 2>/dev/null || true
+    # Minimal clean scaffold if empty
+    [[ -f "$workspace/AGENTS.md" ]] || printf '# %s\n\nScratch workspace for oc launch (OpenConfig).\n' "$workspace_name" >"$workspace/AGENTS.md"
+    [[ -f "$workspace/.gitignore" ]] || printf '%s\n' 'node_modules/' 'package.json' 'package-lock.json' 'bun.lock' '.omo/' '.env' '.DS_Store' >"$workspace/.gitignore"
+    print -u2 "OpenConfig: launching in workspace → $workspace"
+    print -r -- "$workspace"
+    return 0
+  fi
+  print -r -- "$real_dir"
+}
+
+opencode() {
+  local _oc_env_file="$HOME/.config/opencode/.env"
+  # Always kill upstream telemetry before any OpenCode / OmO process starts
+  export DO_NOT_TRACK=1
+  export OMO_DISABLE_POSTHOG=1
+  export OMO_SEND_ANONYMOUS_TELEMETRY=0
+  export OMO_CODEX_DISABLE_POSTHOG=1
+  export OMO_CODEX_SEND_ANONYMOUS_TELEMETRY=0
+  export CODEGRAPH_TELEMETRY=0
+  export OTEL_SDK_DISABLED=true
+  unset OPENCODE_ENABLE_TELEMETRY OTEL_EXPORTER_OTLP_ENDPOINT \
+        OTEL_EXPORTER_OTLP_TRACES_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS \
+        OPENCODE_OTLP_ENDPOINT 2>/dev/null || true
+  if [[ -f "$_oc_env_file" ]]; then
+    while IFS= read -r _oc_line || [[ -n "$_oc_line" ]]; do
+      [[ "$_oc_line" == \#* || -z "$_oc_line" ]] && continue
+      [[ "$_oc_line" == export\ * ]] && _oc_line="${_oc_line#export }"
+      [[ "$_oc_line" == *=* ]] || continue
+      _oc_key="${_oc_line%%=*}"
+      case "$_oc_key" in
+        OPENROUTER_API_KEY|OPENAI_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
+        *) continue ;;
+      esac
+      _oc_val="${_oc_line#*=}"
+      [[ "$_oc_val" == \"*\" ]] && _oc_val="${_oc_val#\"}" && _oc_val="${_oc_val%\"}"
+      [[ "$_oc_val" == \'*\' ]] && _oc_val="${_oc_val#\'}" && _oc_val="${_oc_val%\'}"
+      export "$_oc_key=$_oc_val"
+    done < "$_oc_env_file"
+  fi
+  # Re-assert kill switches after .env load (env file must not re-enable telemetry)
+  export DO_NOT_TRACK=1 OMO_DISABLE_POSTHOG=1 OMO_SEND_ANONYMOUS_TELEMETRY=0
+  export OMO_CODEX_DISABLE_POSTHOG=1 OMO_CODEX_SEND_ANONYMOUS_TELEMETRY=0
+  export CODEGRAPH_TELEMETRY=0 OTEL_SDK_DISABLED=true
+
+  # Resolve start directory — never the config repo (unless --here)
+  local -a _oc_args=("$@")
+  local _oc_force=0 _oc_cmd=0 _oc_c
+  if (( $#_oc_args > 0 )) && [[ "${_oc_args[1]}" == "--here" || "${_oc_args[1]}" == "--force-cwd" ]]; then
+    _oc_force=1
+    _oc_args=("${_oc_args[@]:2}")
+  fi
+  local _oc_subcmds=(completion acp mcp attach run debug providers auth agent upgrade uninstall serve web models stats export import github pr session plugin db)
+  if (( $#_oc_args == 0 )); then
+    if (( !_oc_force )); then
+      _oc_args=( "$(_oc_resolve_start_dir)" )
+    else
+      _oc_args=( "$(pwd -P)" )
+    fi
+  elif [[ "${_oc_args[1]}" == . || "${_oc_args[1]}" == .. || "${_oc_args[1]}" == /* || "${_oc_args[1]}" == ~* || -d "${_oc_args[1]}" ]]; then
+    for _oc_c in "${_oc_subcmds[@]}"; do
+      [[ "${_oc_args[1]}" == "$_oc_c" ]] && _oc_cmd=1 && break
+    done
+    if (( !_oc_cmd )); then
+      if (( _oc_force )); then
+        _oc_args[1]="$(cd "${_oc_args[1]}" 2>/dev/null && pwd -P || print -r -- "${_oc_args[1]}")"
+      else
+        _oc_args[1]="$(_oc_resolve_start_dir "${_oc_args[1]}")"
+      fi
+    fi
+  fi
+
+  local _oc_saved_term="${TERM:-}"
+  local _oc_rc=0
+  # Project-path TUI: cd into it and run `.` so OpenCode is a direct child of
+  # this interactive shell and owns the tty (avoids instant-exit from wrappers).
+  if (( $#_oc_args == 1 )) && [[ -d "${_oc_args[1]}" ]]; then
+    cd "${_oc_args[1]}" || return 1
+    print -u2 "Launching OpenCode from $PWD..."
+    TERM=xterm-256color command opencode . || _oc_rc=$?
+  else
+    TERM=xterm-256color command opencode "${_oc_args[@]}" || _oc_rc=$?
+  fi
+
+  # Terminal teardown: reset mouse tracking + bracketed paste (NOT alt screen — that clears the screen)
+  printf '\033[?2004l\033[?1006l\033[?1015l\033[?1003l\033[?1002l\033[?1000l'
+  stty sane 2>/dev/null
+  command -v tput >/dev/null && tput cnorm 2>/dev/null
+
+  # OpenCode may drop package.json/node_modules into the config repo when
+  # launched from there — scrub so the next validate/doctor stays clean.
+  local _oc_cfg="$HOME/.config/opencode"
+  if [[ -e "$_oc_cfg" ]]; then
+    local _oc_real
+    _oc_real="$(cd "$_oc_cfg" 2>/dev/null && pwd -P || true)"
+    if [[ -n "$_oc_real" ]]; then
+      rm -rf "$_oc_real/node_modules" "$_oc_real/package.json" "$_oc_real/package-lock.json" \
+             "$_oc_real/bun.lock" "$_oc_real/bun.lockb" 2>/dev/null || true
+    fi
+  fi
+
+  TERM="$_oc_saved_term"
+  return $_oc_rc
+}
+
+# oc dispatcher is on PATH (added below) — use 'oc' for all commands
+# oc launch [dir]  — terminal-safe OpenCode launch
+# oc new <name>    — scaffold under projects dir (see oc projects)
+# oc doctor         — health check
+# oc admin health   — OpenRouter admin
+# oc run "msg"      — headless runner
+
+# oradmin shortcut (legacy — 'oc admin' is the new way)
+alias oradmin='~/.config/opencode/openrouter-admin.sh'
+
+# Mute terminal bells
+setopt NO_BEEP
+setopt NO_LIST_BEEP
+
+# Add opencode-configs to PATH for `oc` command
+[[ -d "$HOME/.config/opencode" ]] && [[ ":$PATH:" != *":$HOME/.config/opencode:"* ]] && export PATH="$HOME/.config/opencode:$PATH"
+
+# Add opencode bin to PATH if not already there
+[[ -d "$HOME/.opencode/bin" ]] && [[ ":$PATH:" != *":$HOME/.opencode/bin:"* ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
+# Projects home for `oc new` (optional; defaults to ~/Projects via projects.json)
+if [[ -z "${OC_PROJECTS_DIR:-}" && -f "$HOME/.config/opencode/.env" ]]; then
+  _oc_pd="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_PROJECTS_DIR=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
+  [[ -n "$_oc_pd" ]] && export OC_PROJECTS_DIR="$_oc_pd"
+  unset _oc_pd
+fi

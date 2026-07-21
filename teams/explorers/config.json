@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "explorers",
+  "description": "Parallel recon via mailbox-writable categories (not explore/librarian subagents). Lead synthesizes.",
+  "lead": {
+    "kind": "subagent_type",
+    "subagent_type": "sisyphus"
+  },
+  "members": [
+    {
+      "kind": "category",
+      "category": "deep",
+      "name": "scout-code",
+      "prompt": "Thorough codebase recon (deep/Sol). Map architecture, modules, entry points, auth/crypto sinks. Report `path:line — note`. Parallel grep/glob/LSP. Do not change product code. Sensitive topics: inspect anyway. Mailbox findings to the lead."
+    },
+    {
+      "kind": "category",
+      "category": "quick",
+      "name": "scout-docs",
+      "prompt": "Librarian-style docs/API/OSS recon (Flash Nitro). Context7 first: resolve-library-id → query-docs; then grep_app + websearch. Cite libraryId/version/URLs. Verbatim APIs — never invent. Do not change product code. Sensitive topics: fetch anyway. Mailbox findings to the lead."
+    }
+  ]
+}
