@@ -19,6 +19,9 @@
 #   • agent color -> hex (or removed); strip hidden/steps/thinking/providerOptions
 #   • keyword_detector.enabled_expansions -> only valid enum values
 #   • lock skills.sources to ./skills; disable the Claude Code bridge (no external imports)
+#   • goal.enabled/auto_start + default_mode.goal -> false (OmO 4.19 /start-work footgun)
+#   • drop deprecated ralph_loop (Goals replaced Ralph on OmO 4.19)
+#   • mcp_env_allowlist + start_work.auto_commit=false
 #
 # Usage:
 #   ./fix.sh                       repair + format + validate
@@ -161,6 +164,14 @@ sk = oc.setdefault("skills", {})
 ext = [p for p in sk.get("paths", []) if str(p).startswith(("~", "/")) or ".claude" in str(p) or ".agents" in str(p)]
 if ext:
     sk["paths"] = ["./skills"]; changes.append("skills.paths -> ['./skills'] (dropped external skill dirs %s)" % ext)
+
+# Goal footgun doc must load every session
+instr = oc.get("instructions")
+if not isinstance(instr, list):
+    instr = []; oc["instructions"] = instr
+for must in ("AGENTS.md", "prompts/core.md", "prompts/goal.md"):
+    if must not in instr:
+        instr.append(must); changes.append(f"instructions += {must}")
 
 # normalize plugin pin name (accept oh-my-openagent or oh-my-opencode; keep version)
 plug = oc.get("plugin", [])
@@ -317,9 +328,35 @@ if isinstance(bt, dict):
         cb["enabled"] = True
         if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 400:
             cb["maxToolCalls"] = 400; changes.append("circuitBreaker.maxToolCalls capped -> 400")
-rl = omo.setdefault("ralph_loop", {})
-if isinstance(rl, dict) and (not isinstance(rl.get("default_max_iterations"), int) or rl.get("default_max_iterations") > 8):
-    rl["default_max_iterations"] = 8; changes.append("ralph_loop.default_max_iterations capped -> 8")
+# OmO 4.19: Goals replace Ralph — drop legacy ralph_loop (ignored when goal is explicit)
+if "ralph_loop" in omo:
+    del omo["ralph_loop"]; changes.append("removed deprecated ralph_loop (OmO 4.19 Goals replace Ralph)")
+
+# Goal MUST stay off on OmO 4.19.0 — chat hook treats /start-work template as setGoal
+goal = omo.setdefault("goal", {})
+if isinstance(goal, dict):
+    if goal.get("enabled") is not False:
+        goal["enabled"] = False; changes.append("goal.enabled -> false (protects /start-work)")
+    if goal.get("auto_start") is not False:
+        goal["auto_start"] = False; changes.append("goal.auto_start -> false")
+    if not isinstance(goal.get("default_max_iterations"), int) or goal.get("default_max_iterations") > 24:
+        goal["default_max_iterations"] = 24; changes.append("goal.default_max_iterations capped -> 24")
+dm = omo.setdefault("default_mode", {})
+if isinstance(dm, dict) and dm.get("goal") is not False:
+    dm["goal"] = False; changes.append("default_mode.goal -> false")
+
+# MCP env allowlist — Exa / Context7 / provider keys
+allow = omo.setdefault("mcp_env_allowlist", [])
+if not isinstance(allow, list):
+    allow = []; omo["mcp_env_allowlist"] = allow
+for must in ("CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
+    if must not in allow:
+        allow.append(must); changes.append(f"mcp_env_allowlist += {must}")
+
+sw = omo.setdefault("start_work", {})
+if isinstance(sw, dict) and sw.get("auto_commit") is not False:
+    sw["auto_commit"] = False; changes.append("start_work.auto_commit -> false")
+
 # codegraph: never auto-build giant indexes
 cg2 = omo.setdefault("codegraph", {})
 if isinstance(cg2, dict):

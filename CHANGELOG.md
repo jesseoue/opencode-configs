@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.21] — 2026-07-21
+
+### Doctor / fix completeness (OmO 4.19)
+- Doctor detects `@opencode-ai/plugin` CLI↔npm skew + recent install WARN / `InvalidObjectiveError` log signatures
+- Doctor/validate: `ralph_loop` deprecated (Goals replaced Ralph) — flag leftover config; `oc fix` removes it
+- `oc fix` now **enforces** `goal.enabled=false`, `auto_start=false`, `default_mode.goal=false`, `prompts/goal.md` in instructions, `mcp_env_allowlist`, `start_work.auto_commit=false`
+- Doctor checks mcp_env_allowlist + start_work; smoke runs `bash -n doctor.sh` + `doctor --quick`
+- Drop inert `ralph_loop` block from `oh-my-openagent.json`
+
 ## [1.5.20] — 2026-07-21
 
 ### Doctor safety

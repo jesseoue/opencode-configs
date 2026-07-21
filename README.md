@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.20** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.21** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.20` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.21` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -46,7 +46,7 @@ Most “AI agent setups” are a random JSON file, three conflicting prompts, an
 
 - **Pinned models that actually win their jobs** — Exacto for orchestration, Nitro for parallel recon, direct OpenAI Sol for deep implement/critique, Gemini for visual/writing, Claude Fable for the hard ceiling.
 - **A full agent pantheon** — Sisyphus leads. Hephaestus ships. Oracle adjudicates. Explore maps. Librarian docs. Content-aware research goes nuclear without soft refusals.
-- **Team mode that doesn’t melt your wallet** — intentional concurrency caps, hyperplan adversarial planning, Ralph + Goal loops with guardrails.
+- **Team mode that doesn’t melt your wallet** — intentional concurrency caps, hyperplan adversarial planning, Goal kept off (OmO 4.19 `/start-work` footgun).
 - **Research stack that refuses to hallucinate APIs** — local → Context7 → grep_app → Exa → webfetch. In that order. Encoded in prompts. Enforced by culture.
 - **Self-healing ops** — `oc validate` · `oc doctor` · `oc heal` · `oc signature` · `oc test`. If it drifts, it tells you. If it’s broken, it repairs itself.
 - **Telemetry dark. Secrets local. Identity proven.** This tree fingerprints as OpenConfig — not a random clone of someone else’s weekend experiment.
@@ -163,7 +163,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 ---
 
-## Keyword triggers — ultrawork · hyperplan · team · /goal · Ralph loop
+## Keyword triggers — ultrawork · hyperplan · team · /goal · /start-work
 
 | Say | Effect |
 | --- | --- |
@@ -171,6 +171,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `team` | Team-mode expansion |
 | `hyperplan` / `hpp` / `/hyperplan` | Adversarial planning (from **sisyphus**) |
 | `/goal` | **Disabled** — OmO 4.19.0 goal hook breaks `/start-work` (`InvalidObjectiveError`). Use `/start-work` → Atlas (`prompts/goal.md`) |
+| `/start-work` | Atlas executes an approved Prometheus plan (preferred over `/goal`) |
 
 ---
 
@@ -208,7 +209,7 @@ Team mode knobs (OmO 4.19): `max_parallel_members=4` · `max_members=5` · mailb
 
 OpenRouter is primary. GPT agents prefer **direct OpenAI**. Fallbacks + `runtime_fallback` on API errors. Stream timeouts: **900s** — because real work is long.
 
-### Concurrency caps — background_task · providerConcurrency · team parallel · Ralph · Goal
+### Concurrency caps — background_task · providerConcurrency · team parallel · Goal off
 
 Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`. `oc heal` / `fix.sh` re-apply the caps if something drifts high.
 
@@ -218,7 +219,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | OpenRouter / OpenAI / Anthropic | **6 / 4 / 2** | Provider budgets that don’t melt |
 | Flash / Exacto / Sol / Fable | **4 / 3 / 3 / 1** | Cheap recon parallel; expensive models serial |
 | Team `max_parallel_members` / `max_members` | **4 / 5** | Hyperplan floor without runaway |
-| Ralph / Goal / stale / TTL | **8 / 24 / 180s / 30m** | Loops + hung-task cleanup |
+| Goal / stale / TTL | **off / 180s / 30m** | Goal disabled (OmO 4.19 `/start-work` footgun); hung-task cleanup |
 
 This is what “maximum power with adult supervision” looks like.
 

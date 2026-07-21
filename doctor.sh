@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # doctor.sh — Full OpenConfig readiness check.
-# Covers CLI, config link, signature, plugin, LSP, formatters, keys, prompts,
-# colors, models, MCP, permissions, concurrency/loops, teams, content-aware,
-# terminal, telemetry, compaction, and external-source hardening.
+# Covers CLI, config link, signature, plugin (+ peer skew), LSP, formatters,
+# keys, prompts, colors, models, MCP, permissions, concurrency/loops, teams,
+# OmO 4.19 goal/ralph footguns, content-aware, terminal, telemetry, compaction,
+# runtime log WARN/ERROR signatures, and external-source hardening.
 #
 # Usage: ./doctor.sh [--quick] [--fix] [--harden] [--ai-fix]
 #   --quick   skip live model-routing probes (still checks OpenRouter key + latency)
-#   --fix     run fix.sh (colors, footguns, skills lock) then re-check
+#   --fix     run fix.sh (colors, footguns, skills lock, goal off) then re-check
 #   --harden  remove opencode-owned external junk + disable external loading
 #   --ai-fix  use OpenCode AI to diagnose and fix issues
 #
@@ -140,6 +141,23 @@ if [[ -n "$pin" ]]; then
   elif [[ -d "$cdir" ]]; then bad "plugin cache EMPTY for $pin — install failed; agents will NOT load (check the pin exists on npm)"
   else info "plugin cache not built yet for $pin (populated on first launch)"; fi
 fi
+# OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
+# npm often lags the CLI by a patch (e.g. CLI 1.18.4 → npm 1.18.3) → WARN spam, not fatal.
+_cli_ver="$(oc_tool_version opencode 2>/dev/null || true)"
+_plugin_pin="$(python3 -c "
+import json, os
+p=os.path.expanduser('~/.opencode/package.json')
+if not os.path.isfile(p): raise SystemExit
+d=json.load(open(p)).get('dependencies') or {}
+print(d.get('@opencode-ai/plugin') or '')
+" 2>/dev/null || true)"
+if [[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" != "$_plugin_pin" ]]; then
+  info "@opencode-ai/plugin npm pin $_plugin_pin ≠ CLI $_cli_ver (known lag — OK if OmO cache populated)"
+  tip "log may show 'No matching version found for @opencode-ai/plugin@$_cli_ver' — scrub config package.json with oc cleanup if it appears"
+elif [[ -n "$_cli_ver" && -n "$_plugin_pin" ]]; then
+  ok "@opencode-ai/plugin $_plugin_pin matches OpenCode CLI"
+fi
+unset _cli_ver _plugin_pin
 
 # ─── default_agent will resolve (static: defined in config + cache populated) ──
 # Note: `opencode agent list` registers plugin agents lazily/async and is racy,
@@ -583,9 +601,9 @@ while IFS='|' read -r st msg; do
 done <<< "$perm_report"
 
 # ─── Runtime log health (recent errors from real sessions) ──────────
-# Informational only — does not affect the ready/not-ready verdict.
+# Mostly informational. Footgun signatures (goal / empty plugin) escalate.
 sec "Runtime log health"
-LOG="${XDG_DATA_HOME}/opencode/log/opencode.log"
+LOG="${XDG_DATA_HOME:-$HOME/.local/share}/opencode/log/opencode.log"
 if [[ -f "$LOG" ]]; then
   tailn="$(tail -n 20000 "$LOG" 2>/dev/null)"
   errc="$(printf '%s\n' "$tailn" | grep -c 'level=ERROR' 2>/dev/null || true)"
@@ -607,6 +625,22 @@ if [[ -f "$LOG" ]]; then
     if [[ "${fmt_hits:-0}" -gt 5 ]]; then
       tip "formatter noise (${fmt_hits} hits) — ensure prettier/ruff on PATH (Formatters section) or disable unused formatters"
     fi
+  fi
+  # WARN signatures that matter for OpenConfig footguns
+  plugin_miss="$(printf '%s\n' "$tailn" | grep -c 'No matching version found for @opencode-ai/plugin@' 2>/dev/null || true)"
+  if [[ "${plugin_miss:-0}" -gt 0 ]]; then
+    info "recent @opencode-ai/plugin npm miss ($plugin_miss WARN) — CLI ahead of registry; harmless if OmO cache populated"
+  fi
+  goal_boom="$(printf '%s\n' "$tailn" | grep -c 'InvalidObjectiveError' 2>/dev/null || true)"
+  if [[ "${goal_boom:-0}" -gt 0 ]]; then
+    _goal_on="$(python3 -c "import json;g=json.load(open('$REPO/oh-my-openagent.json')).get('goal') or {};print('yes' if g.get('enabled') is True else 'no')" 2>/dev/null || echo no)"
+    if [[ "$_goal_on" == "yes" ]]; then
+      bad "InvalidObjectiveError in log ($goal_boom) AND goal.enabled=true — run: oc fix"
+      tip "OmO 4.19 goal hook + /start-work template → see prompts/goal.md"
+    else
+      info "stale InvalidObjectiveError in log ($goal_boom) — goal is off now; safe to ignore"
+    fi
+    unset _goal_on
   fi
 else
   info "no opencode log yet ($LOG)"
@@ -748,7 +782,6 @@ bt = omo.get("background_task") or {}
 pc = bt.get("providerConcurrency") or {}
 mc = bt.get("modelConcurrency") or {}
 tm = omo.get("team_mode") or {}
-rl = omo.get("ralph_loop") or {}
 goal = omo.get("goal") or {}
 exp = omo.get("experimental") or {}
 
@@ -804,14 +837,12 @@ else:
 if isinstance(mm, int) and mm < 5:
     bad("team_mode.max_members=%s (<5 hyperplan floor)" % mm)
 
-rmi = rl.get("default_max_iterations")
-if rl.get("enabled") is True:
-    if not isinstance(rmi, int) or rmi > 8:
-        bad("ralph_loop.default_max_iterations=%s (cap 8)" % rmi)
-    else:
-        ok("ralph_loop enabled (max %s)" % rmi)
+# OmO 4.19: Goals replace Ralph — ralph_loop is deprecated/ignored when goal is explicit
+if "ralph_loop" in omo:
+    opt("ralph_loop still in config — deprecated on OmO 4.19 (ignored; /ralph-loop removed) — run: oc fix")
+    tip("continuous work: /start-work → Atlas (Goal stays OFF in OpenConfig)")
 else:
-    opt("ralph_loop disabled")
+    ok("no ralph_loop (OmO 4.19 Goal replaced Ralph)")
 
 # Goal loop — DISABLED on OmO 4.19.0 (chat hook treats /start-work template as objective)
 oc = json.load(open(os.path.join(repo, "opencode.json")))
@@ -820,7 +851,7 @@ oc_instr = oc.get("instructions") or []
 dm = omo.get("default_mode") or {}
 if goal.get("enabled") is True:
     bad("goal.enabled=true breaks /start-work on OmO 4.19.0 (5541-char template > 2000-char objective cap)")
-    tip("set goal.enabled=false (OpenConfig default) — see prompts/goal.md")
+    tip("run: oc fix   # forces goal.enabled=false + default_mode.goal=false")
     if goal.get("auto_start") is True:
         bad("goal.auto_start=true — must be false")
     if dm.get("goal") is True:
@@ -828,15 +859,32 @@ if goal.get("enabled") is True:
 else:
     ok("goal disabled (protects /start-work from InvalidObjectiveError)")
     if dm.get("goal") is True:
-        bad("default_mode.goal=true while goal.enabled=false — set default_mode.goal=false")
+        bad("default_mode.goal=true while goal.enabled=false — run: oc fix")
     elif "goal" in dm and dm.get("goal") is False:
         ok("default_mode.goal=false")
+    if goal.get("auto_start") is True:
+        bad("goal.auto_start=true while goal is disabled — run: oc fix")
     if not os.path.isfile(goal_md):
         bad("prompts/goal.md missing — documents why goal is off")
     elif "prompts/goal.md" not in oc_instr:
-        bad("opencode.json instructions[] missing prompts/goal.md")
+        bad("opencode.json instructions[] missing prompts/goal.md — run: oc fix")
     else:
         ok("goal footgun documented (prompts/goal.md in instructions)")
+
+# MCP env allowlist (Exa / Context7 / provider keys into OmO MCP)
+allow = set(omo.get("mcp_env_allowlist") or [])
+need_env = {"CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"}
+miss_env = sorted(need_env - allow)
+if miss_env:
+    opt("mcp_env_allowlist missing: %s — run: oc fix" % ", ".join(miss_env))
+else:
+    ok("mcp_env_allowlist covers Context7/Exa/OpenAI/OpenRouter")
+
+sw = omo.get("start_work") if isinstance(omo.get("start_work"), dict) else {}
+if "start_work" not in omo:
+    opt("start_work block missing — run: oc fix (auto_commit=false)")
+else:
+    ok("start_work configured (auto_commit=%s)" % sw.get("auto_commit", "?"))
 
 mt = exp.get("max_tools")
 if isinstance(mt, int) and mt <= 48:
@@ -868,7 +916,7 @@ else
       OK) ok "$msg" ;;
       OPT) opt "$msg" ;;
       TIP) tip "$msg" ;;
-      BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings" ;;
+      BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings + goal/ralph hygiene" ;;
       *) info "$msg" ;;
     esac
   done <<< "$conc_report"

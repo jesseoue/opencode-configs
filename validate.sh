@@ -379,13 +379,11 @@ if omo:
         ok(f"tmux team panes ready (layout={tx.get('layout')} isolation={tx.get('isolation')})")
     else:
         err("tmux must be enabled with layout=main-vertical for team mode — run: oc fix")
-    rl = omo.get("ralph_loop") or {}
-    if rl.get("enabled") is True:
-        rmi = rl.get("default_max_iterations")
-        if not isinstance(rmi, int) or rmi > 8:
-            err(f"ralph_loop.default_max_iterations must be ≤8 (got {rmi!r})")
-        else:
-            ok(f"ralph_loop.default_max_iterations={rmi}")
+    # OmO 4.19: Goals replace Ralph — ralph_loop is deprecated/ignored when goal is explicit
+    if "ralph_loop" in omo:
+        warn("ralph_loop present — deprecated on OmO 4.19 (ignored; /ralph-loop removed) — run: oc fix")
+    else:
+        ok("no ralph_loop (OmO 4.19 Goal replaced Ralph)")
     goal = omo.get("goal") or {}
     dm = omo.get("default_mode") or {}
     goal_md = os.path.join(repo, "prompts", "goal.md")
@@ -395,6 +393,8 @@ if omo:
         err("goal.enabled=true breaks /start-work on OmO 4.19.0 — set false (see prompts/goal.md)")
     else:
         ok("goal disabled (protects /start-work)")
+    if goal.get("auto_start") is True:
+        err("goal.auto_start=true — must be false (run: oc fix)")
     if dm.get("goal") is True:
         err("default_mode.goal=true — must be false while OmO goal hook is unsafe")
     elif isinstance(dm, dict) and dm.get("goal") is False:
@@ -405,6 +405,17 @@ if omo:
         err("opencode.json instructions[] must include prompts/goal.md")
     else:
         ok("goal footgun documented (prompts/goal.md in instructions)")
+    allow = set(omo.get("mcp_env_allowlist") or [])
+    need_env = {"CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"}
+    miss_env = sorted(need_env - allow)
+    if miss_env:
+        warn(f"mcp_env_allowlist missing: {', '.join(miss_env)} — run: oc fix")
+    else:
+        ok("mcp_env_allowlist covers Context7/Exa/OpenAI/OpenRouter")
+    if not isinstance(omo.get("start_work"), dict):
+        warn("start_work block missing — run: oc fix")
+    else:
+        ok(f"start_work.auto_commit={omo['start_work'].get('auto_commit')}")
     # modelConcurrency should cover every referenced model id
     mc = bt.get("modelConcurrency") or {}
     ref_ids = set()
