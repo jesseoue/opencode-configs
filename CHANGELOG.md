@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.18] — 2026-07-21
+
+### Critical — disable OmO `/goal` (unblocks `/start-work`)
+- OmO 4.19.0 chat-message goal hook treats **every** user message as `setGoal`, including `/start-work`'s ~5541-char template
+- That exceeds the 2000-char `validateObjective` hard cap → `InvalidObjectiveError` → sessions fail / flash-exit
+- Set `goal.enabled: false` + `default_mode.goal: false`; keep `prompts/goal.md` as the decision log
+- Doctor/validate **error** if goal is re-enabled on this OmO pin
+- Prefer `/start-work` → Atlas for plan execution
+
 ## [1.5.17] — 2026-07-21
 
 ### Doctor / hygiene

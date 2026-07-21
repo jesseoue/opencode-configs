@@ -360,20 +360,24 @@ if omo:
         else:
             ok(f"ralph_loop.default_max_iterations={rmi}")
     goal = omo.get("goal") or {}
-    if goal.get("enabled") is True and goal.get("auto_start") is True:
-        warn("goal.auto_start=true — prefer false so /goal is explicit")
-    elif goal.get("enabled") is True:
-        ok("goal enabled (auto_start off)")
-    # OmO hard-caps objectives at 2000 chars — OpenConfig documents this in prompts/goal.md
+    dm = omo.get("default_mode") or {}
     goal_md = os.path.join(repo, "prompts", "goal.md")
     oc_instr = oc.get("instructions") or []
+    # OmO 4.19.0: goal chat hook treats /start-work's ~5541-char template as setGoal → InvalidObjectiveError
     if goal.get("enabled") is True:
-        if not os.path.isfile(goal_md):
-            err("prompts/goal.md missing — required while goal.enabled (2000-char objective footgun)")
-        elif "prompts/goal.md" not in oc_instr:
-            err("opencode.json instructions[] must include prompts/goal.md while goal.enabled")
-        else:
-            ok("goal objective cap documented (prompts/goal.md in instructions)")
+        err("goal.enabled=true breaks /start-work on OmO 4.19.0 — set false (see prompts/goal.md)")
+    else:
+        ok("goal disabled (protects /start-work)")
+    if dm.get("goal") is True:
+        err("default_mode.goal=true — must be false while OmO goal hook is unsafe")
+    elif isinstance(dm, dict) and dm.get("goal") is False:
+        ok("default_mode.goal=false")
+    if not os.path.isfile(goal_md):
+        err("prompts/goal.md missing — documents OmO goal//start-work footgun")
+    elif "prompts/goal.md" not in oc_instr:
+        err("opencode.json instructions[] must include prompts/goal.md")
+    else:
+        ok("goal footgun documented (prompts/goal.md in instructions)")
     # modelConcurrency should cover every referenced model id
     mc = bt.get("modelConcurrency") or {}
     ref_ids = set()

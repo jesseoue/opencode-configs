@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.17** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.18** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.17` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.18` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -170,7 +170,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `ultrawork` / `ulw` | Claude Fable max ceiling |
 | `team` | Team-mode expansion |
 | `hyperplan` / `hpp` / `/hyperplan` | Adversarial planning (from **sisyphus**) |
-| `/goal` | OmO goal loop (enabled; not auto-start). Objective **≤1800 chars** (OmO hard-caps at 2000) — outcome + done criteria + plan path only; never paste `.omo/plans/*.md` (`prompts/goal.md`) |
+| `/goal` | **Disabled** — OmO 4.19.0 goal hook breaks `/start-work` (`InvalidObjectiveError`). Use `/start-work` → Atlas (`prompts/goal.md`) |
 
 ---
 
