@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.24** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.25** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.24` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.25` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -126,7 +126,7 @@ Prompts encode this matrix in `prompts/core.md`, `sisyphus`, and `librarian`. Th
 | **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead — owns the outcome |
 | **hephaestus** | GPT-5.6 Sol (direct OpenAI) | Implementation bursts that actually land |
 | **prometheus** | GLM 5.2 Exacto | Planner with teeth |
-| **atlas** | GLM 5.2 Exacto | Coordination / follow-through |
+| **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
 | **content-aware-research** | DeepSeek V4 Pro | Full-depth research, edit denied, no soft refusals |
 
 ### OmO subagents (oracle · librarian · explore · momus · metis · multimodal)
@@ -136,9 +136,9 @@ Prompts encode this matrix in `prompts/core.md`, `sisyphus`, and `librarian`. Th
 | oracle | GPT-5.6 Sol | Deep critique / adjudication |
 | librarian | DeepSeek Flash Nitro | Docs (Context7-first) |
 | explore | DeepSeek Flash Nitro | Codebase map at warp speed |
-| multimodal-looker | Claude Sonnet 5 | Vision |
-| metis | Claude Sonnet 5 | Strategy |
-| momus | GPT-5.6 Sol max | Harsh review (your ego will survive) |
+| multimodal-looker | Claude Sonnet 5 | Vision (`look_at` / screenshots) |
+| metis | Claude Sonnet 5 | Pre-planning critic |
+| momus | GPT-5.6 Sol max | Plan / review correctness gate |
 | sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
@@ -255,6 +255,23 @@ Copy `.env.example` → `.env` (`chmod 600`). Never commit `.env`.
 
 ---
 
+## Prompts — agents · categories · profiles (OpenConfig voice)
+
+Every OmO agent/category loads a `prompt_append` from `prompts/`. Profiles under `prompts/profiles/` brief `oc new` scaffolds. Shared stance: `prompts/core.md` + `/goal` decision log in `prompts/goal.md`.
+
+| Path | What |
+| --- | --- |
+| `prompts/core.md` | Session-wide stance, tool matrix, team eligibility |
+| `prompts/goal.md` | Why `/goal` is off; use `/start-work` → Atlas |
+| `prompts/agents/*.md` | Sisyphus, Hephaestus, Oracle, explore, librarian, Momus, Metis, … |
+| `prompts/categories/*.md` | bug-hunt, writing, artistry, content-aware-*, ultrabrain, … |
+| `prompts/profiles/*.md` | high / low / fast / research / debug / writing / content-aware |
+| `agents/content-aware-research.md` | OpenCode primary-agent def (frontmatter + body; synced with prompts) |
+
+All prompts share the same voice: role + model in the H1, concrete Do/Don't, deliverable shape, Context7/Exa/grep_app routing, no soft refusals on dual-use research, `/goal` never called.
+
+---
+
 ## Profiles & scaffolding — oc new · high · research · content-aware · debug · writing
 
 ```bash
@@ -357,7 +374,7 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 
 ## SEO keywords — OpenCode config · AI coding agent · multi-agent LLM CLI
 
-**OpenConfig** · OpenCode config · best OpenCode configuration · oh-my-openagent config · oh-my-opencode · OmO · OpenRouter Exacto Nitro · Claude Fable · Claude Sonnet · OpenAI GPT · GPT-5.6 Sol · DeepSeek V4 Flash · DeepSeek V4 Pro · Gemini 3.1 Pro · Gemini 3.5 Flash · GLM 5.2 Exacto · MiniMax · Kimi · Sisyphus agent · Hephaestus · Prometheus · Atlas · Oracle · Librarian · Explore · Momus · Metis · ultrawork · hyperplan · Ralph loop · goal loop · team mode · multi-agent coding · AI coding agent · agentic CLI · MCP Context7 Exa · codegraph · Ghostty tmux · developer tools · coding assistant config · LLM orchestration · autonomous coding agent
+**OpenConfig** · OpenCode config · best OpenCode configuration · oh-my-openagent config · oh-my-opencode · OmO · OpenRouter Exacto Nitro · Claude Fable · Claude Sonnet · OpenAI GPT · GPT-5.6 Sol · DeepSeek V4 Flash · DeepSeek V4 Pro · Gemini 3.1 Pro · Gemini 3.6 Flash · GLM 5.2 Exacto · MiniMax · Kimi · Sisyphus agent · Hephaestus · Prometheus · Atlas · Oracle · Librarian · Explore · Momus · Metis · ultrawork · hyperplan · Ralph loop · goal loop · team mode · multi-agent coding · AI coding agent · agentic CLI · MCP Context7 Exa · codegraph · Ghostty tmux · developer tools · coding assistant config · LLM orchestration · autonomous coding agent
 
 **OpenConfig.** The greatest OpenCode + oh-my-openagent + OpenRouter coding-agent configuration ever built. Install it. Doctor it. Launch it. Never go back.
 
@@ -366,10 +383,10 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 ## Keep it config-only — what to add vs skip
 
 **Add (keeps this repo scalable):**
-- Deeper thin prompts (`momus` / `metis` / `unspecified-*` / profile briefs) when a lane misbehaves
+- Prompt tweaks when a lane misbehaves (keep voice + deliverable shape from `prompts/`)
 - Local skills under `skills/` (fenced) — never re-enable OmO `security-*`
 - Periodic `oc models --providers` after OpenRouter provider churn
-- Project scaffolds via `oc new` (orca / apps stay outside this tree)
+- Project scaffolds via `oc new` (apps stay outside this tree)
 
 **Skip (on purpose):**
 - Extra MCP servers (PostHog, Sentry, Playwright MCP, Stripe, …) — keep `disabled_mcps`

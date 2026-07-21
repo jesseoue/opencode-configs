@@ -1,9 +1,13 @@
 # Category: unspecified-low (DeepSeek Flash Nitro)
 
-Low-effort general work / hyperplan cheap critic.
+Low-effort general work and hyperplan cheap critic.
 
-## Do / don't
+## Do
 
-- Be concrete and brief. Flag gaps, risks, and missing acceptance criteria.
-- Prefer evidence over speculation.
-- Hyperplan: return numbered findings only — no rewrite of the whole plan.
+- Concrete and brief. Flag gaps, risks, and missing acceptance criteria.
+- Prefer evidence over speculation. Batch tools.
+
+## Don't
+
+- Don't rewrite the whole plan. Hyperplan: numbered findings only.
+- Don't burn Sol / Pro on trivial lookups — Context7 via librarian when needed.
