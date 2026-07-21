@@ -39,6 +39,7 @@ run_step() {
 }
 
 run_step "bash -n oc" bash -n "$REPO/oc"
+run_step "bash -n doctor.sh" bash -n "$REPO/doctor.sh"
 run_step "bash -n locate.sh" bash -n "$REPO/locate.sh"
 run_step "bash -n lib/common.sh" bash -n "$REPO/lib/common.sh"
 run_step "validate --quiet" "$REPO/validate.sh" --quiet
@@ -47,6 +48,7 @@ run_step "signature" "$REPO/signature.sh"
 run_step "fix --dry-run" "$REPO/fix.sh" --dry-run
 run_step "cleanup --dry-run" "$REPO/cleanup.sh" --dry-run
 run_step "setup --check" "$REPO/setup.sh" --check
+run_step "doctor --quick" "$REPO/doctor.sh" --quick
 
 # locate JSON schema basics
 if "$REPO/locate.sh" --json 2>/dev/null | python3 -c '
@@ -70,15 +72,23 @@ for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure
   fi
 done
 
-# /goal disabled + footgun doc (OmO 4.19.0 breaks /start-work when goal is on)
+# /goal disabled + no ralph_loop + footgun doc (OmO 4.19.0 breaks /start-work when goal is on)
 if [[ -f "$REPO/prompts/goal.md" ]] \
   && grep -q 'prompts/goal.md' "$REPO/opencode.json" \
-  && python3 -c 'import json,sys; g=json.load(open(sys.argv[1])).get("goal") or {}; sys.exit(0 if g.get("enabled") is False else 1)' "$REPO/oh-my-openagent.json" \
+  && python3 -c '
+import json,sys
+omo=json.load(open(sys.argv[1]))
+g=omo.get("goal") or {}
+dm=omo.get("default_mode") or {}
+ok=(g.get("enabled") is False and g.get("auto_start") is False
+    and dm.get("goal") is False and "ralph_loop" not in omo)
+sys.exit(0 if ok else 1)
+' "$REPO/oh-my-openagent.json" \
   && grep -q 'plugins' "$REPO/.gitignore" \
   && grep -q 'plugins' "$REPO/lib/common.sh"; then
-  ok "goal disabled + plugins scrubbed"
+  ok "goal off + ralph removed + plugins scrubbed"
 else
-  bad "goal/plugins hygiene incomplete (goal must be disabled)"
+  bad "goal/ralph/plugins hygiene incomplete (goal must be off; ralph_loop must be gone)"
 fi
 
 # Team mode schema + ~/.omo/teams symlinks (not directory copies)

@@ -488,12 +488,6 @@
       "claude_code_compat": false
     }
   },
-  "ralph_loop": {
-    "enabled": true,
-    "default_max_iterations": 8,
-    "default_strategy": "continue",
-    "state_dir": "~/.omo/ralph-loop"
-  },
   "git_master": {
     "commit_footer": false,
     "include_co_authored_by": false

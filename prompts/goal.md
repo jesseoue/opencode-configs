@@ -20,7 +20,7 @@ Prometheus → Atlas handoff (`/start-work`) is more important than the idle `/g
 | Need | Do this |
 | --- | --- |
 | Execute an approved plan | `/start-work` → Atlas (plan file stays in `.omo/plans/*.md`) |
-| Long multi-iteration work | Ralph loop (capped) · team mode · todos — not `/goal` |
+| Long multi-iteration work | Team mode · todos · ultrawork — not `/goal` (Ralph removed in OmO 4.19) |
 | Resume work | Continue the session, or `/start-work <plan-name>` |
 
 ## If OmO fixes this and you re-enable
