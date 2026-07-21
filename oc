@@ -2,7 +2,7 @@
 # oc — OpenConfig CLI (`oc`)
 #
 # Dispatcher for the OpenConfig stack (repo: opencode-configs).
-# Best-known config for OpenCode + OpenRouter + oh-my-openagent (OmO).
+# Pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO).
 # Zero dependencies — just bash. Add ~/.config/opencode to PATH
 # (zshrc.snippet does this) and `oc` works from anywhere.
 #
@@ -53,7 +53,7 @@ info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
 bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
 
 header() {
-  oc_banner "$OC_VERSION" "Best-known config for OpenCode · OpenRouter · OmO"
+  oc_banner "$OC_VERSION" "Pinned stack for OpenCode · OpenRouter · OmO"
   printf "  ${c_dim}%s${c_0}\n\n" "$REPO"
 }
 
@@ -71,7 +71,7 @@ dispatch() {
 # ── Help text ──
 show_help() {
   cat <<HELP
-${c_bold}OpenConfig${c_0} (${c_p}oc${c_0}) — best-known config for OpenCode · OpenRouter · OmO
+${c_bold}OpenConfig${c_0} (${c_p}oc${c_0}) — pinned stack for OpenCode · OpenRouter · OmO
 
 ${c_bold}Usage:${c_0}  oc <command> [args...]
 
