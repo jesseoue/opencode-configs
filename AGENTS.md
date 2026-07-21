@@ -1,8 +1,8 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.13** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.16** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
 
-This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — the best-known pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (OpenConfig 1.5 stance + team eligibility + research tool matrix). Deep reference: `README.md`.
+This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — the best-known pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (OpenConfig 1.5 stance + team eligibility + research tool matrix). `/goal` objective cap: `prompts/goal.md`. Deep reference: `README.md`.
 
 ## Stance
 
@@ -65,7 +65,7 @@ Re-running install / setup / heal / fix on a healthy box must **not** clobber `.
 
 - Parallel tool batches. Prefer `read`/`grep`/`glob` over bash for files. Hashline edits. Smallest diff. Cite `path:line`. Real output only.
 - **Tool matrix:** local code → read/grep/codegraph · library APIs → **Context7** · GitHub patterns → **grep_app** · current web → **Exa websearch** → webfetch. Never invent APIs.
-- Visual → `artistry` / `visual-engineering`. Exacto/Flash for tool loops; escalate when stuck. Long multi-iteration work → `/goal` (OmO goal loop).
+- Visual → `artistry` / `visual-engineering`. Exacto/Flash for tool loops; escalate when stuck. Long multi-iteration work → `/goal` (OmO goal loop; objective ≤1800 chars — never paste `.omo/plans/*.md`; see `prompts/goal.md`).
 - No speculative fallbacks / `as any` / `@ts-ignore`. Plain markdown. Stop when done.
 
 Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.13**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.16**.
 
 ## Permissions
 

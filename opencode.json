@@ -20,7 +20,8 @@
   ],
   "instructions": [
     "AGENTS.md",
-    "prompts/core.md"
+    "prompts/core.md",
+    "prompts/goal.md"
   ],
   "plugin": [
     "oh-my-openagent@4.19.0"

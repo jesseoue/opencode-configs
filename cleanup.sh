@@ -55,7 +55,7 @@ REQUIRED=(
   opencode.sh run.sh openrouter-admin.sh oc locate.sh signature.sh
   lib/common.sh
   agents/content-aware-research.md
-  prompts/core.md
+  prompts/core.md prompts/goal.md
   prompts/agents/sisyphus.md prompts/agents/hephaestus.md prompts/agents/prometheus.md prompts/agents/atlas.md
   prompts/agents/oracle.md prompts/agents/librarian.md prompts/agents/explore.md prompts/agents/multimodal-looker.md
   prompts/agents/metis.md prompts/agents/momus.md prompts/agents/sisyphus-junior.md

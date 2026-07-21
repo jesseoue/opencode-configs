@@ -780,6 +780,7 @@ if goal.get("enabled") is True:
     gmi = goal.get("default_max_iterations", 24)
     auto = goal.get("auto_start")
     ok("goal enabled (max %s, auto_start=%s)" % (gmi, auto))
+    tip("OmO /goal objective hard-cap is 2000 chars — keep ≤1800; never paste .omo/plans/*.md (prompts/goal.md)")
     if auto is True:
         opt("goal.auto_start=true — prefer false so /goal is explicit")
 else:
