@@ -933,8 +933,8 @@
                 "p90": 4
               },
               "order": [
-                "together",
                 "minimax",
+                "together",
                 "novita",
                 "morph",
                 "atlas-cloud",

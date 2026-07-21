@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.24] — 2026-07-21
+
+### Ecosystem hygiene (config-only)
+- Re-enable OmO `look_at` (was disabled while multimodal-looker + permission.allow existed — vision path half-wired)
+- Sync content-aware-research OmO prompt with OpenCode-native agent brief
+- Writing docs/profile: Gemini **3.6** Flash (was stale 3.5)
+- `oc models --providers` — live endpoint health vs `provider.order`/`ignore`
+- `.env.example`: document `OPENCODE_DISABLE_*` launch hygiene (already forced by `oc_telemetry_off`)
+- MiniMax Nitro: prefer official MiniMax host first
+
 ## [1.5.23] — 2026-07-21
 
 ### Provider routing (live endpoints)

@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.23** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.24** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.23` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.24` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -154,7 +154,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `arch-review` | GPT-5.6 Sol | Coupling / blast radius |
 | `content-aware-fast` | DeepSeek Flash Nitro | Attack-surface recon |
 | `content-aware-deep` | DeepSeek Pro Exacto | Deep vuln research |
-| `writing` | Gemini 3.5 Flash Nitro | Docs / prose |
+| `writing` | Gemini 3.6 Flash Nitro | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
 | `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
@@ -360,3 +360,21 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 **OpenConfig** · OpenCode config · best OpenCode configuration · oh-my-openagent config · oh-my-opencode · OmO · OpenRouter Exacto Nitro · Claude Fable · Claude Sonnet · OpenAI GPT · GPT-5.6 Sol · DeepSeek V4 Flash · DeepSeek V4 Pro · Gemini 3.1 Pro · Gemini 3.5 Flash · GLM 5.2 Exacto · MiniMax · Kimi · Sisyphus agent · Hephaestus · Prometheus · Atlas · Oracle · Librarian · Explore · Momus · Metis · ultrawork · hyperplan · Ralph loop · goal loop · team mode · multi-agent coding · AI coding agent · agentic CLI · MCP Context7 Exa · codegraph · Ghostty tmux · developer tools · coding assistant config · LLM orchestration · autonomous coding agent
 
 **OpenConfig.** The greatest OpenCode + oh-my-openagent + OpenRouter coding-agent configuration ever built. Install it. Doctor it. Launch it. Never go back.
+
+---
+
+## Keep it config-only — what to add vs skip
+
+**Add (keeps this repo scalable):**
+- Deeper thin prompts (`momus` / `metis` / `unspecified-*` / profile briefs) when a lane misbehaves
+- Local skills under `skills/` (fenced) — never re-enable OmO `security-*`
+- Periodic `oc models --providers` after OpenRouter provider churn
+- Project scaffolds via `oc new` (orca / apps stay outside this tree)
+
+**Skip (on purpose):**
+- Extra MCP servers (PostHog, Sentry, Playwright MCP, Stripe, …) — keep `disabled_mcps`
+- Cloudflare AI Gateway / OpenAI-compat shims / Claude Code bridge imports
+- Packaging as npm / shipping `node_modules` into the config dir
+- Re-enabling `/goal` on OmO 4.19 until `/start-work` is safe
+- Turning this repo into an application — clone config, run `oc`, build apps elsewhere
+
