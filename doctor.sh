@@ -1243,12 +1243,56 @@ if [[ ${#desktop_hits[@]} -gt 0 ]]; then
   opt "desktop app / data present (${#desktop_hits[@]} path(s)) — CLI-only setup; run ./doctor.sh --harden to remove"
 else ok "no desktop app or its Library data (CLI-only)"; fi
 
-# 2. Stale opencode / lsp-daemon processes (orphans hold old plugin code in memory)
+# 2. Stale processes only — NEVER flag lsp-daemons owned by a live `opencode` /
+#    OpenCode.app / Cursor session (older doctor --harden killed those and nuked TUIs).
 if command -v pgrep >/dev/null 2>&1; then
-  while IFS= read -r pid; do [[ -n "$pid" ]] && HARDEN_KILL+=("$pid"); done < <(pgrep -f "OpenCode.app|ai.opencode.desktop|lsp-daemon/dist/cli.js" 2>/dev/null)
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] && HARDEN_KILL+=("$pid")
+  done < <(pgrep -f "OpenCode.app|ai.opencode.desktop" 2>/dev/null)
+  # Orphan lsp-daemon PIDs only (no opencode/Cursor ancestor)
+  while IFS= read -r pid; do
+    [[ -n "$pid" ]] || continue
+    if python3 -c '
+import subprocess, sys
+pid = int(sys.argv[1])
+cur = pid
+for _ in range(16):
+    try:
+        line = subprocess.check_output(["ps", "-p", str(cur), "-o", "ppid=,command="], text=True).strip()
+    except Exception:
+        sys.exit(0)  # gone → treat as orphanish no-op
+    if not line:
+        sys.exit(0)
+    parts = line.split(None, 1)
+    if len(parts) < 2:
+        sys.exit(0)
+    ppid, cmd = int(parts[0]), parts[1]
+    cl = cmd.lower()
+    if cur != pid:
+        if "lsp-daemon" not in cl and "opencode" in cl:
+            sys.exit(1)  # live CLI
+        if "opencode.app" in cl or "ai.opencode.desktop" in cl:
+            sys.exit(1)
+        if "cursor" in cl and ("helper" in cl or "extension-host" in cl):
+            sys.exit(1)
+    if ppid in (0, 1) or ppid == cur:
+        sys.exit(0)  # orphan
+    cur = ppid
+sys.exit(0)
+' "$pid"
+    then
+      HARDEN_KILL+=("$pid")
+    fi
+  done < <(pgrep -f "lsp-daemon/dist/cli.js" 2>/dev/null)
   if [[ ${#HARDEN_KILL[@]} -gt 0 ]]; then
-    opt "${#HARDEN_KILL[@]} stale opencode/lsp-daemon process(es) — run ./doctor.sh --harden to kill"
-  else ok "no stale opencode/lsp-daemon processes"; fi
+    # shellcheck disable=SC2207
+    HARDEN_KILL=($(printf '%s\n' "${HARDEN_KILL[@]}" | awk 'NF && !seen[$0]++'))
+  fi
+  if [[ ${#HARDEN_KILL[@]} -gt 0 ]]; then
+    opt "${#HARDEN_KILL[@]} stale OpenCode.app / orphan lsp-daemon process(es) — run ./doctor.sh --harden to kill"
+  else
+    ok "no stale OpenCode.app / orphan lsp-daemon processes (live session daemons left alone)"
+  fi
 fi
 
 # 3. External config file that would load alongside the repo
