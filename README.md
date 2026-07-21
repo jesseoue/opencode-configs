@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.26** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.27** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.26` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pins** | OpenConfig `1.5.27` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -93,8 +93,8 @@ Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
 | codegraph | Enabled · telemetry off · `~/.omo/codegraph` |
 | LSP | TypeScript · Python · Go only |
 | Formatters | Prettier + Ruff |
-| Skills | `./skills` + `~/.config/opencode/skills` (fenced) |
-| OmO `security-*` skills | Disabled (hang headless `oc run`) — use `content-aware-*` |
+| Skills | `content-aware-recon` · `content-aware-audit` under `skills/` (fenced) |
+| OmO `security-*` skills | Disabled (hang headless `oc run`) — use local content-aware skills |
 | Extra MCPs | Disabled (PostHog, Sentry, Playwright MCP, …) |
 | Telemetry | Off (OpenCode share/OTel · OmO PostHog · codegraph · `DO_NOT_TRACK`) |
 
@@ -250,13 +250,15 @@ oc new myapp --profile content-aware
 oc projects --list
 ```
 
-| Profile | Agent | Use |
+| Profile | Agent | Tuning |
 | --- | --- | --- |
-| `high` | sisyphus | Default |
-| `low` / `fast` | sisyphus / hephaestus | Cheap / direct coding |
-| `research` / `debug` | sisyphus | Deep reasoning / debug |
-| `writing` | sisyphus | Documentation |
-| `content-aware` | content-aware-research | Full-depth research (edit deny) |
+| `high` | sisyphus | Default Exacto · balanced tool_output |
+| `low` | sisyphus | Cost-first · smaller tool_output |
+| `fast` | hephaestus | Direct GPT Sol · skip ceremony |
+| `research` | sisyphus | Large tool_output · deep / ultrabrain / content-aware |
+| `debug` | sisyphus | Large tool_output · bug-hunt / debug-team |
+| `writing` | sisyphus | Gemini Flash small_model · writing category |
+| `content-aware` | content-aware-research | Edit deny · Pro + recon/audit skills |
 
 Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to `.opencode/profile.json`.
 
@@ -342,8 +344,8 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 
 **Keep:**
 - Prompt tweaks when a lane misbehaves
-- Local skills under `skills/` (fenced)
-- Periodic `oc models --providers` after OpenRouter provider churn
+- Local skills under `skills/` (fenced) — never re-enable OmO `security-*`
+- Weekly `oc models --providers` after OpenRouter host churn (don’t hand-edit `order`/`ignore` blindly)
 - Project scaffolds via `oc new` (apps stay outside this tree)
 
 **Skip:**

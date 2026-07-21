@@ -1,7 +1,7 @@
 {
   "product": "OpenConfig",
   "cli": "oc",
-  "opencode_configs": "1.5.26",
+  "opencode_configs": "1.5.27",
   "tagline": "Pinned stack for OpenCode · OpenRouter · oh-my-openagent",
   "opencode": {
     "min": "1.18.4",

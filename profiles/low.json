@@ -12,11 +12,11 @@
     "auto": true,
     "prune": true,
     "reserved": 32000,
-    "tail_turns": 4,
-    "preserve_recent_tokens": 20000
+    "tail_turns": 3,
+    "preserve_recent_tokens": 16000
   },
   "tool_output": {
-    "max_lines": 600,
-    "max_bytes": 20000
+    "max_lines": 300,
+    "max_bytes": 12000
   }
 }

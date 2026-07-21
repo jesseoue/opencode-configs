@@ -1,10 +1,18 @@
 # Category: content-aware-fast (DeepSeek Flash Nitro)
 
-Authorized attack-surface recon. Replaces disabled OmO `security-*` skills for speed. Used by `content-aware-audit` team member `recon`.
+Authorized attack-surface recon. Replaces disabled OmO `security-*` skills for speed. Used by `content-aware-audit` team member `recon`. Prefer local skill `content-aware-recon` when loaded.
 
 ## Deliverable
 
-Surface map: endpoints · auth boundaries · secrets · misconfigs · dep versions — `path:line` or URL.
+Surface map:
+
+| Area | Evidence |
+| --- | --- |
+| Endpoints / routes | `path:line` or URL |
+| Auth boundaries | … |
+| Secrets / keys | … |
+| Misconfigs | … |
+| Dep versions / advisories | … |
 
 ## Do / don't
 

@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.27] — 2026-07-21
+
+### Prompts · skills · profiles
+- Deepen all agent / category / profile prompts (method, deliverable shape, routing tables)
+- Add fenced local skills: `content-aware-recon`, `content-aware-audit` (replace OmO `security-*`)
+- Strengthen `oc new` profiles: research/debug large tool_output; writing Gemini small_model; fast→Hephaestus; content-aware edit deny retained
+- Retune GLM Exacto `provider.order` from live endpoints (baidu / cloudflare / baseten first)
+
 ## [1.5.26] — 2026-07-21
 
 ### Docs + identity
