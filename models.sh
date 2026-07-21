@@ -11,6 +11,7 @@
 # Usage:
 #   ./models.sh              audit configured models + recommend per role
 #   ./models.sh --catalog    just the ranked recommendations
+#   ./models.sh --providers  live endpoint health vs provider.order/ignore
 #   ./models.sh --json       machine-readable output
 #   ./models.sh --upgrade    detect NEWER versions of the models we pin
 #   ./models.sh --upgrade --apply   apply the version bumps (backs up + validates)
@@ -25,12 +26,91 @@ source "$REPO/lib/common.sh"
 MODE="audit"; APPLY=0
 for a in "$@"; do case "$a" in
   --catalog) MODE="catalog" ;;
+  --providers) MODE="providers" ;;
   --json) MODE="json" ;;
   --upgrade) MODE="upgrade" ;;
   --apply) APPLY=1 ;;
   -h|--help) oc_print_script_help "$0"; exit 0 ;;
   *) echo "Unknown flag: $a"; exit 2 ;;
 esac; done
+
+# ── Live provider health vs configured order/ignore ─────────────────
+if [[ "$MODE" == "providers" ]]; then
+  KEY="$(oc_get_env_key "$REPO/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
+  [[ -z "$KEY" ]] && KEY="${OPENROUTER_API_KEY:-}"
+  [[ -n "$KEY" ]] || { echo "  ✗ OPENROUTER_API_KEY required for --providers"; exit 1; }
+  REPO="$REPO" KEY="$KEY" python3 - <<'PY'
+import json, os, sys, urllib.request
+repo=os.environ["REPO"]; key=os.environ["KEY"]
+oc=json.load(open(os.path.join(repo,"opencode.json")))
+models=oc["provider"]["openrouter"]["models"]
+tty=sys.stdout.isatty()
+def col(c,s): return f"\033[{c}m{s}\033[0m" if tty else s
+G=lambda s:col("32",s); Y=lambda s:col("33",s); R=lambda s:col("31",s); B=lambda s:col("36;1",s)
+
+def endpoints(slug):
+    req=urllib.request.Request(
+        f"https://openrouter.ai/api/v1/models/{slug}/endpoints",
+        headers={"Authorization":f"Bearer {key}"},
+    )
+    with urllib.request.urlopen(req, timeout=45) as r:
+        return (json.load(r).get("data") or {}).get("endpoints") or []
+
+def base(tag): return (tag or "").split("/")[0]
+issues=0
+print(B("== Provider routing health (live OpenRouter endpoints) =="))
+for key,cfg in models.items():
+    api=(cfg.get("id") or key).split(":",1)[0]
+    prov=(cfg.get("options") or {}).get("provider") or {}
+    order=list(prov.get("order") or [])
+    ignore=set(prov.get("ignore") or [])
+    try: eps=endpoints(api)
+    except Exception as e:
+        print("  "+R("✗")+f" {key}: endpoints failed ({e})"); issues+=1; continue
+    by={}
+    for e in eps:
+        b=base(e.get("tag") or "")
+        if not b: continue
+        tools="tools" in set(e.get("supported_parameters") or [])
+        status=e.get("status") or 0
+        tps=(e.get("throughput_last_30m") or {}).get("p50") or 0
+        up=e.get("uptime_last_30m") or 0
+        quant=e.get("quantization") or "unknown"
+        score=(1000 if status==0 and tools else 0) + min(tps,200) + up*0.5
+        if status!=0: score-=500
+        if not tools: score-=300
+        if quant in ("fp4","int4"): score-=40
+        cur=by.get(b)
+        if not cur or score>cur["score"]:
+            by[b]={"score":score,"status":status,"tools":tools,"tps":tps,"up":up,"quant":quant}
+    healthy=sorted([b for b,v in by.items() if v["status"]==0 and v["tools"]],
+                   key=lambda b: -by[b]["score"])
+    dead=[p for p in order if p not in by]
+    unhealthy=[p for p in order if p in by and (by[p]["status"]!=0 or not by[p]["tools"])]
+    reachable=[p for p in order if p in by and by[p]["status"]==0 and by[p]["tools"] and p not in ignore]
+    top3=healthy[:3]
+    flags=[]
+    if dead: flags.append("dead="+",".join(dead)); issues+=1
+    if unhealthy: flags.append("unhealthy="+",".join(unhealthy)); issues+=1
+    if not reachable: flags.append("ZERO reachable"); issues+=1
+    elif order and order[0] not in top3 and order[0] in by:
+        flags.append(f"prefer {top3[0]} over {order[0]}")
+    mark=G("✓") if not flags else Y("⚠")
+    print(f"  {mark} {cfg.get('id') or key}")
+    print(f"      order→ {', '.join(order[:6])}{'…' if len(order)>6 else ''}")
+    print(f"      live→  {', '.join(top3) if top3 else '(none)'}")
+    if flags: print(f"      {Y(' '.join(flags))}")
+print()
+D=lambda s: col("2",s)
+if issues:
+    print(Y(f"  {issues} drift signal(s) — review order/ignore; Auto Exacto still helps on tool calls."))
+    print(D("  Re-tune carefully; do not chase every throughput blip."))
+else:
+    print(G("  All configured orders reach healthy providers. Ready."))
+print()
+PY
+  exit 0
+fi
 
 CATALOG_FILE="$(mktemp)"
 trap 'rm -f "$CATALOG_FILE"' EXIT

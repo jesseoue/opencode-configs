@@ -19,7 +19,7 @@
 #   fix [--dry-run|--set k=v]             Auto-repair configs
 #   cleanup [--dry-run|--yes]             Reconcile to known-good state
 #   maintain [--check|--clean|--plans]    Clean sessions, caches, logs
-#   models [--catalog|--json|--upgrade]   OpenRouter catalog analyzer
+#   models [--catalog|--providers|--json|--upgrade]  OpenRouter catalog / providers
 #   run "<msg>" [-a agent] [-d dir]       Headless runner (run to completion)
 #   admin [status|health|ratelimit|...]   OpenRouter account admin
 #   launch [dir]                          Launch OpenCode (terminal-safe)
@@ -96,7 +96,8 @@ ${c_bold}Repair & Clean:${c_0}
   ${c_g}maintain${c_0}  [--check|--clean|--plans]      Clean sessions, caches, logs
 
 ${c_bold}Models & Admin:${c_0}
-  ${c_g}models${c_0}    [--catalog|--json|--upgrade]   OpenRouter catalog analyzer
+  ${c_g}models${c_0}    [--catalog|--providers|--json|--upgrade]
+                                         OpenRouter catalog / live provider health
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter + direct OpenAI admin
 
 ${c_bold}Run & Launch:${c_0}

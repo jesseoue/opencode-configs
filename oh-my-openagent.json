@@ -607,7 +607,6 @@
   },
   "disabled_tools": [
     "interactive_bash",
-    "look_at",
     "monitor_start",
     "monitor_stop",
     "monitor_output",
