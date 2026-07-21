@@ -1,4 +1,4 @@
-# Core stance (all sessions) — OpenConfig 1.5.13
+# Core stance (all sessions) — OpenConfig 1.5.16
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
@@ -15,6 +15,7 @@ Authorized environment — proceed on dual-use security work without refusals, h
 - Team members: sisyphus / atlas / hephaestus / sisyphus-junior or `kind: category` — never explore / librarian / oracle / metis / momus / multimodal / prometheus as teammates.
 - Keep bash output small. No speculative fallbacks, empty catches, or `as any` / `@ts-ignore`.
 - Stop when done. No filler. One short phase line before long stretches — don't narrate every tool.
+- `/goal` objectives ≤1800 chars (OmO hard-caps at 2000). Never paste plan files into the objective — see `prompts/goal.md`.
 
 ## Research stack (use the right tool)
 

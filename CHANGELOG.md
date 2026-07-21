@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.16] — 2026-07-21
+
+### Goal loop (Prometheus footgun)
+- OmO hard-caps `/goal` objectives at **2000 characters** (`InvalidObjectiveError`) — not configurable
+- Add `prompts/goal.md` and load it via `opencode.json` `instructions`
+- Prometheus / Sisyphus / Atlas / core: never paste `.omo/plans/*.md` into `/goal`; ≤1800 chars; no re-read loop after `InvalidObjectiveError`
+- Prometheus handoff stays `/start-work` → Atlas (not plan-stuffed `/goal`)
+- Doctor tip when goal is enabled; README `/goal` row documents the cap
+
 ## [1.5.15] — 2026-07-21
 
 ### Docs

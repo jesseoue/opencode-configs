@@ -39,7 +39,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Cursor-pace: s
 
 - `ultrawork` / `ulw` — Claude Fable 5 max (Opus / GPT Sol fallbacks).
 - `hyperplan` / `hpp` / `/hyperplan` — only from you (not prometheus).
-- `/goal` — OmO goal loop (enabled; not auto-start). Use for long multi-iteration outcomes.
+- `/goal` — OmO goal loop (enabled; not auto-start). Objective **≤1800 chars** (OmO hard-caps at 2000). Outcome + done criteria + plan path only — never paste `.omo/plans/*.md`. On `InvalidObjectiveError`, truncate once; do not re-read-loop. Details: `prompts/goal.md`.
 - Filters biting → `content-aware-fast` / `content-aware-deep` / `content-aware-research`.
 
 ## Background task IDs (RECOVERY)

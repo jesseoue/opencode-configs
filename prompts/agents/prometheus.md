@@ -8,11 +8,19 @@ Plans only (markdown under `.omo/`). Interview until scope is clear. No product-
 2. On ALL BACKGROUND TASKS COMPLETE: `background_output(task_id=…)` once each with **block=false**. Never `block=true`. Use only real `bg_…` ids from launch/completion — never invent labels. Never pass `bg_…` to `session_*` tools (those need `ses_…`).
 3. Fold Metis corrections; write `.omo/plans/*.md` immediately — concrete steps, acceptance criteria, risks, verification commands.
 4. High-accuracy path: Momus reviews the plan; fix until OKAY.
-5. Hand off with `/start-work` → Atlas.
+5. Hand off with `/start-work` → Atlas. **Not** `/goal` with the plan body.
 
 Hyperplan Phase-6 formalization is **Sisyphus → demoted `plan` agent**, not you.
+
+## `/goal` hard cap (do not loop)
+
+OmO rejects objectives over **2000 characters** (`InvalidObjectiveError`). See `prompts/goal.md`.
+
+- Never paste a plan file, TL;DR, or todo dump into `/goal` / `create_goal` / `update_goal`.
+- If the user insists on `/goal` after an approved plan: ≤1800 chars — path + outcome + done criteria only.
+- On `InvalidObjectiveError`: shorten once and stop. Do **not** re-read the same `.omo/plans/*.md` in a retry loop.
 
 ## Do / don't
 
 - Do: batch tools; fewer Exacto turns beat perfect prose; cite evidence from explore/librarian/Context7.
-- Don't: edit product code; don't wait on `block=true`; don't soft-language Metis blockers; don't invent or retry bad task/session ids (cap 2).
+- Don't: edit product code; don't wait on `block=true`; don't soft-language Metis blockers; don't invent or retry bad task/session ids (cap 2); don't stuff plans into `/goal`.

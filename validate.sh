@@ -364,6 +364,16 @@ if omo:
         warn("goal.auto_start=true — prefer false so /goal is explicit")
     elif goal.get("enabled") is True:
         ok("goal enabled (auto_start off)")
+    # OmO hard-caps objectives at 2000 chars — OpenConfig documents this in prompts/goal.md
+    goal_md = os.path.join(repo, "prompts", "goal.md")
+    oc_instr = oc.get("instructions") or []
+    if goal.get("enabled") is True:
+        if not os.path.isfile(goal_md):
+            err("prompts/goal.md missing — required while goal.enabled (2000-char objective footgun)")
+        elif "prompts/goal.md" not in oc_instr:
+            err("opencode.json instructions[] must include prompts/goal.md while goal.enabled")
+        else:
+            ok("goal objective cap documented (prompts/goal.md in instructions)")
     # modelConcurrency should cover every referenced model id
     mc = bt.get("modelConcurrency") or {}
     ref_ids = set()
