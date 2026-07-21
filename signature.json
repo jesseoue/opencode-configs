@@ -3,7 +3,7 @@
   "product": "OpenConfig",
   "cli": "oc",
   "id": "openconfig/opencode-configs",
-  "version": "1.5.21",
+  "version": "1.5.22",
   "tagline": "The greatest coding-agent configuration ever assembled",
   "description": "Stable project identity. fingerprint = sha256 over sorted path=sha256(content) for files[]. Markers prove branding without hashing every prompt.",
   "markers": [
@@ -80,6 +80,6 @@
     "validate.sh",
     "doctor.sh"
   ],
-  "fingerprint": "13427499ad7fc9bedefe4183deb0600ca4e9f11450a0cf164bb428bc4455c600",
+  "fingerprint": "97a9d955f8680f30fdc658591c8413ec27cd11a3fab6834aa9126813d502dc9d",
   "github_b64": "aHR0cHM6Ly9naXRodWIuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3M="
 }

@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.21** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.22** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — the best-known pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (OpenConfig 1.5 stance + team eligibility + research tool matrix). `/goal` is **disabled** (OmO 4.19.0 footgun — see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -36,7 +36,7 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 - **Orchestration / tool loops** → GLM `5.2:exacto` (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Exacto = tool-call quality on OpenRouter.
 - **Fast parallel recon** → DeepSeek Flash `:nitro` (explore, librarian, junior, quick) — Nitro = throughput.
 - **Deep implement / critique** → OpenAI `gpt-5.6-sol` direct (Hephaestus, Oracle, Momus, deep, ultrabrain, arch-review).
-- **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.5 Flash Nitro).
+- **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.6 Flash Nitro).
 - **Hard ceiling** → Claude Fable 5 max for `ultrawork` / unspecified-high (Opus / Sol fallbacks).
 - **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k3` (1M ctx, ~$3/$15) as a quality fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider, expensive). Prefer K2.7 Code / DeepSeek for routine coding.
 - **Content-aware research** → DeepSeek Pro + `content-aware-*` agent/categories when Claude/OpenAI refuse.
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.21**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.22**.
 
 ## Permissions
 

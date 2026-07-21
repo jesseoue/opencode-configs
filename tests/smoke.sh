@@ -85,8 +85,11 @@ ok=(g.get("enabled") is False and g.get("auto_start") is False
 sys.exit(0 if ok else 1)
 ' "$REPO/oh-my-openagent.json" \
   && grep -q 'plugins' "$REPO/.gitignore" \
+  && grep -qE '^/\*$' "$REPO/.gitignore" \
+  && grep -q '!prompts/' "$REPO/.gitignore" \
+  && ! grep -qE '/Users/Shared/(lm-agents|test-speed)' "$REPO/zshrc.snippet" \
   && grep -q 'plugins' "$REPO/lib/common.sh"; then
-  ok "goal off + ralph removed + plugins scrubbed"
+  ok "goal off + ralph removed + plugins scrubbed + deny-all gitignore + no host paths"
 else
   bad "goal/ralph/plugins hygiene incomplete (goal must be off; ralph_loop must be gone)"
 fi

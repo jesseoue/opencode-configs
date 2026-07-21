@@ -2,6 +2,23 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.22] — 2026-07-21
+
+### Hygiene — no personal host paths · deny-all gitignore
+- `zshrc.snippet`: remove `/Users/Shared/lm-agents` denylist + `/Users/Shared/test-speed` redirect; resolve workspace via `OC_*` / `projects.json` / `~/Projects` only
+- `.gitignore`: default-deny root (`/*`) + explicit allowlist — logs, secrets, runtime junk, and anything outside the config set stay untracked
+- Respect `OC_PROJECTS_DIR` / `OC_DEFAULT_WORKSPACE` (no longer stomp with a hard-coded `~/Projects` when that dir exists)
+
+### OpenRouter catalog + routing tune
+- Add `google/gemini-3.6-flash` (Nitro) — writing primary; visual/artistry fallbacks updated
+- `artistry` → Gemini 3.1 Pro (was Kimi K3) to match the visual lane
+- Refresh GLM / DeepSeek / MiniMax `provider.order` + `ignore` from live `/models/.../endpoints` (drop parasail/-5, fix `atlas-cloud` slug)
+- OpenRouter attribution headers → OpenConfig (`HTTP-Referer` + `X-Title`)
+- Skills: `~/.config/opencode/skills` + `./skills` so global stack works from any cwd (orca, Projects, …)
+- `models.sh`: strip `:exacto`/`:nitro` for catalog/drift; recognize Gemini 3.6
+- `.gitignore` deny-all + allowlist (config-only; blocks personal/runtime junk)
+- `zshrc.snippet` reads projects home from `projects.json` (no host-path hardcoding)
+
 ## [1.5.21] — 2026-07-21
 
 ### Doctor / fix completeness (OmO 4.19)

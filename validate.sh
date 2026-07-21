@@ -574,19 +574,36 @@ else:
     ok("config dir clean (no node_modules/package.json/.omo/.sisyphus/command/plugins)")
 
 # git must ignore the common install paths (even when absent)
-ignore_targets = ["node_modules", "node_modules/pkg", "package.json", "package-lock.json", "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor", "plugins"]
+ignore_targets = [
+    "node_modules", "node_modules/pkg", "package.json", "package-lock.json",
+    "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode",
+    ".cursor", "plugins", "stray-not-in-allowlist.txt", "opencode.log", "logs/x.log",
+]
 try:
     r = subprocess.run(
         ["git", "check-ignore", "-v", "--"] + ignore_targets,
         cwd=repo, capture_output=True, text=True, check=False,
     )
     ignored = {line.split("\t")[-1] for line in r.stdout.splitlines() if "\t" in line}
-    required = {"node_modules", "package.json", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor", "plugins"}
+    required = {
+        "node_modules", "package.json", ".omo", ".sisyphus", ".codegraph",
+        "command", ".opencode", ".cursor", "plugins",
+        "stray-not-in-allowlist.txt", "opencode.log",
+    }
     missing_ignore = sorted(required - ignored)
     if missing_ignore:
         err(f".gitignore does not cover: {missing_ignore}")
     else:
-        ok(".gitignore covers node_modules/package.json/.omo/.sisyphus/.codegraph/command/.opencode/.cursor/plugins")
+        ok(".gitignore covers strays + deny-all outside allowlist")
+    # Deny-all shape: root /* plus allowlist markers
+    gi = open(os.path.join(repo, ".gitignore"), encoding="utf-8").read().splitlines()
+    gi_noncomment = [ln.strip() for ln in gi if ln.strip() and not ln.strip().startswith("#")]
+    if "/*" not in gi_noncomment:
+        err(".gitignore missing root deny-all '/*' (config-only allowlist required)")
+    elif "!prompts/" not in gi_noncomment and "!prompts/**" not in gi_noncomment:
+        err(".gitignore deny-all missing prompts/ allowlist entries")
+    else:
+        ok(".gitignore is deny-all + allowlist (config-only)")
 except FileNotFoundError:
     warn("git not available — skipped ignore coverage check")
 

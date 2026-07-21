@@ -555,15 +555,17 @@ for s in json.load(open('$REPO/oh-my-openagent.json')).get('skills',{}).get('sou
 print(chr(10).join(sorted(paths)))
 " 2>/dev/null || true)"
 if [[ -z "$_sk_lines" ]]; then
-  ok "skills fence active (./skills) — no external sources"
+  ok "skills fence active — no sources configured"
 else
   while read -r p; do
     [[ -z "$p" ]] && continue
     ep="${p/#\~/$HOME}"
     if [[ -d "$ep" ]]; then ok "$p"
     else
+      # ./skills is project-local — missing is fine outside a scaffolded project
+      if [[ "$p" == "./skills" ]]; then info "$p (project-local; created by oc new)"; continue; fi
       opt "$p (not present)"
-      tip "mkdir -p \"$ep\"  # or lock to ./skills via: oc fix"
+      tip "mkdir -p \"$ep\"  # or: oc fix"
     fi
   done <<< "$_sk_lines"
 fi
@@ -1352,12 +1354,15 @@ if [[ ${#ext_cfg[@]} -gt 0 ]]; then
   bad "external config loads alongside repo: ${ext_cfg[*]} — move/remove it (repo is the single source)"
 else ok "no external opencode.json outside the repo"; fi
 
-# 4. External skill dirs referenced by config (should be repo-local ./skills only)
+# 4. Skills fence — global OpenConfig skills + project ./skills (no ~/.claude / ~/.agents)
 ext_skills="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
 import json, os, sys
 repo=sys.argv[1]; ext=[]
+ALLOWED={ "~/.config/opencode/skills", "./skills" }
 def outside(p):
-    p=str(p); return p.startswith(("~","/")) or ".claude" in p or ".agents" in p
+    p=str(p)
+    if p in ALLOWED: return False
+    return ".claude" in p or ".agents" in p or (p.startswith(("~","/")) and "opencode/skills" not in p)
 oc=json.load(open(os.path.join(repo,"opencode.json")))
 ext+=[p for p in (oc.get("skills",{}) or {}).get("paths",[]) if outside(p)]
 omo=json.load(open(os.path.join(repo,"oh-my-openagent.json")))
@@ -1368,8 +1373,8 @@ print("|".join(dict.fromkeys(ext)))
 PY
 )"
 if [[ -n "$ext_skills" ]]; then
-  opt "skills load from OUTSIDE the repo: ${ext_skills//|/, } — run ./doctor.sh --fix to lock to ./skills"
-else ok "skills load only from repo (./skills)"; fi
+  opt "skills load from OUTSIDE OpenConfig: ${ext_skills//|/, } — run: oc fix"
+else ok "skills: ~/.config/opencode/skills + ./skills (any project cwd)"; fi
 
 # 5. Claude Code bridge — imports external MCP/commands/skills/hooks
 cc_on="$(python3 -c "

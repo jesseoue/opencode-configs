@@ -149,9 +149,10 @@
       "model": "openrouter/anthropic/claude-sonnet-5",
       "mode": "subagent",
       "fallback_models": [
+        "openrouter/google/gemini-3.6-flash",
+        "openrouter/google/gemini-3.5-flash",
         "openrouter/moonshotai/kimi-k3",
-        "openai/gpt-5.6-sol",
-        "openrouter/google/gemini-3.5-flash"
+        "openai/gpt-5.6-sol"
       ],
       "maxTokens": 24576,
       "prompt_append": "file://~/.config/opencode/prompts/agents/multimodal-looker.md",
@@ -232,7 +233,7 @@
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-research.md",
       "color": "#FF1744",
-      "description": "Content-aware research \u2014 full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills."
+      "description": "Content-aware research — full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills."
     }
   },
   "categories": {
@@ -240,6 +241,7 @@
       "model": "openrouter/google/gemini-3.1-pro-preview",
       "variant": "high",
       "fallback_models": [
+        "openrouter/google/gemini-3.6-flash",
         "openrouter/google/gemini-3.5-flash",
         "openrouter/anthropic/claude-sonnet-5",
         "openrouter/z-ai/glm-5.2-exacto"
@@ -279,11 +281,16 @@
       "color": "#00F0FF"
     },
     "artistry": {
-      "model": "openrouter/moonshotai/kimi-k3",
+      "model": "openrouter/google/gemini-3.1-pro-preview",
       "variant": "max",
       "is_unstable_agent": true,
       "prompt_append": "file://~/.config/opencode/prompts/categories/artistry.md",
-      "color": "#FF5C00"
+      "color": "#FF5C00",
+      "fallback_models": [
+        "openrouter/google/gemini-3.6-flash",
+        "openrouter/google/gemini-3.5-flash",
+        "openrouter/anthropic/claude-sonnet-5"
+      ]
     },
     "quick": {
       "model": "openrouter/deepseek/deepseek-v4-flash",
@@ -322,8 +329,9 @@
       "color": "#9DFFFF"
     },
     "writing": {
-      "model": "openrouter/google/gemini-3.5-flash",
+      "model": "openrouter/google/gemini-3.6-flash",
       "fallback_models": [
+        "openrouter/google/gemini-3.5-flash",
         "openrouter/google/gemini-3-flash-preview",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -333,7 +341,7 @@
       "color": "#00FFD1"
     },
     "bug-hunt": {
-      "description": "Reproduce \u2192 root cause \u2192 minimal fix \u2192 verify. Cite file:line.",
+      "description": "Reproduce → root cause → minimal fix → verify. Cite file:line.",
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "fallback_models": [
         "openrouter/deepseek/deepseek-v4-pro",
@@ -425,7 +433,8 @@
       "openrouter/openai/gpt-5.5": 3,
       "openrouter/openai/gpt-5.6-sol": 3,
       "openrouter/openai/gpt-5.6-terra": 3,
-      "openrouter/z-ai/glm-5.2-exacto": 3
+      "openrouter/z-ai/glm-5.2-exacto": 3,
+      "openrouter/google/gemini-3.6-flash": 4
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,
@@ -592,6 +601,7 @@
   ],
   "skills": {
     "sources": [
+      "~/.config/opencode/skills",
       "./skills"
     ]
   },

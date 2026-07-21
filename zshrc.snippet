@@ -20,12 +20,25 @@ _oc_resolve_start_dir() {
   local dir="${1:-}"
   local cfg="$HOME/.config/opencode"
   local real_cfg="" real_dir=""
-  local projects_home="${OC_PROJECTS_DIR:-$HOME/Projects}"
-  local workspace_name="${OC_DEFAULT_WORKSPACE:-workspace}"
-  [[ "$projects_home" == ~* ]] && projects_home="${projects_home/#\~/$HOME}"
-  [[ -d "$HOME/Projects" ]] && projects_home="$HOME/Projects"
-  workspace_name="${workspace_name:t}"  # basename
+  local projects_home="${OC_PROJECTS_DIR:-}"
+  local workspace_name="${OC_DEFAULT_WORKSPACE:-}"
+
+  # Defaults from projects.json when env vars are unset (portable — no host paths)
+  if [[ (-z "$projects_home" || -z "$workspace_name") && -f "$cfg/projects.json" ]] \
+     && command -v python3 >/dev/null 2>&1; then
+    local _oc_pd_json _oc_ws_json
+    _oc_pd_json="$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1],encoding="utf-8")).get("projects_dir") or "").strip())' "$cfg/projects.json" 2>/dev/null || true)"
+    _oc_ws_json="$(python3 -c 'import json,sys; print((json.load(open(sys.argv[1],encoding="utf-8")).get("default_workspace") or "").strip())' "$cfg/projects.json" 2>/dev/null || true)"
+    [[ -z "$projects_home" && -n "$_oc_pd_json" ]] && projects_home="$_oc_pd_json"
+    [[ -z "$workspace_name" && -n "$_oc_ws_json" ]] && workspace_name="$_oc_ws_json"
+  fi
+  [[ -n "$projects_home" ]] || projects_home="$HOME/Projects"
   [[ -n "$workspace_name" ]] || workspace_name="workspace"
+  [[ "$projects_home" == ~* ]] && projects_home="${projects_home/#\~/$HOME}"
+  workspace_name="${workspace_name:t}"  # basename only
+  if [[ -z "$workspace_name" || "$workspace_name" == *[!A-Za-z0-9._-]* ]]; then
+    workspace_name="workspace"
+  fi
   local workspace="${projects_home}/${workspace_name}"
 
   if [[ -z "$dir" ]]; then
@@ -43,12 +56,6 @@ _oc_resolve_start_dir() {
   if [[ "$real_dir" == "$projects_home" ]]; then
     need_workspace=1
   fi
-  # Hard denylist: known empty/meta dirs that must never host OpenCode
-  case "$real_dir" in
-    /Users/Shared/lm-agents|/Users/Shared/lm-agents/*)
-      need_workspace=1
-      ;;
-  esac
   # Empty / sidecar-only dirs (only .omo/.codegraph/.claude/.git/…) are not
   # real projects — launching there feels broken/slow (CodeGraph on nothing).
   if (( !need_workspace )) && [[ -d "$real_dir" ]]; then
@@ -61,10 +68,6 @@ _oc_resolve_start_dir() {
     if [[ "${_oc_real_count:-0}" -eq 0 ]]; then
       need_workspace=1
     fi
-  fi
-  # Prefer a known speed-test workspace when present and cwd was empty
-  if (( need_workspace )) && [[ -d /Users/Shared/test-speed && -f /Users/Shared/test-speed/AGENTS.md ]]; then
-    workspace="/Users/Shared/test-speed"
   fi
   if (( need_workspace )); then
     mkdir -p "$workspace" 2>/dev/null || true
@@ -98,7 +101,7 @@ opencode() {
       [[ "$_oc_line" == *=* ]] || continue
       _oc_key="${_oc_line%%=*}"
       case "$_oc_key" in
-        OPENROUTER_API_KEY|OPENAI_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
+        OPENROUTER_API_KEY|OPENAI_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|OC_DEFAULT_WORKSPACE|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
         *) continue ;;
       esac
       _oc_val="${_oc_line#*=}"
@@ -192,9 +195,16 @@ setopt NO_LIST_BEEP
 # Add opencode bin to PATH if not already there
 [[ -d "$HOME/.opencode/bin" ]] && [[ ":$PATH:" != *":$HOME/.opencode/bin:"* ]] && export PATH="$HOME/.opencode/bin:$PATH"
 
-# Projects home for `oc new` (optional; defaults to ~/Projects via projects.json)
-if [[ -z "${OC_PROJECTS_DIR:-}" && -f "$HOME/.config/opencode/.env" ]]; then
-  _oc_pd="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_PROJECTS_DIR=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
-  [[ -n "$_oc_pd" ]] && export OC_PROJECTS_DIR="$_oc_pd"
-  unset _oc_pd
+# Projects home / default workspace (optional; defaults via projects.json)
+if [[ -f "$HOME/.config/opencode/.env" ]]; then
+  if [[ -z "${OC_PROJECTS_DIR:-}" ]]; then
+    _oc_pd="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_PROJECTS_DIR=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
+    [[ -n "$_oc_pd" ]] && export OC_PROJECTS_DIR="$_oc_pd"
+    unset _oc_pd
+  fi
+  if [[ -z "${OC_DEFAULT_WORKSPACE:-}" ]]; then
+    _oc_ws="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_DEFAULT_WORKSPACE=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
+    [[ -n "$_oc_ws" ]] && export OC_DEFAULT_WORKSPACE="$_oc_ws"
+    unset _oc_ws
+  fi
 fi
