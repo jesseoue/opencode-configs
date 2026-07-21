@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.23] — 2026-07-21
+
+### Provider routing (live endpoints)
+- Re-rank `provider.order` / `ignore` from OpenRouter `/models/.../endpoints` health + throughput
+- GLM Exacto → Friendli-first; DeepSeek Flash/Pro order matched live leaders; drop fp4/baseten & down hosts
+- Gemini 3.1 Pro → Google AI Studio first (Vertex status=-2); Opus → Vertex-first; Fable → Bedrock-first (Anthropic/Azure down)
+- MiniMax: allow Venice as fallback; keep Together/MiniMax primary
+- Live probe: all workhorse models complete with intended providers
+
 ## [1.5.22] — 2026-07-21
 
 ### Hygiene — no personal host paths · deny-all gitignore
