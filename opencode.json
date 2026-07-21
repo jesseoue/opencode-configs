@@ -111,13 +111,13 @@
               "data_collection": "allow",
               "allow_fallbacks": true,
               "order": [
+                "friendli",
                 "fireworks",
                 "cloudflare",
-                "baidu",
-                "together",
-                "baseten",
-                "friendli",
                 "alibaba",
+                "together",
+                "baidu",
+                "baseten",
                 "venice",
                 "morph",
                 "z-ai",
@@ -139,7 +139,8 @@
                 "atlas-cloud",
                 "gmicloud",
                 "io-net",
-                "siliconflow"
+                "siliconflow",
+                "wandb"
               ]
             }
           },
@@ -196,13 +197,13 @@
                 "deepseek",
                 "baidu",
                 "alibaba",
-                "venice",
                 "novita",
+                "venice",
+                "streamlake",
                 "fireworks",
                 "morph",
                 "cloudflare",
-                "wandb",
-                "streamlake"
+                "wandb"
               ],
               "ignore": [
                 "parasail",
@@ -260,8 +261,8 @@
               "order": [
                 "deepseek",
                 "baidu",
-                "novita",
                 "alibaba",
+                "novita",
                 "venice",
                 "gmicloud",
                 "streamlake",
@@ -278,7 +279,8 @@
                 "deepinfra",
                 "ambient",
                 "akashml",
-                "phala"
+                "phala",
+                "baseten"
               ]
             }
           },
@@ -395,8 +397,8 @@
               },
               "allow_fallbacks": true,
               "order": [
-                "anthropic",
                 "google-vertex",
+                "anthropic",
                 "amazon-bedrock",
                 "azure"
               ]
@@ -567,8 +569,8 @@
                 "p90": 12
               },
               "order": [
-                "google-vertex",
-                "google-ai-studio"
+                "google-ai-studio",
+                "google-vertex"
               ]
             },
             "reasoning": {
@@ -625,8 +627,8 @@
                 "p90": 4
               },
               "order": [
-                "google-vertex",
-                "google-ai-studio"
+                "google-ai-studio",
+                "google-vertex"
               ],
               "ignore": [
                 "ambient",
@@ -874,9 +876,9 @@
                 "p90": 14
               },
               "order": [
+                "amazon-bedrock",
                 "google-vertex",
                 "anthropic",
-                "amazon-bedrock",
                 "azure"
               ]
             }
@@ -936,11 +938,11 @@
                 "novita",
                 "morph",
                 "atlas-cloud",
+                "venice",
                 "deepinfra"
               ],
               "ignore": [
                 "parasail",
-                "venice",
                 "ambient",
                 "digitalocean",
                 "akashml",
