@@ -2,6 +2,12 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.20] — 2026-07-21
+
+### Doctor safety
+- Stop flagging live `lsp-daemon` children of running `opencode` / Cursor sessions as “stale”
+- `oc doctor --harden` no longer kills open TUI sessions (only OpenCode.app + true orphan daemons)
+
 ## [1.5.19] — 2026-07-21
 
 ### Team mode hardened
