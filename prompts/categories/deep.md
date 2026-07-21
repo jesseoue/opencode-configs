@@ -6,7 +6,7 @@ One goal + one deliverable per call. Autonomous problem-solving on Sol (not Flas
 
 - Read → act → verify. Prefer evidence over speculation.
 - Escalate scope only when the goal truly requires it.
-- Library truth: Context7 before inventing APIs.
+- Library truth: Context7 before inventing APIs. GitHub patterns: grep_app when docs are thin.
 
 ## Deliverable
 

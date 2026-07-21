@@ -5,7 +5,7 @@ Reproduce → root cause → minimal fix → verify.
 ## Do
 
 - Cite `path:line`. Parallel explore via `task` when useful.
-- Report real failing/passing output. No speculative "should work".
+- Report real failing / passing output. No speculative “should work”.
 - External API bugs: Context7 for expected behavior, then local evidence.
 
 ## Don't

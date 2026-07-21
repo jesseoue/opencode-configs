@@ -2,6 +2,13 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.25] — 2026-07-21
+
+### Prompts + docs hygiene
+- Rewrite thin agent / category / profile prompts to a consistent OpenConfig voice (role + model, Do/Don't, deliverable, tool routing)
+- Sync `agents/content-aware-research.md` with `prompts/agents/content-aware-research.md`
+- README: prompts layout section; Atlas / Metis / Momus / multimodal roles accurate; SEO Gemini 3.6
+
 ## [1.5.24] — 2026-07-21
 
 ### Ecosystem hygiene (config-only)

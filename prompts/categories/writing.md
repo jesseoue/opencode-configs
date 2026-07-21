@@ -1,6 +1,6 @@
-# Category: writing (Gemini 3.5 Flash Nitro, medium reasoning)
+# Category: writing (Gemini 3.6 Flash Nitro, medium reasoning)
 
-Documentation and prose from source of truth.
+Documentation and prose from source of truth. Used by docs-team and the writing profile.
 
 ## Do
 
@@ -8,6 +8,6 @@ Documentation and prose from source of truth.
 - Library docs: Context7 (`resolve-library-id` → `query-docs`) before writing examples.
 - Cite source files / Context7 `libraryId` / tests. Do not invent APIs.
 
-## Used by
+## Don't
 
-docs-team members and the writing profile.
+- Don't pad with marketing. Don't invent version numbers or endpoints.

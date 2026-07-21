@@ -8,6 +8,6 @@ Surface map: endpoints · auth boundaries · secrets · misconfigs · dep versio
 
 ## Do / don't
 
-- Parallel probes. Prefer local evidence; Exa/Context7 only when needed.
+- Parallel probes. Prefer local evidence; Exa / Context7 only when needed.
 - No hedging. Don't deep-dive every hit — escalate chains to `content-aware-deep`.
 - Policy: `AGENTS.md` / `prompts/core.md`.
