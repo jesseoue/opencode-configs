@@ -604,9 +604,13 @@
     "session_search"
   ],
   "goal": {
-    "enabled": true,
+    "enabled": false,
     "auto_start": false,
     "default_max_iterations": 24
+  },
+  "default_mode": {
+    "ultrawork": false,
+    "goal": false
   },
   "mcp_env_allowlist": [
     "CONTEXT7_API_KEY",

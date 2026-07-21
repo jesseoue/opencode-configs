@@ -777,41 +777,30 @@ if rl.get("enabled") is True:
 else:
     opt("ralph_loop disabled")
 
-# Goal loop + OmO 2000-char objective hard cap (not configurable)
+# Goal loop — DISABLED on OmO 4.19.0 (chat hook treats /start-work template as objective)
 oc = json.load(open(os.path.join(repo, "opencode.json")))
 goal_md = os.path.join(repo, "prompts", "goal.md")
 oc_instr = oc.get("instructions") or []
+dm = omo.get("default_mode") or {}
 if goal.get("enabled") is True:
-    gmi = goal.get("default_max_iterations", 24)
-    auto = goal.get("auto_start")
-    ok("goal enabled (max %s, auto_start=%s)" % (gmi, auto))
-    if auto is True:
-        opt("goal.auto_start=true — prefer false so /goal is explicit")
-    if not os.path.isfile(goal_md):
-        bad("prompts/goal.md missing — required while goal.enabled (OmO 2000-char objective hard cap)")
-    elif "prompts/goal.md" not in oc_instr:
-        bad("opencode.json instructions[] missing prompts/goal.md while goal.enabled")
-    else:
-        ok("goal objective cap documented (prompts/goal.md in instructions)")
-        tip("OmO /goal objective hard-cap is 2000 chars — keep ≤1800; never paste .omo/plans/*.md")
-    # Agent prompts that set/execute goals must know the cap
-    for rel in (
-        "prompts/agents/prometheus.md",
-        "prompts/agents/sisyphus.md",
-        "prompts/agents/atlas.md",
-        "prompts/core.md",
-    ):
-        path = os.path.join(repo, rel)
-        if not os.path.isfile(path):
-            bad("%s missing" % rel)
-            continue
-        text = open(path, encoding="utf-8").read()
-        if "2000" not in text and "1800" not in text and "InvalidObjectiveError" not in text:
-            bad("%s missing /goal 2000-char objective guardrail" % rel)
-        else:
-            ok("%s knows /goal objective cap" % rel)
+    bad("goal.enabled=true breaks /start-work on OmO 4.19.0 (5541-char template > 2000-char objective cap)")
+    tip("set goal.enabled=false (OpenConfig default) — see prompts/goal.md")
+    if goal.get("auto_start") is True:
+        bad("goal.auto_start=true — must be false")
+    if dm.get("goal") is True:
+        bad("default_mode.goal=true — must be false while OmO goal hook is unsafe")
 else:
-    opt("goal disabled")
+    ok("goal disabled (protects /start-work from InvalidObjectiveError)")
+    if dm.get("goal") is True:
+        bad("default_mode.goal=true while goal.enabled=false — set default_mode.goal=false")
+    elif "goal" in dm and dm.get("goal") is False:
+        ok("default_mode.goal=false")
+    if not os.path.isfile(goal_md):
+        bad("prompts/goal.md missing — documents why goal is off")
+    elif "prompts/goal.md" not in oc_instr:
+        bad("opencode.json instructions[] missing prompts/goal.md")
+    else:
+        ok("goal footgun documented (prompts/goal.md in instructions)")
 
 mt = exp.get("max_tools")
 if isinstance(mt, int) and mt <= 48:

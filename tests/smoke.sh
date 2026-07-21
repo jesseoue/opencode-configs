@@ -70,14 +70,15 @@ for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure
   fi
 done
 
-# /goal objective hard-cap wiring (OmO 2000-char InvalidObjectiveError)
+# /goal disabled + footgun doc (OmO 4.19.0 breaks /start-work when goal is on)
 if [[ -f "$REPO/prompts/goal.md" ]] \
   && grep -q 'prompts/goal.md' "$REPO/opencode.json" \
+  && python3 -c 'import json,sys; g=json.load(open(sys.argv[1])).get("goal") or {}; sys.exit(0 if g.get("enabled") is False else 1)' "$REPO/oh-my-openagent.json" \
   && grep -q 'plugins' "$REPO/.gitignore" \
   && grep -q 'plugins' "$REPO/lib/common.sh"; then
-  ok "goal.md wired + plugins scrubbed"
+  ok "goal disabled + plugins scrubbed"
 else
-  bad "goal.md / plugins hygiene incomplete"
+  bad "goal/plugins hygiene incomplete (goal must be disabled)"
 fi
 
 printf "\n${c_bold}Result:${c_0} %d passed · %d failed\n\n" "$pass" "$fail"
