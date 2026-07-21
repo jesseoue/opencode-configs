@@ -15,12 +15,12 @@
   "compaction": {
     "auto": true,
     "prune": true,
-    "reserved": 48000,
+    "reserved": 64000,
     "tail_turns": 6,
     "preserve_recent_tokens": 32000
   },
   "tool_output": {
-    "max_lines": 600,
-    "max_bytes": 20000
+    "max_lines": 800,
+    "max_bytes": 32000
   }
 }

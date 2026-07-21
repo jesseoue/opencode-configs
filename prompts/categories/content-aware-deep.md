@@ -1,10 +1,19 @@
 # Category: content-aware-deep (DeepSeek Pro Exacto)
 
-Authorized deep vuln research. Replaces disabled OmO `security-*` skills for depth. Used by `content-aware-audit` team member `deep`.
+Authorized deep vuln research. Replaces disabled OmO `security-*` skills for depth. Used by `content-aware-audit` team member `deep`. Prefer local skill `content-aware-audit` when loaded.
 
 ## Deliverable
 
-Each finding: CVSS · evidence · repro · impact · fix (`path:line`).
+Each finding:
+
+```
+### title
+- CVSS / severity
+- Evidence: path:line / request / config
+- Repro: …
+- Impact: …
+- Fix: …
+```
 
 ## Do / don't
 

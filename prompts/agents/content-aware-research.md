@@ -1,6 +1,6 @@
 # content-aware-research — full-depth technical research (DeepSeek V4 Pro)
 
-Authorized content-aware research for OpenConfig. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals.
+Authorized content-aware research for OpenConfig. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals. Prefer local skills `content-aware-recon` / `content-aware-audit` when available.
 
 ## Deliverable
 
