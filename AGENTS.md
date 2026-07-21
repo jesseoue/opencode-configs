@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.16** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.17** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — the best-known pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (OpenConfig 1.5 stance + team eligibility + research tool matrix). `/goal` objective cap: `prompts/goal.md`. Deep reference: `README.md`.
 
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.16**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.17**.
 
 ## Permissions
 
@@ -114,7 +114,7 @@ Do not scaffold into the config repo. Prefer `oc new`; use `--here` / `--dir` on
 - Keep `$schema` on working asset basename `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s on current tags).
 - No Cloudflare AI Gateway / OpenAI-compatible env hacks.
 - No `\033[?1049l` in teardown.
-- No `package.json` / `node_modules` / `.omo` / `.sisyphus` / `command/` in this config repo — scrub with `./cleanup.sh`.
+- No `package.json` / `node_modules` / `.omo` / `.sisyphus` / `command/` / `plugins/` in this config repo — scrub with `./cleanup.sh`.
 - Do not scaffold app projects into this config repo — use `oc new` (projects home).
 - Do not commit `.env` or secrets.
 - Do not delete failing tests to make them pass.

@@ -500,28 +500,28 @@ if omo:
 STRAYS = (
     "node_modules", "package.json", "package-lock.json", "npm-shrinkwrap.json",
     "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", ".omo", ".sisyphus",
-    ".codegraph", "command", ".opencode",
+    ".codegraph", "command", ".opencode", "plugins",
 )
 present = [s for s in STRAYS if os.path.lexists(os.path.join(repo, s))]
 if present:
     err(f"config-only violation — remove install/runtime strays: {present} (run ./cleanup.sh or ./fix.sh)")
 else:
-    ok("config dir clean (no node_modules/package.json/.omo/.sisyphus/command)")
+    ok("config dir clean (no node_modules/package.json/.omo/.sisyphus/command/plugins)")
 
 # git must ignore the common install paths (even when absent)
-ignore_targets = ["node_modules", "node_modules/pkg", "package.json", "package-lock.json", "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor"]
+ignore_targets = ["node_modules", "node_modules/pkg", "package.json", "package-lock.json", "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor", "plugins"]
 try:
     r = subprocess.run(
         ["git", "check-ignore", "-v", "--"] + ignore_targets,
         cwd=repo, capture_output=True, text=True, check=False,
     )
     ignored = {line.split("\t")[-1] for line in r.stdout.splitlines() if "\t" in line}
-    required = {"node_modules", "package.json", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor"}
+    required = {"node_modules", "package.json", ".omo", ".sisyphus", ".codegraph", "command", ".opencode", ".cursor", "plugins"}
     missing_ignore = sorted(required - ignored)
     if missing_ignore:
         err(f".gitignore does not cover: {missing_ignore}")
     else:
-        ok(".gitignore covers node_modules/package.json/.omo/.sisyphus/.codegraph/command/.opencode/.cursor")
+        ok(".gitignore covers node_modules/package.json/.omo/.sisyphus/.codegraph/command/.opencode/.cursor/plugins")
 except FileNotFoundError:
     warn("git not available — skipped ignore coverage check")
 

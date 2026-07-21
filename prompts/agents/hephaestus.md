@@ -14,6 +14,7 @@ Implement. You own the code path — do not over-orchestrate.
 
 - Don't re-plan what Sisyphus/Prometheus already decided.
 - Don't claim green without command evidence.
+- Don't paste `.omo/plans/*.md` into `/goal` / `update_goal` (OmO hard-caps objectives at 2000 chars — keep ≤1800; see `prompts/goal.md`).
 
 ## Team
 

@@ -4,7 +4,7 @@
 
 **OpenConfig** · **OpenCode** · **oh-my-openagent (OmO)** · **OpenRouter** · **Claude** · **GPT** · **DeepSeek** · **Gemini** · **GLM Exacto** · **MCP** · **Context7** · **Exa** · **tmux** · **Ghostty**
 
-**v1.5.16** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.17** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 > **GitHub topics / search keywords:** `opencode` · `oh-my-openagent` · `oh-my-opencode` · `openrouter` · `coding-agent` · `ai-agent` · `llm` · `claude` · `openai` · `gpt` · `deepseek` · `gemini` · `glm` · `agentic` · `mcp` · `context7` · `exa` · `tmux` · `ghostty` · `developer-tools` · `cli` · `sisyphus` · `hephaestus` · `hyperplan` · `ultrawork` · `ralph-loop` · `multi-agent` · `ai-coding` · `opencode-config` · `best-opencode-config`
 
@@ -27,7 +27,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pinned excellence** | OpenConfig `1.5.16` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pinned excellence** | OpenConfig `1.5.17` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default god-mode lead** | `sisyphus` (GLM Exacto — tool-call royalty) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -344,7 +344,7 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 - Don’t rename the plugin away from `oh-my-openagent`
 - Don’t add Cloudflare / AI Gateway / fake OpenAI-compatible shims
 - Don’t put `plan` in `disabled_agents` (breaks hyperplan)
-- Don’t commit `.env`, `package.json`, `node_modules`, `.omo`, or `.sisyphus` here
+- Don’t commit `.env`, `package.json`, `node_modules`, `.omo`, `.sisyphus`, or `plugins/` here
 - Don’t scaffold apps into this repo — use `oc new`
 - Don’t load `.opencode/profile.json` as `OPENCODE_CONFIG`
 - Don’t re-enable telemetry
