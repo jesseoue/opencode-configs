@@ -143,12 +143,29 @@ for spec_dir in "$REPO"/teams/*/; do
   team_name="$(basename "$spec_dir")"
   team_link="$OMO_TEAMS/$team_name"
   target="${spec_dir%/}"
-  if [ -L "$team_link" ] && [ "$(readlink "$team_link")" = "$target" -o "$(readlink "$team_link")" = "$spec_dir" ]; then
-    ok "team '$team_name' provisioned"
-  else
-    fix ln -sfn "$target" "$team_link"
-    ok "team '$team_name' symlinked"
+  # Resolve desired link text (no trailing slash)
+  if [ -L "$team_link" ]; then
+    _cur="$(readlink "$team_link" 2>/dev/null || true)"
+    if [ "$_cur" = "$target" ] || [ "$_cur" = "$spec_dir" ]; then
+      ok "team '$team_name' provisioned (symlink)"
+      unset _cur
+      continue
+    fi
+    unset _cur
   fi
+  # Real directory copies (or wrong links) must be replaced — macOS ln -sfn
+  # will nest a symlink *inside* an existing directory instead of replacing it.
+  if [ -d "$team_link" ] && [ ! -L "$team_link" ]; then
+    if $CHECK_ONLY; then
+      opt "team '$team_name' is a directory copy (not symlink) — run setup to replace"
+      continue
+    fi
+    fix rm -rf "$team_link"
+  elif [ -e "$team_link" ] || [ -L "$team_link" ]; then
+    fix rm -f "$team_link"
+  fi
+  fix ln -sfn "$target" "$team_link"
+  ok "team '$team_name' symlinked → $target"
 done
 echo ""
 

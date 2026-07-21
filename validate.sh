@@ -352,6 +352,33 @@ if omo:
         err(f"team_mode.max_parallel_members={mp} — want 1–4")
     elif isinstance(mp, int):
         ok(f"team_mode.max_parallel_members={mp}")
+    # Full OmO 4.19 team_mode schema — pin required keys (Zod defaults alone hide drift)
+    for k in (
+        "tmux_visualization", "max_messages_per_run", "max_wall_clock_minutes",
+        "max_member_turns", "message_payload_max_bytes", "recipient_unread_max_bytes",
+        "mailbox_poll_interval_ms", "base_dir",
+    ):
+        if k not in tm:
+            err(f"team_mode.{k} missing — run: oc fix")
+    if tm.get("enabled") is not True:
+        err("team_mode.enabled must be true")
+    if not isinstance(tm.get("tmux_visualization"), bool):
+        err("team_mode.tmux_visualization must be a boolean")
+    poll = tm.get("mailbox_poll_interval_ms")
+    if not isinstance(poll, int) or poll < 500:
+        err(f"team_mode.mailbox_poll_interval_ms={poll!r} — OmO minimum 500")
+    else:
+        ok(f"team_mode.mailbox_poll_interval_ms={poll}")
+    base = tm.get("base_dir") or "~/.omo"
+    if not isinstance(base, str) or not base:
+        err("team_mode.base_dir must be a non-empty string (want ~/.omo)")
+    else:
+        ok(f"team_mode.base_dir={base}")
+    tx = omo.get("tmux") or {}
+    if tx.get("enabled") is True and tx.get("layout") == "main-vertical" and tx.get("isolation") in ("inline", "window", "session"):
+        ok(f"tmux team panes ready (layout={tx.get('layout')} isolation={tx.get('isolation')})")
+    else:
+        err("tmux must be enabled with layout=main-vertical for team mode — run: oc fix")
     rl = omo.get("ralph_loop") or {}
     if rl.get("enabled") is True:
         rmi = rl.get("default_max_iterations")
@@ -477,6 +504,29 @@ if omo:
                 else:
                     err(f"{rel}: members[{i}].kind must be category or subagent_type")
         ok(f"{len(team_cfgs)} team spec(s) pass OmO eligibility rules")
+        # Provisioned ~/.omo/teams entries must be symlinks into this repo
+        base = (tm.get("base_dir") or "~/.omo")
+        if isinstance(base, str) and base.startswith("~/"):
+            base = os.path.join(os.path.expanduser("~"), base[2:])
+        elif isinstance(base, str) and base == "~":
+            base = os.path.expanduser("~")
+        ldir = os.path.join(base, "teams") if isinstance(base, str) else ""
+        if ldir and os.path.isdir(ldir):
+            bad_links = []
+            for cfg_path in team_cfgs:
+                name = os.path.basename(os.path.dirname(cfg_path))
+                link = os.path.join(ldir, name)
+                want = os.path.realpath(os.path.dirname(cfg_path))
+                if not os.path.lexists(link):
+                    bad_links.append(f"{name} (missing — run oc setup)")
+                elif not os.path.islink(link):
+                    bad_links.append(f"{name} (directory copy — run oc setup)")
+                elif os.path.realpath(link) != want:
+                    bad_links.append(f"{name} (symlink drift — run oc setup)")
+            if bad_links:
+                err(f"~/.omo/teams provision drift: {', '.join(bad_links)}")
+            else:
+                ok(f"{len(team_cfgs)} team specs symlinked under {ldir}")
 
     # cross-file: every agent/category model + fallback resolves to a defined model
     if oc:

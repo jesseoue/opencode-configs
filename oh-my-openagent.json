@@ -443,11 +443,16 @@
   },
   "team_mode": {
     "enabled": true,
+    "tmux_visualization": false,
     "max_parallel_members": 4,
     "max_members": 5,
+    "max_messages_per_run": 10000,
     "max_wall_clock_minutes": 60,
-    "mailbox_poll_interval_ms": 500,
-    "base_dir": "~/.omo"
+    "max_member_turns": 500,
+    "base_dir": "~/.omo",
+    "message_payload_max_bytes": 32768,
+    "recipient_unread_max_bytes": 262144,
+    "mailbox_poll_interval_ms": 1000
   },
   "runtime_fallback": {
     "enabled": true,
@@ -515,7 +520,10 @@
   "tmux": {
     "enabled": true,
     "layout": "main-vertical",
-    "isolation": "inline"
+    "isolation": "inline",
+    "main_pane_size": 60,
+    "main_pane_min_width": 120,
+    "agent_pane_min_width": 40
   },
   "browser_automation_engine": {
     "provider": "playwright"
