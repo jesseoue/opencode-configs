@@ -11,13 +11,13 @@
       "kind": "category",
       "category": "bug-hunt",
       "name": "reproducer",
-      "prompt": "Reproduce only. Steps, expected vs actual, minimal failing case. Parallel tools. Real output. Prefer evidence collection over product edits. Mailbox the repro to the lead."
+      "prompt": "ROLE: reproduce only - do not fix. DELIVERABLE: steps, expected vs actual, minimal failing case, real failing output. METHOD: parallel tools; Context7 if an external API shape is involved. Prefer evidence over product edits. Mailbox the repro to the lead; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "ultrabrain",
       "name": "root-cause",
-      "prompt": "From the repro: WHY (GPT Sol max). Cite path:line. Minimal fix proposal with blast radius. Real evidence. Prefer analysis; leave the patch to the lead. Mailbox the verdict."
+      "prompt": "ROLE: explain WHY from the repro (GPT Sol max). DELIVERABLE: verdict, reasoning, evidence (path:line / command / Context7), minimal fix proposal + blast radius, next action. Prefer analysis; leave the patch to the lead unless reassigned. Mailbox the verdict; shut down cleanly."
     }
   ]
 }

@@ -11,19 +11,19 @@
       "kind": "subagent_type",
       "subagent_type": "hephaestus",
       "name": "forge",
-      "prompt": "Implement assigned steps (GPT Sol direct). Read call sites first; minimal diffs. Context7 before guessing library APIs. Parallel tools. Verify LSP + tests; paste real output. Claim/update tasks; mailbox the lead when blocked or done."
+      "prompt": "ROLE: implement assigned steps (GPT Sol direct). METHOD: read call sites first; minimal diffs; Context7 before guessing library APIs; parallel tools. VERIFY: LSP + typecheck/tests with real output pasted. Security-sensitive code: full implementation, no stubs. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
     },
     {
       "kind": "subagent_type",
       "subagent_type": "sisyphus-junior",
       "name": "junior",
-      "prompt": "Small assigned units only (Flash Nitro). No re-delegation. Minimal diffs. Verify before done with real output. Claim/update tasks; mailbox the lead."
+      "prompt": "ROLE: small assigned units only (Flash Nitro). No re-delegation and no scope expansion. METHOD: match repo style; minimal diffs; Context7 for library shapes. VERIFY with real output before claiming done. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "bug-hunt",
       "name": "verifier",
-      "prompt": "Regression-only verifier. Exercise changed paths for regressions and edges. Failures with repro + path:line. Real output. Do not edit product code and do not add features. Mailbox findings to the lead."
+      "prompt": "ROLE: regression-only verifier - do not edit product code and do not add features. METHOD: exercise changed paths for regressions and edges; paste real failing/passing output. DELIVERABLE: failures with repro + path:line, or OKAY with what was exercised. Mailbox findings to the lead; shut down cleanly."
     }
   ]
 }

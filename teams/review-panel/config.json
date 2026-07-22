@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "review-panel",
-  "description": "Multi-lens review. Propose findings only — lead aggregates.",
+  "description": "Multi-lens review. Propose findings only - lead aggregates.",
   "lead": {
     "kind": "subagent_type",
     "subagent_type": "sisyphus"
@@ -11,19 +11,19 @@
       "kind": "category",
       "category": "arch-review",
       "name": "arch",
-      "prompt": "Coupling, cohesion, security. `severity path:line — issue + fix`. No softening. Do not edit. Mailbox findings."
+      "prompt": "ROLE: architecture/security review - findings only, do not edit. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix. Cite Context7 on external API misuse. No softening. Mailbox findings; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "bug-hunt",
       "name": "bugs",
-      "prompt": "Correctness bugs (edges, nulls, races). `severity path:line — repro + fix`. No softening. Do not edit. Mailbox findings."
+      "prompt": "ROLE: correctness hunt - findings only, do not edit. SURFACE: edges, nulls, races, silent failures, broken error paths. DELIVERABLE: severity path:line - repro + fix. Real evidence preferred over speculation. No softening. Mailbox findings; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "refactor-safe",
       "name": "cleanup",
-      "prompt": "PROPOSALS ONLY — do not apply edits. Safe cleanups (duplication, dead code, simplifications). Cite path:line. No softening. Mailbox proposals for the lead to schedule."
+      "prompt": "ROLE: cleanup proposals ONLY - do not apply edits. SURFACE: duplication, dead code, simplifications that preserve behavior. DELIVERABLE: path:line proposals with why + risk. No style nits. Mailbox proposals for the lead to schedule; shut down cleanly."
     }
   ]
 }

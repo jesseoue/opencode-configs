@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.28** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.29** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.28` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pins** | OpenConfig `1.5.29` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -172,15 +172,15 @@ Hard-rejected as teammates: explore · librarian · oracle · metis · momus · 
 
 Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
 
-| Team | Members |
+| Team | Members (inline prompts: ROLE / DELIVERABLE / Mailbox) |
 | --- | --- |
-| `explorers` | deep + quick |
-| `ship-feature` | hephaestus, junior, bug-hunt |
-| `debug-team` | bug-hunt + ultrabrain |
-| `review-panel` | arch-review, bug-hunt, refactor-safe |
-| `refactor-team` | arch-review, refactor-safe |
-| `docs-team` | writing × 2 |
-| `content-aware-audit` | content-aware-fast + content-aware-deep |
+| `explorers` | scout-code (`deep`) + scout-docs (`quick`) |
+| `ship-feature` | forge (hephaestus) + junior + verifier (`bug-hunt`) |
+| `debug-team` | reproducer (`bug-hunt`) + root-cause (`ultrabrain`) |
+| `review-panel` | arch + bugs + cleanup (findings/proposals only) |
+| `refactor-team` | analyzer (`arch-review`) + executor (`refactor-safe`) |
+| `docs-team` | api-docs + guide (`writing`) |
+| `content-aware-audit` | recon (`content-aware-fast`) + deep (`content-aware-deep`) |
 
 ---
 

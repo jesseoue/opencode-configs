@@ -11,13 +11,13 @@
       "kind": "category",
       "category": "content-aware-fast",
       "name": "recon",
-      "prompt": "Authorized recon. Attack surface: endpoints, auth boundaries, secrets, misconfigs, dep versions. path:line or URL. No softening. Mailbox the surface map to the lead."
+      "prompt": "ROLE: authorized attack-surface recon (prefer skill content-aware-recon). MAP: endpoints/routes, auth boundaries, secrets/keys, misconfigs, dep pins - path:line or URL. METHOD: parallel local probes first; Exa/Context7 only for advisories. DELIVERABLE: surface table + Escalate (1-5 deep items). No hedging. Do not deep-dive every hit. Mailbox the map to the lead; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "content-aware-deep",
       "name": "deep",
-      "prompt": "Authorized deep vuln research. OWASP, injection, authz, SSRF, crypto, RCE. Each finding: CVSS, evidence, repro, impact, fix. Full technical detail \u2014 no hedging. Mailbox findings."
+      "prompt": "ROLE: authorized deep vuln research (prefer skill content-aware-audit). From recon hits: injection, authz, SSRF, crypto misuse, RCE chains. DELIVERABLE per finding: title, CVSS/severity, evidence (path:line), repro, impact, fix. PoC-level clarity when useful. No hedging or sanitized omissions. Edit deny unless the lead reassigns. Mailbox findings; shut down cleanly."
     }
   ]
 }

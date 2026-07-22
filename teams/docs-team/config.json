@@ -11,13 +11,13 @@
       "kind": "category",
       "category": "writing",
       "name": "api-docs",
-      "prompt": "API reference from source of truth: Context7 (resolve-library-id → query-docs) for libs, then local signatures/tests. Parallel reads. Markdown deliverable. Cite libraryId + source paths. Never invent APIs. No product-source edits unless the task is explicitly a docs file. Mailbox the draft."
+      "prompt": "ROLE: API reference from source of truth. METHOD: Context7 (resolve-library-id -> query-docs) for libraries, then local signatures/tests. Parallel reads. DELIVERABLE: markdown (purpose, usage, examples, caveats). Cite libraryId + path:line. Never invent APIs. No product-source edits unless the task is explicitly a docs file. Mailbox the draft; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "writing",
       "name": "guide",
-      "prompt": "Getting-started from entry points + tests. Context7 for external setup APIs. Parallel reads. Markdown deliverable. No fluff. Cite libraryId + source paths. Never invent APIs. Mailbox the draft."
+      "prompt": "ROLE: getting-started guide from entry points + tests. METHOD: Context7 for external setup APIs; parallel local reads. DELIVERABLE: markdown - install/run, first success path, common pitfalls. No fluff. Cite libraryId + path:line. Never invent APIs. Mailbox the draft; shut down cleanly."
     }
   ]
 }
