@@ -510,14 +510,20 @@ if omo:
                 else:
                     seen_names.add(mname)
                 kind = m.get("kind")
+                prompt = (m.get("prompt") or "").strip()
+                if not prompt:
+                    err(f"{rel}: members[{i}] ({mname or i}) requires non-empty inline prompt")
+                elif "ROLE:" not in prompt or "Mailbox" not in prompt:
+                    warn(
+                        f"{rel}: members[{i}] ({mname}) prompt should include ROLE: … and Mailbox … "
+                        "(OpenConfig team prompt shape)"
+                    )
                 if kind == "category":
                     cat = m.get("category")
                     if not cat:
                         err(f"{rel}: members[{i}] kind=category missing category")
                     elif cat not in cats:
                         err(f"{rel}: members[{i}] unknown category '{cat}'")
-                    if not (m.get("prompt") or "").strip():
-                        err(f"{rel}: members[{i}] kind=category requires non-empty prompt")
                 elif kind == "subagent_type":
                     st = m.get("subagent_type")
                     if st in TEAM_HARD_REJECT:

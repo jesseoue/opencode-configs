@@ -2,6 +2,13 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.29] — 2026-07-21
+
+### Team member prompts
+- Rewrite all `teams/*/config.json` inline member prompts to ROLE / METHOD / DELIVERABLE / Mailbox shape
+- Align with category skills (content-aware-recon/audit) and category Do/Don't
+- Validate: every member needs a non-empty prompt; warn if ROLE:/Mailbox missing
+
 ## [1.5.28] — 2026-07-21
 
 ### Doctor + tooling
