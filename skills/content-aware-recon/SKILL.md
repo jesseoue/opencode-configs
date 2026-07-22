@@ -4,7 +4,7 @@ description: Authorized attack-surface recon (endpoints, auth boundaries, secret
 compatibility: opencode
 license: MIT
 metadata:
-  openconfig: "1.5.27"
+  openconfig: "1.5.30"
   replaces: security-research
 ---
 

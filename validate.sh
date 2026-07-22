@@ -830,7 +830,7 @@ else:
 required_scripts = [
     "oc", "install.sh", "setup.sh", "doctor.sh", "validate.sh", "fix.sh",
     "cleanup.sh", "run.sh", "opencode.sh", "openrouter-admin.sh",
-    "diagnose.sh", "maintain.sh", "models.sh", "locate.sh", "signature.sh", "lib/common.sh",
+    "diagnose.sh", "maintain.sh", "models.sh", "versions.sh", "locate.sh", "signature.sh", "lib/common.sh",
 ]
 missing_scripts = []
 nonexec = []

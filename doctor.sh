@@ -155,7 +155,7 @@ if [[ -n "$pin" ]]; then
   else info "plugin cache not built yet for $pin (populated on first launch)"; fi
 fi
 # OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
-# npm often lags the CLI by a patch (e.g. CLI 1.18.4 → npm 1.18.3) → WARN spam, not fatal.
+# When npm lags the CLI by a patch → WARN spam, not fatal. Align with: oc versions --fix
 _cli_ver="$(oc_tool_version opencode 2>/dev/null || true)"
 _plugin_pin="$(python3 -c "
 import json, os

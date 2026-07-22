@@ -4,7 +4,7 @@ description: Authorized deep vulnerability research with CVSS, evidence, repro, 
 compatibility: opencode
 license: MIT
 metadata:
-  openconfig: "1.5.27"
+  openconfig: "1.5.30"
   replaces: security-review
 ---
 

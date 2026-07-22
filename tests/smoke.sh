@@ -41,6 +41,7 @@ run_step() {
 run_step "bash -n oc" bash -n "$REPO/oc"
 run_step "bash -n doctor.sh" bash -n "$REPO/doctor.sh"
 run_step "bash -n locate.sh" bash -n "$REPO/locate.sh"
+run_step "bash -n versions.sh" bash -n "$REPO/versions.sh"
 run_step "bash -n lib/common.sh" bash -n "$REPO/lib/common.sh"
 run_step "validate --quiet" "$REPO/validate.sh" --quiet
 run_step "locate --json" "$REPO/locate.sh" --json
@@ -49,6 +50,7 @@ run_step "fix --dry-run" "$REPO/fix.sh" --dry-run
 run_step "cleanup --dry-run" "$REPO/cleanup.sh" --dry-run
 run_step "setup --check" "$REPO/setup.sh" --check
 run_step "doctor --quick" "$REPO/doctor.sh" --quick
+run_step "versions --local" "$REPO/versions.sh" --local
 
 # doctor --json schema (machine summary for heal/check tooling)
 if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '

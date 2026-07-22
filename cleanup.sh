@@ -50,7 +50,7 @@ drift=0
 sec "Required files"
 REQUIRED=(
   opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json
-  validate.sh doctor.sh cleanup.sh fix.sh models.sh diagnose.sh setup.sh install.sh maintain.sh
+  validate.sh doctor.sh cleanup.sh fix.sh models.sh versions.sh diagnose.sh setup.sh install.sh maintain.sh
 # Add locate.sh to required list
   opencode.sh run.sh openrouter-admin.sh oc locate.sh signature.sh
   lib/common.sh
@@ -72,7 +72,16 @@ REQUIRED=(
 )
 missing=0
 for f in "${REQUIRED[@]}"; do
-  if [[ -e "$REPO/$f" ]]; then :; else bad "missing: $f"; missing=$((missing+1)); drift=$((drift+1)); fi
+  if [[ -e "$REPO/$f" ]]; then
+    :
+  elif [[ "$f" == "skills/.gitkeep" ]]; then
+    # Keep skills/ trackable even when only fenced skills exist
+    act "mkdir -p \"$REPO/skills\" && : > \"$REPO/skills/.gitkeep\""
+    fix "restored skills/.gitkeep"
+    drift=$((drift+1))
+  else
+    bad "missing: $f"; missing=$((missing+1)); drift=$((drift+1))
+  fi
 done
 [[ $missing -eq 0 ]] && ok "all ${#REQUIRED[@]} expected files present"
 # scripts executable

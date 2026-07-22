@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.29** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.30** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.29` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pins** | OpenConfig `1.5.30` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -63,6 +63,7 @@ oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter + OpenAI probes
 oc models --providers  # OpenRouter provider health for routed models
+oc versions            # package pins vs npm/GitHub + other opencode.json
 oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
 oc test                # smoke + idempotency
@@ -288,6 +289,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 ```
 opencode-configs/
 ├── oc · install.sh · setup.sh · doctor.sh · validate.sh · fix.sh
+├── models.sh · versions.sh · cleanup.sh · signature.sh · locate.sh
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · AGENTS.md
 ├── agents/content-aware-research.md

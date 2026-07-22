@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.29** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.30** · CLI `oc` · identity `openconfig/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** (OmO 4.19.0 footgun — see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them. Product version: **1.5.29**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.30**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.
@@ -90,7 +90,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 
 ## Commands
 
-`oc help` · `oc doctor` · `oc validate` · `oc launch` · `oc run` · `oc new` · `oc heal` · `oc signature` · `oc admin health`. Details: `README.md`.
+`oc help` · `oc doctor` · `oc validate` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc heal` · `oc signature` · `oc admin health`. Details: `README.md`.
 
 ## Projects & scaffolding
 
