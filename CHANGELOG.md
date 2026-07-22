@@ -9,6 +9,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - Scan other `opencode.json` under `~/Projects` and `/Users/Shared` (project overlays; OmO stays global)
 - `oc versions --fix` aligns `~/.opencode` `@opencode-ai/plugin` peer to the installed CLI when npm has it
 - Pins verified current: OpenCode `1.18.4`, OmO `4.19.0`, plugin peer `1.18.4`
+- README: Package pins section + verify/install flows include `oc versions`
 
 ## [1.5.29] — 2026-07-21
 

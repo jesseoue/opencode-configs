@@ -16,11 +16,11 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.30` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pins** | OpenConfig `1.5.30` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` · `@opencode-ai/plugin` `1.18.4` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
-| **Health** | `oc doctor` → *Ready to code — everything checks out.* |
+| **Health** | `oc doctor` · `oc versions` · `oc test` |
 
 > Plugin name must stay **`oh-my-openagent@…`** (not legacy `oh-my-opencode`).  
 > Schema URL basename stays `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s).
@@ -38,7 +38,7 @@ export EXA_API_KEY=…            # OmO websearch
 export CONTEXT7_API_KEY=…       # library docs
 
 oc install --quick
-oc signature && oc test && oc doctor
+oc signature && oc test && oc versions && oc doctor
 oc launch
 ```
 
@@ -63,7 +63,8 @@ oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter + OpenAI probes
 oc models --providers  # OpenRouter provider health for routed models
-oc versions            # package pins vs npm/GitHub + other opencode.json
+oc versions            # pins vs npm + GitHub (+ other opencode.json)
+oc versions --fix       # align ~/.opencode @opencode-ai/plugin to CLI
 oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
 oc test                # smoke + idempotency
@@ -72,6 +73,28 @@ oc doctor --quick --json   # machine summary (heal/check tooling)
 ```
 
 Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
+
+---
+
+## Package pins
+
+Floors and the OmO pin live in [`versions.json`](./versions.json). The OmO plugin string in `opencode.json` must match. Audit anytime:
+
+```bash
+oc versions              # local pins + npm/GitHub latest
+oc versions --local      # no network
+oc versions --json       # machine-readable
+oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCode CLI
+```
+
+| Package | Source of truth | Current |
+| --- | --- | --- |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.30` |
+| OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.4+` |
+| OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.0` |
+| `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
+
+`oc versions` also lists other `opencode.json` files under `~/Projects` and `/Users/Shared`. Those are project overlays — OmO stays pinned globally here.
 
 ---
 
@@ -308,7 +331,7 @@ opencode-configs/
 ## Verify
 
 ```bash
-oc signature && oc test && oc validate && oc doctor
+oc signature && oc test && oc validate && oc versions && oc doctor
 bunx oh-my-openagent@4.19.0 doctor   # upstream: System OK
 ```
 
@@ -349,6 +372,7 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 - Prompt tweaks when a lane misbehaves
 - Local skills under `skills/` (fenced) — never re-enable OmO `security-*`
 - Weekly `oc models --providers` after OpenRouter host churn (don’t hand-edit `order`/`ignore` blindly)
+- `oc versions` after OpenCode / OmO releases (bump `versions.json` + plugin pin together)
 - Project scaffolds via `oc new` (apps stay outside this tree)
 
 **Skip:**
