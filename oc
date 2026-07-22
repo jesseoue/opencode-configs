@@ -20,6 +20,7 @@
 #   cleanup [--dry-run|--yes]             Reconcile to known-good state
 #   maintain [--check|--clean|--plans]    Clean sessions, caches, logs
 #   models [--catalog|--providers|--json|--upgrade]  OpenRouter catalog / providers
+#   versions [--check|--local|--fix|--json]  Package pins vs npm/GitHub
 #   run "<msg>" [-a agent] [-d dir]       Headless runner (run to completion)
 #   admin [status|health|ratelimit|...]   OpenRouter account admin
 #   launch [dir]                          Launch OpenCode (terminal-safe)
@@ -99,6 +100,8 @@ ${c_bold}Repair & Clean:${c_0}
 ${c_bold}Models & Admin:${c_0}
   ${c_g}models${c_0}    [--catalog|--providers|--json|--upgrade]
                                          OpenRouter catalog / live provider health
+  ${c_g}versions${c_0}  [--check|--local|--fix|--json]
+                                         Package pins vs npm + GitHub (+ other repos)
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter + direct OpenAI admin
 
 ${c_bold}Run & Launch:${c_0}
@@ -137,6 +140,8 @@ ${c_bold}Examples:${c_0}
   oc doctor                       Full health (OpenRouter latency, prompts, keys, skills, …)
   oc doctor --quick --json        Machine-readable readiness summary
   oc doctor --fix                 Repair configs + re-check
+  oc versions                    Pins vs npm/GitHub + other opencode.json
+  oc versions --fix               Align ~/.opencode @opencode-ai/plugin to CLI
   oc fix                         Restore agent colors + footguns
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
@@ -982,6 +987,7 @@ case "$cmd" in
   cleanup)    dispatch cleanup.sh "$@" ;;
   maintain)   dispatch maintain.sh "$@" ;;
   models)     dispatch models.sh "$@" ;;
+  versions|pins) dispatch versions.sh "$@" ;;
   run)        dispatch run.sh "$@" ;;
   diagnose)   dispatch diagnose.sh "$@" ;;
   opencode)   dispatch opencode.sh "$@" ;;
