@@ -50,6 +50,7 @@ fi
 # ── Helpers ──
 ok(){   printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
+opt(){  printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
 
 header() {
@@ -85,8 +86,8 @@ ${c_bold}Install & self-heal (start here):${c_0}
 
 ${c_bold}Setup & Health:${c_0}
   ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams, LSP, projects)
-  ${c_g}doctor${c_0}    [--quick|--fix|--harden|--ai-fix]
-                                         Full readiness (keys, concurrency, teams, MCP, …)
+  ${c_g}doctor${c_0}    [--quick|--json|--fix|--harden|--ai-fix]
+                                         Full readiness (keys, skills, teams, MCP, …)
   ${c_g}validate${c_0}  [--quiet]                      Config validator + footgun detector
   ${c_g}diagnose${c_0}  [--no-ai|--fix|--agent-fix]    AI-assisted deep diagnostics
 
@@ -133,7 +134,8 @@ ${c_bold}Examples:${c_0}
   oc signature                   Verify project identity fingerprint
   oc signature --refresh         Recompute fingerprint after intentional edits
   oc test                        Smoke + idempotency self-tests
-  oc doctor                       Full health (OpenRouter latency, prompts, keys, …)
+  oc doctor                       Full health (OpenRouter latency, prompts, keys, skills, …)
+  oc doctor --quick --json        Machine-readable readiness summary
   oc doctor --fix                 Repair configs + re-check
   oc fix                         Restore agent colors + footguns
   oc validate                    Structural / footgun checks
@@ -868,16 +870,19 @@ HEALHELP
     fi
   fi
 
-  # 7. Doctor — only --fix when quick pass fails
+  # 7. Doctor — only --fix when criticals fail (exit 1). Soft/optional advisories stay exit 0.
   if [[ -x "$REPO/doctor.sh" ]]; then
     if _heal_run "7/8 doctor --quick" "$REPO/doctor.sh" --quick; then
       ok "doctor clean" | tee -a "$log"
+      if _doc_json="$("$REPO/doctor.sh" --quick --json 2>/dev/null)"; then
+        printf '%s\n' "$_doc_json" | tee -a "$log" >/dev/null
+        info "doctor json: $(printf '%s' "$_doc_json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("verdict"), "crit="+str(d.get("critical")), "opt="+str(d.get("optional")), "soft="+str(d.get("soft")))' 2>/dev/null || true)" | tee -a "$log"
+      fi
     else
-      bad "doctor reported issues — repairing" | tee -a "$log"
+      bad "doctor reported critical issues — repairing" | tee -a "$log"
       _heal_run "7b/8 doctor --quick --fix" "$REPO/doctor.sh" --quick --fix || true
       if _heal_run "7c/8 doctor --quick (verify)" "$REPO/doctor.sh" --quick; then
         ok "doctor clean after fix" | tee -a "$log"
-        # Doctor warnings alone shouldn't fail heal if validate is clean
         rc=0
       else
         bad "doctor still unhealthy" | tee -a "$log"
