@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.28] — 2026-07-21
+
+### Doctor + tooling
+- Doctor: `soft` advisories (latency/network) no longer count as “optional missing”
+- Doctor: `--json` machine summary (`critical` / `optional` / `soft` / `verdict`) for heal/check
+- Doctor: inventory fenced skills; require `content-aware-recon` + `content-aware-audit`
+- Doctor: accurate OpenRouter/OpenAI key auth failures (`401`/`403` → critical)
+- Validate: assert local content-aware skills exist; smoke covers `doctor --json`
+- Heal: log doctor JSON verdict after quick pass
+
 ## [1.5.27] — 2026-07-21
 
 ### Prompts · skills · profiles

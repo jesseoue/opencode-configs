@@ -50,6 +50,21 @@ run_step "cleanup --dry-run" "$REPO/cleanup.sh" --dry-run
 run_step "setup --check" "$REPO/setup.sh" --check
 run_step "doctor --quick" "$REPO/doctor.sh" --quick
 
+# doctor --json schema (machine summary for heal/check tooling)
+if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '
+import json,sys
+d=json.load(sys.stdin)
+need=("ok","ready","critical","optional","soft","verdict","version","repo")
+missing=[k for k in need if k not in d]
+if missing: raise SystemExit(1)
+if d.get("critical", 1) != 0: raise SystemExit(2)
+if d.get("verdict") not in ("ready", "core_ready"): raise SystemExit(3)
+'; then
+  ok "doctor --json schema"
+else
+  bad "doctor --json schema"
+fi
+
 # locate JSON schema basics
 if "$REPO/locate.sh" --json 2>/dev/null | python3 -c '
 import json,sys

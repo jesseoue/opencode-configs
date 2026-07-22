@@ -2,14 +2,19 @@
 # doctor.sh — Full OpenConfig readiness check.
 # Covers CLI, config link, signature, plugin (+ peer skew), LSP, formatters,
 # keys, prompts, colors, models, MCP, permissions, concurrency/loops, teams,
-# OmO 4.19 goal/ralph footguns, content-aware, terminal, telemetry, compaction,
-# runtime log WARN/ERROR signatures, and external-source hardening.
+# OmO 4.19 goal/ralph footguns, content-aware + local skills, terminal,
+# telemetry, compaction, runtime log WARN/ERROR signatures, and external-source
+# hardening.
 #
-# Usage: ./doctor.sh [--quick] [--fix] [--harden] [--ai-fix]
+# Usage: ./doctor.sh [--quick] [--json] [--fix] [--harden] [--ai-fix]
 #   --quick   skip live model-routing probes (still checks OpenRouter key + latency)
+#   --json    machine-readable summary only (implies quiet human sections)
 #   --fix     run fix.sh (colors, footguns, skills lock, goal off) then re-check
 #   --harden  remove opencode-owned external junk + disable external loading
 #   --ai-fix  use OpenCode AI to diagnose and fix issues
+#
+# Exit: 0 = no critical issues (optional/soft advisories allowed)
+#       1 = critical issues present
 #
 # Related: oc check · oc validate · oc heal · oc diagnose
 
@@ -20,37 +25,45 @@ source "$REPO/lib/common.sh"
 OC_BIN="$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")"
 LINK="${OC_CONFIG_LINK}"
 
-DO_QUICK=0 DO_FIX=0 DO_HARDEN=0 DO_AI=0
+DO_QUICK=0 DO_FIX=0 DO_HARDEN=0 DO_AI=0 DO_JSON=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --quick) DO_QUICK=1; shift ;;
+    --json) DO_JSON=1; shift ;;
     --fix) DO_FIX=1; shift ;;
     --harden) DO_HARDEN=1; shift ;;
     --ai-fix) DO_AI=1; shift ;;
     -h|--help) oc_print_script_help "$0"; exit 0 ;;
-    *) echo "Unknown flag: $1 (try --quick --fix --harden --ai-fix)"; exit 2 ;;
+    *) echo "Unknown flag: $1 (try --quick --json --fix --harden --ai-fix)"; exit 2 ;;
   esac
 done
 
-# Colors: ok=green, info=dim cyan, tip=bold cyan, warn=yellow, bad=red
-if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+# --json suppresses human chrome; still runs every check.
+# Colors: ok=green, info=dim cyan, tip=bold cyan, soft/opt=yellow, bad=red
+if [[ -t 1 && -z "${NO_COLOR:-}" && $DO_JSON -eq 0 ]]; then
   c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"
   c_dim="\033[2m"; c_bold="\033[1m"; c_0="\033[0m"
 else
   c_g=""; c_y=""; c_r=""; c_b=""; c_dim=""; c_bold=""; c_0=""
 fi
-crit=0; miss=0
-sec(){ printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$*"; }
-ok(){ printf "  ${c_g}✓${c_0} %s\n" "$*"; }
-info(){ printf "  ${c_dim}•${c_0} %s\n" "$*"; }
-tip(){ printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
-opt(){ printf "  ${c_y}⚠${c_0} %s\n" "$*"; miss=$((miss+1)); }
-bad(){ printf "  ${c_r}✗${c_0} %s\n" "$*"; crit=$((crit+1)); }
+crit=0; miss=0; softn=0
+# soft = advisory (latency blip, known npm lag) — does NOT count as "optional missing"
+sec(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$*"; }
+ok(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_g}✓${c_0} %s\n" "$*"; }
+info(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_dim}•${c_0} %s\n" "$*"; }
+tip(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
+soft(){ softn=$((softn+1)); [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_y}~${c_0} %s\n" "$*"; }
+opt(){ miss=$((miss+1)); [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
+bad(){ crit=$((crit+1)); [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_r}✗${c_0} %s\n" "$*"; }
 
-_OC_VER="$(oc_versions_get opencode_configs 2>/dev/null || echo "?")"
-printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · %s%s${c_0}\n" \
-  "$_OC_VER" "$REPO" "$([[ $DO_QUICK -eq 1 ]] && echo ' · --quick' || true)"
-unset _OC_VER
+OC_DOCTOR_VER="$(oc_versions_get opencode_configs 2>/dev/null || echo "?")"
+if [[ $DO_JSON -eq 0 ]]; then
+  _flags=""
+  [[ $DO_QUICK -eq 1 ]] && _flags="${_flags} · --quick"
+  printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · %s%s${c_0}\n" \
+    "$OC_DOCTOR_VER" "$REPO" "$_flags"
+  unset _flags
+fi
 
 # ─── CLI ─────────────────────────────────────────────────────────────
 sec "OpenCode CLI"
@@ -196,9 +209,9 @@ while IFS='|' read -r name cmd; do
   fi
   [[ -z "$cmd" ]] && continue
   if command -v "$cmd" >/dev/null 2>&1; then
-    printf "  ${c_g}✓${c_0} %s: %s\n" "$name" "$cmd"
+    ok "$name: $cmd"
   else
-    printf "  ${c_y}⚠${c_0} %s: %s NOT installed (LSP tools disabled for this language)\n" "$name" "$cmd"
+    opt "$name: $cmd NOT installed (LSP tools disabled for this language)"
     _lsp_miss=$((_lsp_miss+1))
     case "$name" in
       typescript) tip "install: npm i -g typescript-language-server typescript" ;;
@@ -216,7 +229,8 @@ print(f'META|{len(enabled)} enabled, {disabled} builtins disabled')
 for k,cmd in enabled:
     print(f'{k}|{cmd}')
 " 2>/dev/null)
-miss=$((miss+_lsp_miss))
+# _lsp_miss already counted via opt(); do not double-add
+unset _lsp_miss
 
 # ─── CodeGraph ───────────────────────────────────────────────────────
 sec "CodeGraph (OmO)"
@@ -245,14 +259,12 @@ else ok "config: $cg_line"; fi
 
 # ─── Formatters ──────────────────────────────────────────────────────
 sec "Formatters"
-_fmt_miss=0
 while read -r name cmd; do
   [[ -z "$cmd" ]] && continue
   if command -v "$cmd" >/dev/null 2>&1; then
-    printf "  ${c_g}✓${c_0} %s: %s\n" "$name" "$cmd"
+    ok "$name: $cmd"
   else
-    printf "  ${c_y}⚠${c_0} %s: %s not on PATH (auto-format skipped)\n" "$name" "$cmd"
-    _fmt_miss=$((_fmt_miss+1))
+    opt "$name: $cmd not on PATH (auto-format skipped)"
     case "$name" in
       prettier) tip "install: npm i -g prettier" ;;
       ruff) tip "install: brew install ruff   # or: pipx install ruff" ;;
@@ -260,7 +272,6 @@ while read -r name cmd; do
     esac
   fi
 done < <(python3 -c "import json;[print(k,(v.get('command') or [''])[0]) for k,v in json.load(open('$REPO/opencode.json')).get('formatter',{}).items() if not v.get('disabled')]" 2>/dev/null)
-miss=$((miss+_fmt_miss))
 
 # ─── API keys ────────────────────────────────────────────────────────
 sec "API keys (.env)"
@@ -303,40 +314,49 @@ if [[ -f "$ENV_FILE" ]]; then
   else
     ok ".env allowlist-clean (OpenConfig keys only)"
   fi
-  # Live OpenRouter key check + latency (healthy is typically ~100–300ms)
+  # Live OpenRouter key check + latency (healthy is typically ~100–400ms; blips are soft)
   ork="$(getkey OPENROUTER_API_KEY)"
   if [[ -n "$ork" ]] && command -v curl >/dev/null; then
-    _or_out="$(curl -s -o /tmp/oc-doctor-or-key.json -w '%{http_code} %{time_total}' \
+    _or_out="$(curl -sS -o /tmp/oc-doctor-or-key.json -w '%{http_code} %{time_total}' \
+      --connect-timeout 5 --max-time 15 \
       -H "Authorization: Bearer $ork" https://openrouter.ai/api/v1/key 2>/dev/null || echo "000 0")"
     code="${_or_out%% *}"
     secs="${_or_out##* }"
     ms="$(python3 -c "print(int(round(float('$secs')*1000)))" 2>/dev/null || echo "?")"
     if [[ "$code" == "200" ]]; then
-      if [[ "$ms" != "?" && "$ms" -le 200 ]]; then
-        ok "OpenRouter key live (HTTP 200, ${ms}ms)"
-      elif [[ "$ms" != "?" && "$ms" -le 800 ]]; then
-        ok "OpenRouter key live (HTTP 200, ${ms}ms)"
-        info "latency >200ms — usually fine; check network if this stays high"
-      else
-        opt "OpenRouter key live but slow (HTTP 200, ${ms}ms) — expected ~200ms"
+      ok "OpenRouter key live (HTTP 200, ${ms}ms)"
+      if [[ "$ms" != "?" && "$ms" -gt 800 ]]; then
+        soft "OpenRouter latency ${ms}ms (typical ~200–400ms) — network blip, not a missing install item"
+      elif [[ "$ms" != "?" && "$ms" -gt 400 ]]; then
+        info "OpenRouter latency ${ms}ms — usually fine"
       fi
+    elif [[ "$code" == "401" || "$code" == "403" ]]; then
+      bad "OpenRouter key rejected (HTTP $code)"
+      tip "verify key at https://openrouter.ai/keys · credits: oc admin credits"
     else
-      opt "OpenRouter key check returned HTTP $code (${ms}ms)"
-      tip "verify key at https://openrouter.ai/keys and credits via: oc admin credits"
+      soft "OpenRouter key check returned HTTP $code (${ms}ms) — retry or oc admin health"
+      tip "verify key at https://openrouter.ai/keys"
     fi
   fi
   # Direct OpenAI key ping (cheap)
   oai="$(getkey OPENAI_API_KEY)"
   if [[ -n "$oai" ]] && command -v curl >/dev/null; then
-    _oa_out="$(curl -s -o /dev/null -w '%{http_code} %{time_total}' \
+    _oa_out="$(curl -sS -o /dev/null -w '%{http_code} %{time_total}' \
+      --connect-timeout 5 --max-time 15 \
       -H "Authorization: Bearer $oai" https://api.openai.com/v1/models 2>/dev/null || echo "000 0")"
     oacode="${_oa_out%% *}"
     oasecs="${_oa_out##* }"
     oams="$(python3 -c "print(int(round(float('$oasecs')*1000)))" 2>/dev/null || echo "?")"
     if [[ "$oacode" == "200" ]]; then
       ok "OpenAI key live (HTTP 200, ${oams}ms)"
+      if [[ "$oams" != "?" && "$oams" -gt 1500 ]]; then
+        soft "OpenAI latency ${oams}ms — network blip, GPT lane still usable"
+      fi
+    elif [[ "$oacode" == "401" || "$oacode" == "403" ]]; then
+      bad "OpenAI key rejected (HTTP $oacode) — GPT lane (Hephaestus/Oracle/Momus) will fail"
+      tip "https://platform.openai.com/api-keys → update OPENAI_API_KEY in $ENV_FILE"
     else
-      opt "OpenAI key check returned HTTP $oacode (${oams}ms)"
+      soft "OpenAI key check returned HTTP $oacode (${oams}ms)"
       tip "https://platform.openai.com/api-keys — GPT lane needs a valid direct key"
     fi
   fi
@@ -521,13 +541,44 @@ fi
 
 # ─── MCP ─────────────────────────────────────────────────────────────
 sec "MCP servers"
-python3 -c "
-import json
-m=json.load(open('$REPO/opencode.json')).get('mcp',{})
-for n,c in m.items(): print(n, c.get('enabled',True), c.get('url') or (c.get('command') or [''])[0])
-" 2>/dev/null | while read -r n en url; do
-  [[ "$en" == "True" ]] && printf "  ${c_g}✓${c_0} %s enabled (%s)\n" "$n" "$url" || printf "  ${c_y}⚠${c_0} %s disabled\n" "$n"
-done
+_mcp_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
+import json, os, sys
+repo = sys.argv[1]
+m = json.load(open(os.path.join(repo, "opencode.json"))).get("mcp") or {}
+if not m:
+    print("INFO|no MCP servers configured")
+for n, c in m.items():
+    if not isinstance(c, dict):
+        continue
+    en = c.get("enabled", True)
+    url = c.get("url") or ((c.get("command") or [""])[0])
+    if en:
+        print("OK|%s enabled (%s)" % (n, url))
+        if n == "context7":
+            envf = os.path.join(repo, ".env")
+            key = ""
+            if os.path.isfile(envf):
+                for line in open(envf, encoding="utf-8"):
+                    if line.startswith("CONTEXT7_API_KEY=") and not line.strip().endswith("="):
+                        key = line.split("=", 1)[1].strip().strip("'\"")
+                        break
+            if key:
+                print("OK|context7 has CONTEXT7_API_KEY")
+            else:
+                print("OPT|context7 enabled but CONTEXT7_API_KEY unset")
+    else:
+        print("INFO|%s disabled" % n)
+PY
+)"
+if [[ -z "$_mcp_report" ]]; then
+  opt "could not evaluate MCP servers"
+else
+  while IFS='|' read -r kind msg; do
+    [[ -z "$kind" ]] && continue
+    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; INFO) info "$msg" ;; *) info "$msg" ;; esac
+  done <<< "$_mcp_report"
+fi
+unset _mcp_report
 
 # ─── Reference workspaces ────────────────────────────────────────────
 sec "Reference workspaces"
@@ -544,31 +595,95 @@ else
   done <<< "$_ref_lines"
 fi
 
-# ─── Skills paths ────────────────────────────────────────────────────
+# ─── Skills paths + inventory ────────────────────────────────────────
 sec "Skills sources"
-_sk_lines="$(python3 -c "
-import json
-paths=set(json.load(open('$REPO/opencode.json')).get('skills',{}).get('paths',[]) or [])
-for s in json.load(open('$REPO/oh-my-openagent.json')).get('skills',{}).get('sources',[]) or []:
-    if isinstance(s, dict) and s.get('path'): paths.add(s['path'])
-    elif isinstance(s, str): paths.add(s)
-print(chr(10).join(sorted(paths)))
-" 2>/dev/null || true)"
-if [[ -z "$_sk_lines" ]]; then
-  ok "skills fence active — no sources configured"
+_sk_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
+import json, os, re, sys
+repo = sys.argv[1]
+oc = json.load(open(os.path.join(repo, "opencode.json")))
+omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
+paths = set((oc.get("skills") or {}).get("paths") or [])
+for s in (omo.get("skills") or {}).get("sources") or []:
+    if isinstance(s, dict) and s.get("path"):
+        paths.add(s["path"])
+    elif isinstance(s, str):
+        paths.add(s)
+allowed = {"~/.config/opencode/skills", "./skills"}
+home = os.path.expanduser("~")
+
+def expand(p):
+    if p.startswith("~/"):
+        return os.path.join(home, p[2:])
+    if p == "./skills":
+        return os.path.join(repo, "skills")
+    return p
+
+if not paths:
+    print("OK|skills fence active - no sources configured")
+else:
+    for p in sorted(paths):
+        ep = expand(p)
+        if os.path.isdir(ep):
+            print("OK|source %s -> %s" % (p, ep))
+        elif p == "./skills":
+            print("INFO|./skills (project-local; oc new creates it)")
+        else:
+            print("OPT|%s (not present)" % p)
+            print("TIP|mkdir -p %s  # or: oc fix" % ep)
+    outside = [p for p in paths if p not in allowed and (".claude" in p or ".agents" in p)]
+    if outside:
+        print("OPT|skills fence leak: %s - run: oc fix" % ", ".join(outside))
+    else:
+        print("OK|skills fence = ~/.config/opencode/skills + ./skills")
+
+skills_root = os.path.join(repo, "skills")
+found = []
+if os.path.isdir(skills_root):
+    for name in sorted(os.listdir(skills_root)):
+        skill = os.path.join(skills_root, name, "SKILL.md")
+        if not os.path.isfile(skill):
+            continue
+        text = open(skill, encoding="utf-8").read(4000)
+        m = re.search(r"(?m)^name:\s*[\"']?([A-Za-z0-9._-]+)", text)
+        front = m.group(1) if m else name
+        if front != name:
+            print("OPT|skills/%s/SKILL.md name=%r (dir is %r)" % (name, front, name))
+        else:
+            found.append(name)
+            print("OK|skill %s" % name)
+required = ("content-aware-recon", "content-aware-audit")
+missing = [n for n in required if n not in found]
+if missing:
+    for n in missing:
+        print("BAD|required skill missing: skills/%s/SKILL.md" % n)
+    print("TIP|restore from repo - replaces disabled OmO security-* skills")
+else:
+    print("OK|required content-aware skills present (%s)" % ", ".join(required))
+
+disabled = {str(s).lower() for s in (omo.get("disabled_skills") or [])}
+if {"security-research", "security-review"} <= disabled:
+    print("OK|OmO security-* skills stay disabled (use local content-aware skills)")
+else:
+    print("BAD|OmO security-research/security-review must stay disabled")
+PY
+)"
+if [[ -z "$_sk_report" ]]; then
+  opt "could not evaluate skills sources"
 else
-  while read -r p; do
-    [[ -z "$p" ]] && continue
-    ep="${p/#\~/$HOME}"
-    if [[ -d "$ep" ]]; then ok "$p"
-    else
-      # ./skills is project-local — missing is fine outside a scaffolded project
-      if [[ "$p" == "./skills" ]]; then info "$p (project-local; created by oc new)"; continue; fi
-      opt "$p (not present)"
-      tip "mkdir -p \"$ep\"  # or: oc fix"
-    fi
-  done <<< "$_sk_lines"
+  while IFS='|' read -r kind msg; do
+    [[ -z "$kind" ]] && continue
+    case "$kind" in
+      OK) ok "$msg" ;;
+      INFO) info "$msg" ;;
+      TIP) tip "$msg" ;;
+      OPT) opt "$msg" ;;
+      SOFT) soft "$msg" ;;
+      BAD|FAIL) bad "$msg" ;;
+      *) info "$msg" ;;
+    esac
+  done <<< "$_sk_report"
 fi
+unset _sk_report
 
 # ─── Permissions audit ───────────────────────────────────────────────
 sec "Permissions"
@@ -613,10 +728,12 @@ if [[ -f "$LOG" ]]; then
     ok "no ERROR lines in the last 20k log lines"
   else
     info "$errc ERROR line(s) in last 20k lines of $LOG — top signatures:"
-    printf '%s\n' "$tailn" | grep 'level=ERROR' \
-      | sed -E 's/.*message=//; s/^"([^"]*)".*/\1/; s/ (ref|error|cause|sessionID|session\.id|messageID|stack|small|agent|providerID|modelID)=.*$//; s/ses_[A-Za-z0-9]+/ses_…/g; s/[0-9]+/N/g' \
-      | sort | uniq -c | sort -rn | head -3 \
-      | while read -r n rest; do printf "      %6dx %s\n" "$n" "$(printf '%s' "$rest" | cut -c1-88)"; done
+    if [[ $DO_JSON -eq 0 ]]; then
+      printf '%s\n' "$tailn" | grep 'level=ERROR' \
+        | sed -E 's/.*message=//; s/^"([^"]*)".*/\1/; s/ (ref|error|cause|sessionID|session\.id|messageID|stack|small|agent|providerID|modelID)=.*$//; s/ses_[A-Za-z0-9]+/ses_…/g; s/[0-9]+/N/g' \
+        | sort | uniq -c | sort -rn | head -3 \
+        | while read -r n rest; do printf "      %6dx %s\n" "$n" "$(printf '%s' "$rest" | cut -c1-88)"; done
+    fi
     # Known runaway: an agent passed a descriptive LABEL as task_id instead of a ses_ id.
     loop="$(printf '%s\n' "$tailn" | grep -c 'Expected a string starting with .ses' 2>/dev/null || true)"
     if [[ "${loop:-0}" -gt 0 ]]; then
@@ -965,6 +1082,9 @@ else:
         print("OK|profile content-aware → content-aware-research")
 team = os.path.join(repo, "teams", "content-aware-audit", "config.json")
 print(("OK" if os.path.isfile(team) else "BAD") + "|team content-aware-audit " + ("present" if os.path.isfile(team) else "missing"))
+for skill in ("content-aware-recon", "content-aware-audit"):
+    sp = os.path.join(repo, "skills", skill, "SKILL.md")
+    print(("OK" if os.path.isfile(sp) else "BAD") + "|local skill %s" % skill + (" present" if os.path.isfile(sp) else " missing"))
 # stale names
 blob = json.dumps(omo)
 if "grayhat" in blob.lower() or "security-audit" in blob:
@@ -978,7 +1098,7 @@ if [[ -z "$ca_report" ]]; then
 else
   while IFS='|' read -r kind msg; do
     [[ -z "$kind" ]] && continue
-    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD|FAIL) bad "$msg"; tip "restore content-aware agent/profile/team from repo" ;; *) info "$msg" ;; esac
+    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD|FAIL) bad "$msg"; tip "restore content-aware agent/profile/team/skills from repo" ;; *) info "$msg" ;; esac
   done <<< "$ca_report"
 fi
 
@@ -1000,8 +1120,7 @@ elif [ -f "$HOME/.zshrc" ] && grep -q 'zshrc.snippet' "$HOME/.zshrc" 2>/dev/null
 else
   opt "opencode() not in ~/.zshrc — add: source \"$REPO/zshrc.snippet\""
 fi
-echo ""
-
+[[ $DO_JSON -eq 0 ]] && echo ""
 # ─── Supported versions (versions.json) ───────────────────────────
 sec "Supported versions"
 if [[ ! -f "$REPO/versions.json" ]]; then
@@ -1173,8 +1292,7 @@ else
   opt "Ghostty not found (optional but recommended)"
   tip "install: https://ghostty.org  (≥ $(oc_versions_get ghostty.min 2>/dev/null || echo 1.3.0))"
 fi
-echo ""
-
+[[ $DO_JSON -eq 0 ]] && echo ""
 # ─── Telemetry / phone-home ───────────────────────────────────────
 sec "Telemetry (must be off)"
 tel_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
@@ -1232,8 +1350,7 @@ for _kv in DO_NOT_TRACK=1 OMO_DISABLE_POSTHOG=1 OMO_SEND_ANONYMOUS_TELEMETRY=0 C
   fi
 done
 unset _kv _k _want _got _tel_env_ok
-echo ""
-
+[[ $DO_JSON -eq 0 ]] && echo ""
 # ─── Compaction optimizations ─────────────────────────────────────
 sec "Compaction optimizations"
 # Compaction is JSON-config (opencode.json compaction.* + experimental.compaction.autocontinue).
@@ -1264,8 +1381,7 @@ else
     case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; FAIL) bad "$msg" ;; esac
   done <<< "$comp_report"
 fi
-echo ""
-
+[[ $DO_JSON -eq 0 ]] && echo ""
 # ─── External sources & stray installs (hardening) ────────────────
 # Everything that makes opencode load code/config from OUTSIDE this repo, plus
 # opencode-owned junk that should not exist (desktop app, stale caches/procs).
@@ -1398,8 +1514,7 @@ if [[ -n "${pin:-}" ]]; then
     fi
   else ok "package caches healthy (plugin installed)"; fi
 fi
-echo ""
-
+[[ $DO_JSON -eq 0 ]] && echo ""
 # ─── Harden (optional): remove opencode-owned externals + disable external loading ─
 if [[ $DO_HARDEN -eq 1 ]]; then
   sec "Harden"
@@ -1429,7 +1544,7 @@ if [[ $DO_HARDEN -eq 1 ]]; then
     info "Disabling external loading in config (skills -> ./skills, claude_code bridge off)..."
     "$REPO/fix.sh" >/dev/null 2>&1 && ok "config locked to repo"
   fi
-  echo ""
+  [[ $DO_JSON -eq 0 ]] && echo ""
   info "Re-running doctor..."
   if [[ $DO_QUICK -eq 1 ]]; then exec "$REPO/doctor.sh" --quick; else exec "$REPO/doctor.sh"; fi
 fi
@@ -1441,7 +1556,7 @@ if [[ $DO_FIX -eq 1 ]]; then
     info "Running fix.sh (colors, footguns, skills lock)..."
     "$REPO/fix.sh" 2>&1
     ok "fix.sh complete"
-    echo ""
+    [[ $DO_JSON -eq 0 ]] && echo ""
     info "Re-running doctor..."
     if [[ $DO_QUICK -eq 1 ]]; then exec "$REPO/doctor.sh" --quick; else exec "$REPO/doctor.sh"; fi
   else
@@ -1470,23 +1585,54 @@ if [[ $DO_AI -eq 1 ]]; then
     fi
     "$REPO/run.sh" "Read /tmp/oc-doctor-output.txt. This is the output of doctor.sh. Fix every issue marked ✗ or ⚠. Run fix.sh first (restores agent colors), then manually fix any remaining issues. Verify with validate.sh and doctor.sh after fixing." 2>&1 || true
     ok "AI fix complete — re-running doctor..."
-    echo ""
+    [[ $DO_JSON -eq 0 ]] && echo ""
     if [[ $DO_QUICK -eq 1 ]]; then exec "$REPO/doctor.sh" --quick; else exec "$REPO/doctor.sh"; fi
   fi
 fi
 
 # ─── Summary ─────────────────────────────────────────────────────────
+if [[ $DO_JSON -eq 1 ]]; then
+  python3 - "$crit" "$miss" "$softn" "$DO_QUICK" "${OC_DOCTOR_VER:-?}" "$REPO" <<'PY'
+import json, sys
+crit, miss, softn = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
+quick = sys.argv[4] == "1"
+ver, repo = sys.argv[5], sys.argv[6]
+ready = crit == 0
+print(json.dumps({
+    "ok": ready,
+    "ready": ready and miss == 0,
+    "critical": crit,
+    "optional": miss,
+    "soft": softn,
+    "quick": quick,
+    "version": ver,
+    "repo": repo,
+    "verdict": (
+        "ready" if ready and miss == 0 else
+        "core_ready" if ready else
+        "unhealthy"
+    ),
+}, indent=2))
+PY
+  exit $(( crit > 0 ? 1 : 0 ))
+fi
+
 sec "Summary"
 if [[ $crit -eq 0 && $miss -eq 0 ]]; then
   printf "  ${c_g}${c_bold}Ready to code — everything checks out.${c_0}\n"
+  [[ $softn -gt 0 ]] && info "$softn advisory note(s) (~) — not blocking"
 elif [[ $crit -eq 0 ]]; then
   printf "  ${c_g}Core is ready.${c_0} ${c_y}$miss optional item(s) missing (see ⚠ above).${c_0}\n"
+  [[ $softn -gt 0 ]] && info "$softn advisory note(s) (~) — latency/network, not install gaps"
   tip "full install tips above · or: bash \"$REPO/install.sh\" · oc fix · oc setup"
 else
-  printf "  ${c_r}$crit critical issue(s)${c_0} + ${c_y}$miss optional${c_0} — fix ✗ items before coding.\n"
+  printf "  ${c_r}$crit critical issue(s)${c_0}"
+  [[ $miss -gt 0 ]] && printf " + ${c_y}$miss optional${c_0}"
+  [[ $softn -gt 0 ]] && printf " · ${c_dim}$softn advisory${c_0}"
+  printf " — fix ✗ items before coding.\n"
   tip "bash \"$REPO/install.sh\"   # full stack"
   tip "oc fix                     # colors + config footguns"
   tip "oc validate && oc doctor   # re-check"
 fi
-echo ""
+[[ $DO_JSON -eq 0 ]] && echo ""
 exit $(( crit > 0 ? 1 : 0 ))

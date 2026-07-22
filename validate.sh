@@ -264,6 +264,21 @@ if omo:
     else:
         ok("disabled_skills blocks OmO runtime skills.urls hang")
 
+    # Local skills that replace OmO security-* (fenced under skills/)
+    for skill_name in ("content-aware-recon", "content-aware-audit"):
+        skill_md = os.path.join(repo, "skills", skill_name, "SKILL.md")
+        if not os.path.isfile(skill_md):
+            err(
+                f"skills/{skill_name}/SKILL.md missing "
+                "(replaces disabled OmO security-* skills)"
+            )
+        else:
+            head = open(skill_md, encoding="utf-8").read(2000)
+            if f"name: {skill_name}" not in head and f'name: "{skill_name}"' not in head:
+                warn(f"skills/{skill_name}/SKILL.md should set frontmatter name: {skill_name}")
+            else:
+                ok(f"local skill {skill_name}")
+
     # CodeGraph: must stay enabled; install_dir must not point at the broken cache path
     # (OmO does not expand ~ in provisionedBinFromInstallDir — default ~/.omo/codegraph).
     cg = omo.get("codegraph") or {}

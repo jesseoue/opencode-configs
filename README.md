@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.27** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.28** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.27` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
+| **Pins** | OpenConfig `1.5.28` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -67,6 +67,7 @@ oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
 oc test                # smoke + idempotency
 oc doctor              # full readiness
+oc doctor --quick --json   # machine summary (heal/check tooling)
 ```
 
 Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
