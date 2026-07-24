@@ -367,53 +367,23 @@ fi
 
 # ─── 8b. Plugin platform binary ────────────────────────────────
 # The oh-my-openagent plugin needs a platform-specific optionalDependency.
-# Pre-install it into OpenCode's plugin cache so runtime resolution is instant.
-# bunfig.toml trusts lifecycle scripts, but do NOT run postinstall.mjs here —
-# it calls invalidateOpenCodePluginCache() and deletes this cache directory.
-if ! $CHECK_ONLY; then
-  # Derive version from the pinned plugin in opencode.json (e.g. oh-my-openagent@4.16.3)
-  PLUGIN_VER="$(python3 -c "import json; p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my-openagent@' in x]; print(p[0].split('@',1)[1] if p else '')" 2>/dev/null || true)"
-  if [[ -z "$PLUGIN_VER" ]]; then
-    PLUGIN_VER="$(npm view oh-my-openagent version 2>/dev/null || echo "4.19.1")"
+# Pre-install into OpenCode's plugin cache so agents (sisyphus/prometheus/…) resolve.
+# Do NOT run postinstall.mjs — it calls invalidateOpenCodePluginCache() and deletes the cache.
+if $CHECK_ONLY; then
+  if oc_omo_plugin_cache_ok; then
+    ok "plugin cache healthy ($(python3 -c "import json; p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my-openagent@' in x]; print(p[0] if p else '?')" 2>/dev/null))"
+  else
+    opt "plugin cache missing/broken — agents will not load until: oc setup"
   fi
-  PLUGIN_CACHE="$HOME/.cache/opencode/packages/oh-my-openagent@${PLUGIN_VER}"
-  PLATFORM_PKG=""
-  
-  # Detect platform
-  case "$(uname -s)-$(uname -m)" in
-    Darwin-arm64)  PLATFORM_PKG="oh-my-openagent-darwin-arm64" ;;
-    Darwin-x86_64) PLATFORM_PKG="oh-my-openagent-darwin-x64" ;;
-    Linux-x86_64)  PLATFORM_PKG="oh-my-openagent-linux-x64" ;;
-    Linux-aarch64) PLATFORM_PKG="oh-my-openagent-linux-arm64" ;;
-  esac
-  
-  if [[ -n "$PLATFORM_PKG" ]]; then
-    if [[ -d "$PLUGIN_CACHE/node_modules/$PLATFORM_PKG" ]]; then
-      ok "platform binary present ($PLUGIN_VER)"
+else
+  if oc_omo_plugin_cache_ok; then
+    ok "plugin cache healthy"
+  else
+    info "Installing OmO plugin cache (oh-my-openagent + platform binary)…"
+    if oc_ensure_omo_plugin_cache; then
+      ok "plugin + platform binary installed"
     else
-      # Cache missing or binary not installed — pre-install both packages from npm registry
-      info "Installing from npm: oh-my-openagent@$PLUGIN_VER + $PLATFORM_PKG@$PLUGIN_VER → $PLUGIN_CACHE"
-      mkdir -p "$PLUGIN_CACHE"
-      cat > "$PLUGIN_CACHE/package.json" <<PKGJSON
-{
-  "name": "oh-my-openagent-cache",
-  "private": true,
-  "dependencies": {
-    "oh-my-openagent": "$PLUGIN_VER",
-    "$PLATFORM_PKG": "$PLUGIN_VER"
-  }
-}
-PKGJSON
-      cp "$REPO/bunfig.toml" "$PLUGIN_CACHE/bunfig.toml" 2>/dev/null
-      ( cd "$PLUGIN_CACHE" && bun install 2>/dev/null ) && ok "plugin + platform binary installed ($PLUGIN_VER)" || opt "install failed (opencode will use runtime fallback)"
-      # NOTE: Do NOT run postinstall.mjs from the cache — it calls invalidateOpenCodePluginCache()
-      # which deletes the cache directory itself. Just verify the binary exists.
-      if [[ -f "$PLUGIN_CACHE/node_modules/$PLATFORM_PKG/bin/oh-my-openagent.js" ]] \
-        || [[ -f "$PLUGIN_CACHE/node_modules/$PLATFORM_PKG/bin/oh-my-opencode.js" ]]; then
-        ok "platform binary verified"
-      else
-        opt "platform binary not found after install (opencode will use runtime fallback)"
-      fi
+      opt "plugin cache install failed — agents will NOT load (retry: oc setup · oc heal)"
     fi
   fi
 fi

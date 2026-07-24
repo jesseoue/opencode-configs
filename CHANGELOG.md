@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.33] — 2026-07-24
+
+### Fix — empty OmO plugin cache wiped agents
+- Root cause: `~/.cache/opencode/packages/oh-my-openagent@4.19.1` was empty after pin bump, so Prometheus / Sisyphus / Atlas / etc. silently failed to load
+- Restored plugin + platform binary via bun install into the OpenCode cache
+- Add `oc_ensure_omo_plugin_cache` / `oc_omo_plugin_cache_ok` in `lib/common.sh`
+- `oc setup` and `oc heal` now reinstall the cache when empty/broken
+- Doctor checks for `node_modules/oh-my-openagent/package.json` (not just a non-empty dir)
+
 ## [1.5.32] — 2026-07-23
 
 ### OmO 4.19.1 pin bump

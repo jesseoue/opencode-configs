@@ -1642,6 +1642,82 @@ sys.exit(0)
 PY
 }
 
+# OmO plugin cache path for a pin like oh-my-openagent@4.19.1
+oc_omo_plugin_cache_dir() {
+  local pin="${1:-}"
+  if [[ -z "$pin" ]]; then
+    pin="$(python3 -c "import json,os; p=os.path.join('${REPO:-.}','opencode.json'); xs=[x for x in json.load(open(p)).get('plugin',[]) if 'oh-my-openagent@' in x]; print(xs[0] if xs else '')" 2>/dev/null || true)"
+  fi
+  [[ -n "$pin" ]] || return 1
+  printf '%s\n' "${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/$pin"
+}
+
+# True when the pin's cache has a real oh-my-openagent install (not an empty dir).
+oc_omo_plugin_cache_ok() {
+  local pin="${1:-}" cdir pkg
+  cdir="$(oc_omo_plugin_cache_dir "$pin")" || return 1
+  pkg="$cdir/node_modules/oh-my-openagent/package.json"
+  [[ -f "$pkg" ]]
+}
+
+# Pre-install oh-my-openagent + platform binary into OpenCode's plugin cache.
+# Do NOT run postinstall.mjs — it calls invalidateOpenCodePluginCache() and deletes the dir.
+# Returns 0 when cache is healthy after (or already was).
+oc_ensure_omo_plugin_cache() {
+  local pin ver cdir platform_pkg uname_s uname_m
+  pin="$(python3 -c "import json,os; p=os.path.join('${REPO:-.}','opencode.json'); xs=[x for x in json.load(open(p)).get('plugin',[]) if 'oh-my-openagent@' in x]; print(xs[0] if xs else '')" 2>/dev/null || true)"
+  if [[ -z "$pin" ]]; then
+    echo "oc: no oh-my-openagent@… pin in opencode.json" >&2
+    return 1
+  fi
+  ver="${pin#oh-my-openagent@}"
+  cdir="$(oc_omo_plugin_cache_dir "$pin")" || return 1
+  if oc_omo_plugin_cache_ok "$pin"; then
+    return 0
+  fi
+  if ! command -v bun >/dev/null 2>&1; then
+    echo "oc: bun required to install plugin cache for $pin" >&2
+    return 1
+  fi
+  uname_s="$(uname -s)"
+  uname_m="$(uname -m)"
+  case "${uname_s}-${uname_m}" in
+    Darwin-arm64)  platform_pkg="oh-my-openagent-darwin-arm64" ;;
+    Darwin-x86_64) platform_pkg="oh-my-openagent-darwin-x64" ;;
+    Linux-x86_64)  platform_pkg="oh-my-openagent-linux-x64" ;;
+    Linux-aarch64) platform_pkg="oh-my-openagent-linux-arm64" ;;
+    *)
+      echo "oc: unsupported platform ${uname_s}-${uname_m} for OmO binary" >&2
+      return 1
+      ;;
+  esac
+  # Wipe empty/partial cache so bun install is clean
+  rm -rf "$cdir"
+  mkdir -p "$cdir"
+  cat > "$cdir/package.json" <<PKGJSON
+{
+  "name": "oh-my-openagent-cache",
+  "private": true,
+  "dependencies": {
+    "oh-my-openagent": "$ver",
+    "$platform_pkg": "$ver"
+  }
+}
+PKGJSON
+  if [[ -n "${REPO:-}" && -f "$REPO/bunfig.toml" ]]; then
+    cp "$REPO/bunfig.toml" "$cdir/bunfig.toml"
+  fi
+  if ! ( cd "$cdir" && bun install ); then
+    echo "oc: bun install failed for $pin → $cdir" >&2
+    return 1
+  fi
+  if ! oc_omo_plugin_cache_ok "$pin"; then
+    echo "oc: plugin cache still missing node_modules/oh-my-openagent after install ($pin)" >&2
+    return 1
+  fi
+  return 0
+}
+
 # Write fingerprint into signature.json (maintainer). Prints new fingerprint.
 oc_signature_refresh() {
   local root="${1:-${REPO:?}}"
