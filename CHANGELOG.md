@@ -2,6 +2,22 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.31] — 2026-07-23
+
+### Live provider re-rank + new models
+- Re-rank GLM 5.2 Exacto `provider.order` from live endpoints (Alibaba 73 thr promoted above Friendli 72)
+- Re-rank DeepSeek V4 Flash Nitro `provider.order` — Fireworks (79 thr, #1) promoted to #2 behind DeepSeek official
+- Re-rank DeepSeek V4 Pro Exacto `provider.order` — Novita/SiliconFlow (55 thr each) promoted above Baidu/Alibaba
+- Add `openai/gpt-5.6-luna` to whitelist + OpenRouter/OpenAI model defs — fast GPT lane ($1/$6, 145 thr)
+- Add `openai/gpt-5.6-sol-pro` to whitelist + model defs — higher-quality reasoning mode, wired into Hephaestus/Oracle/Momus/ultrabrain/arch-review fallbacks
+- Add `anthropic/claude-opus-4.7` to whitelist + model def — next-gen Opus for async agents ($5/$25), wired into Momus/ultrabrain/arch-review/unspecified-high fallbacks
+- Add new models to `modelConcurrency` map (Luna=4, Sol Pro=3, Opus 4.7=1)
+
+### Prompt tuning
+- `prompts/core.md`: add Luna fast-lane routing note, update escalation path to Sol Pro
+- `prompts/agents/sisyphus.md`: add Sol Pro fallback note for Hephaestus, Luna for fast GPT lane
+- `AGENTS.md`: routing logic table updated with Sol Pro, Luna, Opus 4.7
+
 ## [1.5.30] — 2026-07-21
 
 ### Package pin audit

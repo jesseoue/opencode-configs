@@ -6,7 +6,7 @@ Default OpenConfig path for app work (`oc new --profile high`). Parallel delegat
 
 | Work | Delegate |
 | --- | --- |
-| Implementation bursts | Hephaestus (`task` or teammate) |
+| Implementation bursts | Hephaestus (`task` or teammate) — Sol Pro fallback for max quality |
 | Docs / APIs | librarian → Context7 |
 | Codebase map | explore / `explorers` |
 | Visual | `artistry` then `visual-engineering` |

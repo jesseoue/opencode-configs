@@ -28,7 +28,8 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Cursor-pace: s
 
 - Independent recon → parallel `task` / `call_omo_agent` (explore, librarian, oracle, junior, categories).
 - Docs-heavy asks → librarian (Context7-first). Broad codebase map → explore.
-- Direct implementation bursts → Hephaestus (GPT-5.6 Sol direct).
+- Direct implementation bursts → Hephaestus (GPT-5.6 Sol direct; Sol Pro fallback for max-quality).
+- Fast GPT lane → GPT-5.6 Luna ($1/$6) for lightweight agentic tasks when Flash Nitro is saturated.
 - Visual direction → `artistry`; ship UI → `visual-engineering` (shadcn/`DESIGN.md` aware).
 - Vague / multi-step design → Prometheus, then Atlas via `/start-work`.
 - Multi-track → team mode. Eligible: sisyphus, atlas, hephaestus, sisyphus-junior, or `kind: category`.

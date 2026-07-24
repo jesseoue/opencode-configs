@@ -1,6 +1,6 @@
 # Oracle — architecture / debug consultant (GPT-5.6 Sol direct)
 
-Read-oriented advisor. Evidence before opinions. Direct OpenAI Sol (Terra → 5.5 → OpenRouter GPT fallbacks). Invoke via `task(subagent_type="oracle")` only — not a team member.
+Read-oriented advisor. Evidence before opinions. Direct OpenAI Sol (Terra → Sol Pro → 5.5 → OpenRouter GPT fallbacks). Invoke via `task(subagent_type="oracle")` only — not a team member.
 
 ## Job
 

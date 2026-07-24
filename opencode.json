@@ -63,7 +63,9 @@
         "deepseek/deepseek-v4-pro",
         "minimax/minimax-m3",
         "openai/gpt-5.6-sol",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-luna",
         "openai/gpt-5.5",
         "google/gemini-3.1-pro-preview",
         "google/gemini-3.6-flash",
@@ -72,6 +74,7 @@
         "anthropic/claude-sonnet-5",
         "anthropic/claude-opus-4.8",
         "anthropic/claude-opus-4.8-fast",
+        "anthropic/claude-opus-4.7",
         "anthropic/claude-fable-5",
         "moonshotai/kimi-k3"
       ],
@@ -114,9 +117,9 @@
                 "baidu",
                 "cloudflare",
                 "baseten",
+                "alibaba",
                 "friendli",
                 "fireworks",
-                "alibaba",
                 "together",
                 "venice",
                 "morph",
@@ -195,12 +198,12 @@
               },
               "order": [
                 "deepseek",
+                "fireworks",
+                "novita",
                 "baidu",
                 "alibaba",
-                "novita",
-                "venice",
                 "streamlake",
-                "fireworks",
+                "venice",
                 "morph",
                 "cloudflare",
                 "wandb"
@@ -260,13 +263,13 @@
               "allow_fallbacks": true,
               "order": [
                 "deepseek",
+                "novita",
+                "siliconflow",
+                "venice",
                 "baidu",
                 "alibaba",
-                "novita",
-                "venice",
                 "gmicloud",
-                "streamlake",
-                "siliconflow"
+                "streamlake"
               ],
               "ignore": [
                 "parasail",
@@ -458,6 +461,66 @@
               "preferred_max_latency": {
                 "p50": 1.5,
                 "p90": 3
+              }
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "anthropic/claude-opus-4.7": {
+          "id": "anthropic/claude-opus-4.7",
+          "name": "Claude Opus 4.7",
+          "family": "claude",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": false,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          },
+          "options": {
+            "reasoning": {
+              "effort": "high"
+            },
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "order": [
+                "google-vertex",
+                "anthropic",
+                "amazon-bedrock",
+                "azure"
+              ],
+              "preferred_min_throughput": {
+                "p50": 50,
+                "p90": 40
+              },
+              "preferred_max_latency": {
+                "p50": 3,
+                "p90": 6
               }
             }
           },
@@ -698,6 +761,122 @@
             },
             "reasoning": {
               "effort": "high"
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "openai/gpt-5.6-sol-pro": {
+          "id": "openai/gpt-5.6-sol-pro",
+          "name": "GPT-5.6 Sol Pro (OpenRouter)",
+          "family": "gpt",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "options": {
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "preferred_min_throughput": {
+                "p50": 25,
+                "p90": 17
+              },
+              "preferred_max_latency": {
+                "p50": 6,
+                "p90": 10
+              },
+              "order": [
+                "openai",
+                "azure"
+              ]
+            },
+            "reasoning": {
+              "effort": "high"
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "openai/gpt-5.6-luna": {
+          "id": "openai/gpt-5.6-luna",
+          "name": "GPT-5.6 Luna (OpenRouter)",
+          "family": "gpt",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "options": {
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "preferred_min_throughput": {
+                "p50": 40,
+                "p90": 30
+              },
+              "preferred_max_latency": {
+                "p50": 3,
+                "p90": 6
+              },
+              "order": [
+                "openai",
+                "azure"
+              ]
+            },
+            "reasoning": {
+              "effort": "medium"
             }
           },
           "variants": {
@@ -1120,6 +1299,86 @@
           "options": {
             "reasoning": {
               "effort": "high"
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "gpt-5.6-sol-pro": {
+          "name": "GPT-5.6 Sol Pro (direct)",
+          "family": "gpt",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "options": {
+            "reasoning": {
+              "effort": "high"
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna (direct)",
+          "family": "gpt",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "options": {
+            "reasoning": {
+              "effort": "medium"
             }
           },
           "variants": {
