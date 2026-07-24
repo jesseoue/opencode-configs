@@ -374,7 +374,7 @@ if ! $CHECK_ONLY; then
   # Derive version from the pinned plugin in opencode.json (e.g. oh-my-openagent@4.16.3)
   PLUGIN_VER="$(python3 -c "import json; p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my-openagent@' in x]; print(p[0].split('@',1)[1] if p else '')" 2>/dev/null || true)"
   if [[ -z "$PLUGIN_VER" ]]; then
-    PLUGIN_VER="$(npm view oh-my-openagent version 2>/dev/null || echo "4.19.0")"
+    PLUGIN_VER="$(npm view oh-my-openagent version 2>/dev/null || echo "4.19.1")"
   fi
   PLUGIN_CACHE="$HOME/.cache/opencode/packages/oh-my-openagent@${PLUGIN_VER}"
   PLATFORM_PKG=""

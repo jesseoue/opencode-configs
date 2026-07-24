@@ -24,7 +24,7 @@
     "prompts/goal.md"
   ],
   "plugin": [
-    "oh-my-openagent@4.19.0"
+    "oh-my-openagent@4.19.1"
   ],
   "skills": {
     "paths": [

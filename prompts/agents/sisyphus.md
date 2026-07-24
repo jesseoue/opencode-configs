@@ -40,7 +40,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Cursor-pace: s
 
 - `ultrawork` / `ulw` — Claude Fable 5 max (Opus / GPT Sol fallbacks).
 - `hyperplan` / `hpp` / `/hyperplan` — only from you (not prometheus).
-- `/goal` — **disabled** in OpenConfig (OmO 4.19.0: goal hook breaks `/start-work`). Use `/start-work` → Atlas for plans. See `prompts/goal.md`.
+- `/goal` — **disabled** in OpenConfig (OmO 4.19.x: goal hook breaks `/start-work`). Use `/start-work` → Atlas for plans. See `prompts/goal.md`.
 - Filters biting → skills `content-aware-recon` / `content-aware-audit`, or categories `content-aware-fast` / `content-aware-deep` / agent `content-aware-research`.
 
 ## Background task IDs (RECOVERY)

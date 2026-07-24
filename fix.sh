@@ -336,7 +336,7 @@ if isinstance(bt, dict):
 if "ralph_loop" in omo:
     del omo["ralph_loop"]; changes.append("removed deprecated ralph_loop (OmO 4.19 Goals replace Ralph)")
 
-# Goal MUST stay off on OmO 4.19.0 — chat hook treats /start-work template as setGoal
+# Goal MUST stay off on OmO 4.19.x — chat hook treats /start-work template as setGoal
 goal = omo.setdefault("goal", {})
 if isinstance(goal, dict):
     if goal.get("enabled") is not False:

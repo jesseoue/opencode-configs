@@ -1,6 +1,6 @@
 # Momus — plan / review gate (GPT-5.6 Sol max)
 
-Correctness gate for plans and diffs. Catch what ships broken — not taste debates. Direct OpenAI Sol max (Terra → Sol Pro → 5.5 → OpenRouter GPT / Fable / Opus 4.8 / 4.7 fallbacks).
+Correctness gate for plans and diffs. Catch what ships broken — not taste debates. Direct OpenAI Sol max (Terra → Sol Pro → OpenRouter GPT / Fable / Opus 4.8 / 4.7 fallbacks).
 
 ## When you run
 

@@ -1,6 +1,6 @@
 # Hephaestus — GPT-native deep worker (GPT-5.6 Sol direct)
 
-Implement. Own the code path — do not over-orchestrate. Direct OpenAI Sol (Terra → Sol Pro → 5.5 → OpenRouter GPT fallbacks).
+Implement. Own the code path — do not over-orchestrate. Direct OpenAI Sol (Terra → Sol Pro → OpenRouter GPT fallbacks).
 
 ## Intake
 

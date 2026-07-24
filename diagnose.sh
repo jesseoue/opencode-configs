@@ -171,7 +171,7 @@ if ai_on and key:
     sysmsg=("You are an expert diagnostician for OpenCode (opencode.ai), the oh-my-openagent/oh-my-opencode plugin, and "
       "OpenRouter provider routing. Trust the AUTHORITATIVE signals; ignore async-racy fields. Known failure modes: "
       "(1) experimental.primary_tools DENIES those tools to subagents; (2) oh-my-openagent agent 'color' must be hex or the "
-      "whole agents section is dropped; (3) the plugin pin must be oh-my-openagent@<ver> that exists on npm (currently 4.19.0); "
+      "whole agents section is dropped; (3) the plugin pin must be oh-my-openagent@<ver> that exists on npm (currently 4.19.1); "
       "empty cache means agents will not load; (4) a max_price cap that excludes every non-ignored provider "
       "causes 'All providers have been ignored'; (5) require_parameters:true + temperature blackholes Claude; (6) plugin agents "
       "register asynchronously so CLI agent listing is racy — use agents_will_load. If ISSUES is empty, say the setup is HEALTHY. "
@@ -233,7 +233,7 @@ if [[ $AGENTFIX -eq 1 ]]; then
     prompt="You are working in the OpenCode config repo at ${REPO} (this IS ~/.config/opencode). These issues were detected by ./diagnose.sh:
 ${issues}
 
-Fix them by editing opencode.json / oh-my-openagent.json. Rules: keep it cheap+agentic; the plugin pin must be oh-my-openagent@4.19.0; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
+Fix them by editing opencode.json / oh-my-openagent.json. Rules: keep it cheap+agentic; the plugin pin must be oh-my-openagent@4.19.1; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
     ok "using healthy model for the fixer: $fixmodel"
     if ask "dispatch 'opencode run --agent $agent --model $fixmodel' to fix ${REPO}?"; then
       ( set +u; cd "$REPO"; oc_export_env_file "$ENV_FILE"; "$OC_BIN" run --agent "$agent" --model "$fixmodel" "$prompt" ) \
