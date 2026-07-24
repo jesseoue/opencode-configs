@@ -1,14 +1,14 @@
 {
   "product": "OpenConfig",
   "cli": "oc",
-  "opencode_configs": "1.5.31",
+  "opencode_configs": "1.5.32",
   "tagline": "Pinned stack for OpenCode · OpenRouter · oh-my-openagent",
   "opencode": {
     "min": "1.18.4",
     "pin_note": "CLI from opencode.ai/install; doctor warns below min"
   },
   "oh_my_openagent": {
-    "pin": "4.19.0",
+    "pin": "4.19.1",
     "schema_asset": "oh-my-opencode.schema.json"
   },
   "ghostty": {

@@ -403,9 +403,9 @@ if omo:
     dm = omo.get("default_mode") or {}
     goal_md = os.path.join(repo, "prompts", "goal.md")
     oc_instr = oc.get("instructions") or []
-    # OmO 4.19.0: goal chat hook treats /start-work's ~5541-char template as setGoal → InvalidObjectiveError
+    # OmO 4.19.x: goal chat hook treats /start-work's ~5541-char template as setGoal → InvalidObjectiveError
     if goal.get("enabled") is True:
-        err("goal.enabled=true breaks /start-work on OmO 4.19.0 — set false (see prompts/goal.md)")
+        err("goal.enabled=true breaks /start-work on OmO 4.19.x — set false (see prompts/goal.md)")
     else:
         ok("goal disabled (protects /start-work)")
     if goal.get("auto_start") is True:

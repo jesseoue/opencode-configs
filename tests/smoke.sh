@@ -89,7 +89,7 @@ for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure
   fi
 done
 
-# /goal disabled + no ralph_loop + footgun doc (OmO 4.19.0 breaks /start-work when goal is on)
+# /goal disabled + no ralph_loop + footgun doc (OmO 4.19.x breaks /start-work when goal is on)
 if [[ -f "$REPO/prompts/goal.md" ]] \
   && grep -q 'prompts/goal.md' "$REPO/opencode.json" \
   && python3 -c '

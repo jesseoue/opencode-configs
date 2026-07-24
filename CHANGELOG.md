@@ -2,6 +2,19 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.32] — 2026-07-23
+
+### OmO 4.19.1 pin bump
+- Bump `oh-my-openagent` pin 4.19.0 → 4.19.1 (stability patch: process sweep, parent-liveness watchdogs, CodeGraph 1.4.1, sharper LSP diagnostics, ulw-loop batch efficiency)
+- Update schema URL to v4.19.1, plugin pin in `opencode.json` / `tui.json`, `setup.sh` fallback
+- Update all 4.19.0 goal-footgun references to 4.19.x (bug persists in 4.19.1)
+
+### gpt-5.5 fallback purge (align with OmO 4.19.1)
+- Remove `openai/gpt-5.5` and `openrouter/openai/gpt-5.5` from all OmO `fallback_models` arrays (Hephaestus, Oracle, Momus, ultrabrain, deep, arch-review)
+- Remove gpt-5.5 from `modelConcurrency` map
+- Update agent prompts (hephaestus, oracle, momus, fast profile) to drop 5.5 from fallback chain descriptions
+- gpt-5.5 model definitions retained in `opencode.json` (still valid for direct use, just not a fallback rung)
+
 ## [1.5.31] — 2026-07-23
 
 ### Live provider re-rank + new models

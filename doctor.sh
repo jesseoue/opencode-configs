@@ -963,13 +963,13 @@ if "ralph_loop" in omo:
 else:
     ok("no ralph_loop (OmO 4.19 Goal replaced Ralph)")
 
-# Goal loop — DISABLED on OmO 4.19.0 (chat hook treats /start-work template as objective)
+# Goal loop — DISABLED on OmO 4.19.x (chat hook treats /start-work template as objective)
 oc = json.load(open(os.path.join(repo, "opencode.json")))
 goal_md = os.path.join(repo, "prompts", "goal.md")
 oc_instr = oc.get("instructions") or []
 dm = omo.get("default_mode") or {}
 if goal.get("enabled") is True:
-    bad("goal.enabled=true breaks /start-work on OmO 4.19.0 (5541-char template > 2000-char objective cap)")
+    bad("goal.enabled=true breaks /start-work on OmO 4.19.x (5541-char template > 2000-char objective cap)")
     tip("run: oc fix   # forces goal.enabled=false + default_mode.goal=false")
     if goal.get("auto_start") is True:
         bad("goal.auto_start=true — must be false")

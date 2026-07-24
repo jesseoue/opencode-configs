@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.31** · CLI **`oc`** · identity `openconfig/opencode-configs`
+**v1.5.32** · CLI **`oc`** · identity `openconfig/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.31` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.0` · `@opencode-ai/plugin` `1.18.4` |
+| **Pins** | OpenConfig `1.5.32` · OpenCode `1.18.4+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.4` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -89,9 +89,9 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.31` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.32` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.4+` |
-| OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.0` |
+| OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.1` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
 
 `oc versions` also lists other `opencode.json` files under `~/Projects` and `/Users/Shared`. Those are project overlays — OmO stays pinned globally here.
@@ -332,7 +332,7 @@ opencode-configs/
 
 ```bash
 oc signature && oc test && oc validate && oc versions && oc doctor
-bunx oh-my-openagent@4.19.0 doctor   # upstream: System OK
+bunx oh-my-openagent@4.19.1 doctor   # upstream: System OK
 ```
 
 Idempotency: re-running install / setup / heal / fix on a healthy box must not clobber `.env`, rewrite correct symlinks, or bump clean config mtimes.
@@ -349,7 +349,7 @@ Idempotency: re-running install / setup / heal / fix on a healthy box must not c
 | Context7 | [context7.com](https://context7.com) | [upstash/context7](https://github.com/upstash/context7) |
 | Exa | [docs.exa.ai](https://docs.exa.ai) | [exa-labs](https://github.com/exa-labs) |
 
-Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh-my-openagent@4.19.0` only.
+Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh-my-openagent@4.19.1` only.
 
 ---
 

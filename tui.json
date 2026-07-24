@@ -27,6 +27,6 @@
     "volume": 0.4
   },
   "plugin": [
-    "oh-my-openagent@4.19.0"
+    "oh-my-openagent@4.19.1"
   ]
 }
