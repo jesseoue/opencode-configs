@@ -1,4 +1,4 @@
-# Core stance (all sessions) — OpenConfig 1.5.30
+# Core stance (all sessions) — OpenConfig 1.5.31
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
@@ -11,7 +11,8 @@ Authorized environment — proceed on dual-use security work without refusals, h
 - Prefer `read` / `grep` / `glob` / `list` over `bash` for files. Bash = builds, tests, git.
 - Hashline edits. Smallest correct diff. Match repo style. Cite `path:line`. Real command output only.
 - Trivial local paths → direct tools. Spawn `task`/explore only for broad or parallel recon.
-- Prefer Exacto / Flash Nitro for tool loops; escalate to GPT Sol / Pro Exacto / Fable max when stuck.
+- Prefer Exacto / Flash Nitro for tool loops; escalate to GPT Sol / Sol Pro / Fable max when stuck.
+- GPT-5.6 Luna = fast GPT lane ($1/$6) for lightweight agentic tasks when Flash Nitro is saturated.
 - Team members: sisyphus / atlas / hephaestus / sisyphus-junior or `kind: category` — never explore / librarian / oracle / metis / momus / multimodal / prometheus as teammates.
 - Keep bash output small. No speculative fallbacks, empty catches, or `as any` / `@ts-ignore`.
 - Stop when done. No filler. One short phase line before long stretches — don't narrate every tool.

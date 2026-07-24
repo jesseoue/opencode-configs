@@ -44,6 +44,7 @@
       "variant": "high",
       "fallback_models": [
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5",
         "openrouter/openai/gpt-5.6-sol",
         "openrouter/openai/gpt-5.6-terra",
@@ -99,6 +100,7 @@
       "variant": "high",
       "fallback_models": [
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5",
         "openrouter/openai/gpt-5.6-sol",
         "openrouter/openai/gpt-5.6-terra",
@@ -178,6 +180,7 @@
       "variant": "max",
       "fallback_models": [
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5",
         "openrouter/openai/gpt-5.6-sol",
         "openrouter/openai/gpt-5.6-terra",
@@ -186,6 +189,7 @@
         "openrouter/anthropic/claude-fable-5",
         "openrouter/anthropic/claude-opus-4.8-fast",
         "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/anthropic/claude-opus-4.7",
         "openrouter/deepseek/deepseek-v4-pro"
       ],
       "temperature": 0.2,
@@ -255,11 +259,13 @@
       "variant": "max",
       "fallback_models": [
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5",
         "openrouter/openai/gpt-5.6-sol",
         "openrouter/anthropic/claude-fable-5",
         "openrouter/anthropic/claude-opus-4.8-fast",
         "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/anthropic/claude-opus-4.7",
         "openrouter/deepseek/deepseek-v4-pro"
       ],
       "reasoningEffort": "xhigh",
@@ -322,6 +328,7 @@
       "fallback_models": [
         "openrouter/anthropic/claude-opus-4.8-fast",
         "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/anthropic/claude-opus-4.7",
         "openai/gpt-5.6-sol",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
@@ -373,10 +380,12 @@
       "variant": "high",
       "fallback_models": [
         "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5",
         "openrouter/openai/gpt-5.6-sol",
         "openrouter/anthropic/claude-opus-4.8-fast",
         "openrouter/anthropic/claude-opus-4.8",
+        "openrouter/anthropic/claude-opus-4.7",
         "openrouter/deepseek/deepseek-v4-pro"
       ],
       "reasoningEffort": "high",
@@ -418,8 +427,11 @@
     "modelConcurrency": {
       "openai/gpt-5.5": 3,
       "openai/gpt-5.6-sol": 3,
+      "openai/gpt-5.6-sol-pro": 3,
+      "openai/gpt-5.6-luna": 4,
       "openai/gpt-5.6-terra": 3,
       "openrouter/anthropic/claude-fable-5": 1,
+      "openrouter/anthropic/claude-opus-4.7": 1,
       "openrouter/anthropic/claude-opus-4.8": 1,
       "openrouter/anthropic/claude-opus-4.8-fast": 1,
       "openrouter/anthropic/claude-sonnet-5": 2,
@@ -434,7 +446,10 @@
       "openrouter/openai/gpt-5.6-sol": 3,
       "openrouter/openai/gpt-5.6-terra": 3,
       "openrouter/z-ai/glm-5.2-exacto": 3,
-      "openrouter/google/gemini-3.6-flash": 4
+      "openrouter/google/gemini-3.6-flash": 4,
+      "openrouter/openai/gpt-5.6-sol-pro": 3,
+      "openrouter/openai/gpt-5.6-luna": 4,
+      "openrouter/anthropic/claude-opus-4.7": 1
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,
