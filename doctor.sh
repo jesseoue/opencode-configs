@@ -147,12 +147,17 @@ if command -v bunx >/dev/null 2>&1; then
     opt "plugin doctor: $(printf '%s' "$dout" | grep -iE 'issue' | head -1)"
   fi
 else opt "bun missing — cannot verify plugin version"; fi
-# The pin must resolve to a NON-EMPTY cache, else the plugin silently loads no agents.
+# The pin must resolve to a real install (node_modules/oh-my-openagent), else agents silently vanish.
 cdir="$HOME/.cache/opencode/packages/$pin"
 if [[ -n "$pin" ]]; then
-  if [[ -d "$cdir" && -n "$(ls -A "$cdir" 2>/dev/null)" ]]; then ok "plugin cache populated ($pin)"
-  elif [[ -d "$cdir" ]]; then bad "plugin cache EMPTY for $pin — install failed; agents will NOT load (check the pin exists on npm)"
-  else info "plugin cache not built yet for $pin (populated on first launch)"; fi
+  if [[ -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
+    ok "plugin cache populated ($pin)"
+  elif [[ -d "$cdir" ]]; then
+    bad "plugin cache EMPTY/broken for $pin — agents will NOT load (fix: oc setup · oc heal)"
+    tip "OpenCode may leave an empty ~/.cache/opencode/packages/$pin after a failed install/postinstall wipe"
+  else
+    info "plugin cache not built yet for $pin — run: oc setup  (or oc heal)"
+  fi
 fi
 # OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
 # When npm lags the CLI by a patch → WARN spam, not fatal. Align with: oc versions --fix
@@ -189,13 +194,13 @@ print('yes' if ('$default_agent' in (omo.get('agents') or {}) or '$default_agent
 " 2>/dev/null)"
   cache_ok=0
   cdir="$HOME/.cache/opencode/packages/$pin"
-  [[ -n "$pin" && -d "$cdir" && -n "$(ls -A "$cdir" 2>/dev/null)" ]] && cache_ok=1
+  [[ -n "$pin" && -f "$cdir/node_modules/oh-my-openagent/package.json" ]] && cache_ok=1
   if [[ "$defined" == "yes" && "$cache_ok" -eq 1 ]]; then
     ok "default_agent '$default_agent' is defined and its plugin is installed → will resolve"
   elif [[ "$defined" != "yes" ]]; then
     bad "default_agent '$default_agent' is not defined in oh-my-openagent.json — opencode will fall back to 'build'"
   else
-    bad "default_agent '$default_agent' defined but plugin cache empty — it will NOT load until the plugin installs"
+    bad "default_agent '$default_agent' defined but plugin cache empty — it will NOT load until: oc setup"
   fi
 fi
 

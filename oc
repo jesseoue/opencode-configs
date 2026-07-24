@@ -718,13 +718,14 @@ oc heal — Unattended self-repair for OpenConfig (idempotent)
 Probe-first — writes only when something is actually wrong:
   1. signature + locate
   2. validate → fix (if needed) → cleanup (if needed)
-  3. merge missing .env keys (never clobber values)
-  4. re-validate
-  5. if still broken → diagnose --yes --fix
+  3. OmO plugin cache reinstall if empty (agents like prometheus vanish otherwise)
+  4. merge missing .env keys (never clobber values)
+  5. re-validate
+  6. if still broken → diagnose --yes --fix
        · AI diagnosis when OPENROUTER_API_KEY is set (default)
        · --no-ai skips the model
-  6. doctor --quick (--fix only if doctor fails)
-  7. if still broken + key → AI diagnose again; --ai → agent-fix
+  7. doctor --quick (--fix only if doctor fails)
+  8. if still broken + key → AI diagnose again; --ai → agent-fix
 
 Usage:
   oc heal           Auto: structural + AI diagnose when needed (needs OpenRouter key)
@@ -820,6 +821,19 @@ HEALHELP
       printf '%s\n' "$clean_dry" | tail -5 | tee -a "$log" >/dev/null
     else
       _heal_run "3/8 cleanup --yes" "$REPO/cleanup.sh" --yes || true
+    fi
+  fi
+
+  # 3b. OmO plugin cache — empty/broken cache = agents (prometheus/sisyphus/…) vanish
+  if oc_omo_plugin_cache_ok 2>/dev/null; then
+    ok "plugin cache healthy" | tee -a "$log"
+  else
+    bad "plugin cache empty/broken — reinstalling (agents were not loading)" | tee -a "$log"
+    if _heal_run "3b/8 plugin cache install" oc_ensure_omo_plugin_cache; then
+      ok "plugin cache restored" | tee -a "$log"
+    else
+      bad "plugin cache install failed — agents will not load" | tee -a "$log"
+      rc=1
     fi
   fi
 
