@@ -2,6 +2,18 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.34] — 2026-07-25
+
+### OpenCode 1.18.5 + live provider re-rank
+- Upgrade OpenCode CLI 1.18.4 → **1.18.5** (Claude adaptive thinking, OpenAI Responses phase, MiniMax M3 thinking, grep symlink paths)
+- Align `@opencode-ai/plugin` peer 1.18.4 → **1.18.5**; bump `versions.json` floor to 1.18.5
+- OmO stays **4.19.1** (still npm + GitHub latest)
+- Re-rank OpenRouter `provider.order` from live endpoints:
+  - GLM Exacto → BaseTen / Cloudflare / Fireworks first (Baidu demoted; Friendli/Together absent — ignored)
+  - DeepSeek Flash → DeepSeek / Baidu / Alibaba / Novita (Fireworks demoted on 95% uptime)
+  - DeepSeek Pro → DeepSeek / Novita / Baidu / Alibaba (Venice demoted on 90% uptime)
+  - MiniMax M3 → MiniMax / AtlasCloud / DeepInfra first
+
 ## [1.5.33] — 2026-07-24
 
 ### Fix — empty OmO plugin cache wiped agents

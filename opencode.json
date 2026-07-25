@@ -114,18 +114,16 @@
               "data_collection": "allow",
               "allow_fallbacks": true,
               "order": [
-                "baidu",
-                "cloudflare",
                 "baseten",
-                "alibaba",
-                "friendli",
+                "cloudflare",
                 "fireworks",
-                "together",
                 "venice",
                 "morph",
-                "z-ai",
                 "streamlake",
-                "novita"
+                "z-ai",
+                "baidu",
+                "novita",
+                "alibaba"
               ],
               "ignore": [
                 "parasail",
@@ -143,7 +141,10 @@
                 "gmicloud",
                 "io-net",
                 "siliconflow",
-                "wandb"
+                "wandb",
+                "friendli",
+                "together",
+                "coreweave"
               ]
             }
           },
@@ -198,22 +199,24 @@
               },
               "order": [
                 "deepseek",
-                "fireworks",
-                "novita",
                 "baidu",
                 "alibaba",
+                "novita",
+                "fireworks",
+                "siliconflow",
                 "streamlake",
-                "venice",
-                "morph",
                 "cloudflare",
-                "wandb"
+                "morph",
+                "venice"
               ],
               "ignore": [
                 "parasail",
                 "ambient",
                 "digitalocean",
                 "akashml",
-                "io-net"
+                "io-net",
+                "atlas-cloud",
+                "wandb"
               ]
             }
           },
@@ -264,12 +267,12 @@
               "order": [
                 "deepseek",
                 "novita",
-                "siliconflow",
-                "venice",
                 "baidu",
                 "alibaba",
                 "gmicloud",
-                "streamlake"
+                "siliconflow",
+                "streamlake",
+                "venice"
               ],
               "ignore": [
                 "parasail",
@@ -283,7 +286,9 @@
                 "ambient",
                 "akashml",
                 "phala",
-                "baseten"
+                "baseten",
+                "wafer",
+                "coreweave"
               ]
             }
           },
@@ -1113,12 +1118,12 @@
               },
               "order": [
                 "minimax",
+                "atlas-cloud",
+                "deepinfra",
                 "together",
                 "novita",
-                "morph",
-                "atlas-cloud",
                 "venice",
-                "deepinfra"
+                "morph"
               ],
               "ignore": [
                 "parasail",
