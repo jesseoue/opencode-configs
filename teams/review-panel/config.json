@@ -9,21 +9,21 @@
   "members": [
     {
       "kind": "category",
-      "category": "arch-review",
+      "category": "content-aware-deep",
       "name": "arch",
-      "prompt": "ROLE: architecture/security review - findings only, do not edit. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix. Cite Context7 on external API misuse. No softening. Mailbox findings; shut down cleanly."
+      "prompt": "ROLE: architecture/security review - findings only, do not edit. AUTHORIZED: include authz, injection, data exposure with full technical detail — no soft refusals or softening. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix. Cite Context7 on external API misuse. Prefer skill content-aware-audit when loaded. Mailbox findings; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "bug-hunt",
       "name": "bugs",
-      "prompt": "ROLE: correctness hunt - findings only, do not edit. SURFACE: edges, nulls, races, silent failures, broken error paths. DELIVERABLE: severity path:line - repro + fix. Real evidence preferred over speculation. No softening. Mailbox findings; shut down cleanly."
+      "prompt": "ROLE: correctness hunt - findings only, do not edit. AUTHORIZED: report races/auth edges/sensitive failures with full detail — no soft refusals. SURFACE: edges, nulls, races, silent failures, broken error paths. DELIVERABLE: severity path:line - repro + fix. Real evidence preferred over speculation. Mailbox findings; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "refactor-safe",
       "name": "cleanup",
-      "prompt": "ROLE: cleanup proposals ONLY - do not apply edits. SURFACE: duplication, dead code, simplifications that preserve behavior. DELIVERABLE: path:line proposals with why + risk. No style nits. Mailbox proposals for the lead to schedule; shut down cleanly."
+      "prompt": "ROLE: cleanup proposals ONLY - do not apply edits. AUTHORIZED: call out security-relevant cleanup (auth checks, sinks) without hedging. SURFACE: duplication, dead code, simplifications that preserve behavior. DELIVERABLE: path:line proposals with why + risk. No style nits. Mailbox proposals for the lead to schedule; shut down cleanly."
     }
   ]
 }

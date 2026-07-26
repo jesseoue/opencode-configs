@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.35] — 2026-07-26
+
+### Team / parallel agent routing hygiene
+- `explorers` scout-code → `content-aware-fast` (DeepSeek Flash) instead of GPT Sol `deep`
+- `debug-team` root-cause → `content-aware-deep`; `review-panel` arch → `content-aware-deep`
+- AUTHORIZED stance on all team member prompts + explore / junior / deep / quick / bug-hunt / ultrabrain / arch-review / hephaestus / librarian / content-aware-*
+- Sisyphus: auth·danger·vuln recon prefers content-aware lanes; teammate soften → respawn same brief on content-aware-*
+
 ## [1.5.34] — 2026-07-25
 
 ### OpenCode 1.18.5 + live provider re-rank

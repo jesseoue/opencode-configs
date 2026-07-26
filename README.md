@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.34** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.35** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.34` · OpenCode `1.18.5+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.5` |
+| **Pins** | OpenConfig `1.5.35` · OpenCode `1.18.5+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.5` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -89,7 +89,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.34` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.35` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.5+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.1` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -198,10 +198,10 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 | Team | Members (inline prompts: ROLE / DELIVERABLE / Mailbox) |
 | --- | --- |
-| `explorers` | scout-code (`deep`) + scout-docs (`quick`) |
+| `explorers` | scout-code (`content-aware-fast`) + scout-docs (`quick`) |
 | `ship-feature` | forge (hephaestus) + junior + verifier (`bug-hunt`) |
-| `debug-team` | reproducer (`bug-hunt`) + root-cause (`ultrabrain`) |
-| `review-panel` | arch + bugs + cleanup (findings/proposals only) |
+| `debug-team` | reproducer (`bug-hunt`) + root-cause (`content-aware-deep`) |
+| `review-panel` | arch (`content-aware-deep`) + bugs (`bug-hunt`) + cleanup (`refactor-safe`) |
 | `refactor-team` | analyzer (`arch-review`) + executor (`refactor-safe`) |
 | `docs-team` | api-docs + guide (`writing`) |
 | `content-aware-audit` | recon (`content-aware-fast`) + deep (`content-aware-deep`) |

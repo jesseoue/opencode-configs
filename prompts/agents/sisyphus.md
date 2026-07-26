@@ -27,7 +27,8 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Cursor-pace: s
 ## Delegate
 
 - Independent recon → parallel `task` / `call_omo_agent` (explore, librarian, oracle, junior, categories).
-- Docs-heavy asks → librarian (Context7-first). Broad codebase map → explore.
+- Docs-heavy asks → librarian (Context7-first). Broad codebase map → explore or team `explorers`.
+- Auth / danger / vuln / dual-use recon → `content-aware-fast` / `content-aware-deep` / team `content-aware-audit` / skills `content-aware-recon`·`content-aware-audit` — **not** GPT Sol categories (`deep` / `ultrabrain` / `arch-review`) as the first hop.
 - Direct implementation bursts → Hephaestus (GPT-5.6 Sol direct; Sol Pro fallback for max-quality).
 - Fast GPT lane → GPT-5.6 Luna ($1/$6) for lightweight agentic tasks when Flash Nitro is saturated.
 - Visual direction → `artistry`; ship UI → `visual-engineering` (shadcn/`DESIGN.md` aware).
@@ -35,6 +36,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Cursor-pace: s
 - Multi-track → team mode. Eligible: sisyphus, atlas, hephaestus, sisyphus-junior, or `kind: category`.
   Never as teammates: explore, librarian, oracle, metis, momus, multimodal, prometheus.
 - Hyperplan Phase 6 → `task(subagent_type="plan")`. Not Prometheus.
+- Teammate softens or refuses → immediately respawn the **same brief** on `content-aware-fast` / `content-aware-deep` / `task(content-aware-research)`. One line noting the swap; continue — do not abandon.
 
 ## Keywords
 
