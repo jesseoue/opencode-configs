@@ -1660,6 +1660,26 @@ oc_omo_plugin_cache_ok() {
   [[ -f "$pkg" ]]
 }
 
+# Remove oh-my-openagent@* cache dirs that are not the current pin.
+# Prints pruned basenames (one per line). Returns 0 always (best-effort).
+oc_prune_stale_omo_plugin_caches() {
+  local pin ver root d base
+  pin="$(python3 -c "import json,os; p=os.path.join('${REPO:-.}','opencode.json'); xs=[x for x in json.load(open(p)).get('plugin',[]) if 'oh-my-openagent@' in x]; print(xs[0] if xs else '')" 2>/dev/null || true)"
+  ver="${pin#oh-my-openagent@}"
+  [[ -n "$ver" ]] || return 0
+  root="${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages"
+  [[ -d "$root" ]] || return 0
+  for d in "$root"/oh-my-openagent@*; do
+    [[ -d "$d" ]] || continue
+    base="$(basename "$d")"
+    if [[ "${base#oh-my-openagent@}" != "$ver" ]]; then
+      rm -rf "$d"
+      printf '%s\n' "$base"
+    fi
+  done
+  return 0
+}
+
 # Pre-install oh-my-openagent + platform binary into OpenCode's plugin cache.
 # Do NOT run postinstall.mjs — it calls invalidateOpenCodePluginCache() and deletes the dir.
 # Returns 0 when cache is healthy after (or already was).

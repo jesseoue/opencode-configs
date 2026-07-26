@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.36] — 2026-07-26
+
+### Doctor harden
+- OmO plugin: verify pin-cache `package.json` version; detect stale sibling caches that make `bunx doctor` false-report “outdated”
+- `oc doctor --fix` / `oc versions --fix`: prune stale OmO caches + ensure pin cache + align `@opencode-ai/plugin` peer
+- `modelConcurrency` orphans → soft advisory; whitelist + `openai/X`↔`openrouter/openai/X` aliases count as covered
+- Runtime log: suppress historical `@opencode-ai/plugin` npm-miss when peer matches CLI; tip prettier/`BUN_BE_BUN` formatter noise
+- `oc_prune_stale_omo_plugin_caches` helper in `lib/common.sh`
+
 ## [1.5.35] — 2026-07-26
 
 ### Team / parallel agent routing hygiene

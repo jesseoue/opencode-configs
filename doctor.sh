@@ -137,27 +137,77 @@ else opt "validate.sh missing"; fi
 # ─── Plugin ──────────────────────────────────────────────────────────
 sec "oh-my-openagent plugin"
 pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null)"
-if command -v bunx >/dev/null 2>&1; then
-  dout="$(bunx "${pin:-oh-my-openagent@latest}" doctor 2>/dev/null)"
-  if printf '%s' "$dout" | grep -q "System OK"; then
-    ok "plugin doctor: $(printf '%s' "$dout" | grep -iE 'System OK' | head -1 | sed 's/^[^A-Za-z]*//')"
-  elif printf '%s' "$dout" | grep -qi "outdated"; then
-    info "plugin doctor: reports outdated — check npm view oh-my-openagent version vs pin $pin"
-  else
-    opt "plugin doctor: $(printf '%s' "$dout" | grep -iE 'issue' | head -1)"
-  fi
-else opt "bun missing — cannot verify plugin version"; fi
+pin_ver="${pin##*@}"
 # The pin must resolve to a real install (node_modules/oh-my-openagent), else agents silently vanish.
-cdir="$HOME/.cache/opencode/packages/$pin"
+cdir="${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/$pin"
+_cache_ver=""
+_stale_caches=""
 if [[ -n "$pin" ]]; then
   if [[ -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
-    ok "plugin cache populated ($pin)"
+    _cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
+    if [[ -n "$_cache_ver" && -n "$pin_ver" && "$_cache_ver" != "$pin_ver" ]]; then
+      bad "plugin cache $pin has package version $_cache_ver (want $pin_ver) — agents may load wrong OmO"
+      tip "fix: rm -rf \"$cdir\" && oc setup   # or: oc heal"
+    else
+      ok "plugin cache populated ($pin → v${_cache_ver:-?})"
+    fi
   elif [[ -d "$cdir" ]]; then
     bad "plugin cache EMPTY/broken for $pin — agents will NOT load (fix: oc setup · oc heal)"
     tip "OpenCode may leave an empty ~/.cache/opencode/packages/$pin after a failed install/postinstall wipe"
   else
     info "plugin cache not built yet for $pin — run: oc setup  (or oc heal)"
   fi
+  # Sibling caches confuse bunx doctor ("Loaded 4.19.0" while pin is 4.19.1)
+  _stale_caches="$(python3 - "$pin_ver" <<'PY' 2>/dev/null || true
+import os, sys
+want = sys.argv[1]
+root = os.path.join(os.path.expanduser(os.environ.get("XDG_CACHE_HOME") or "~/.cache"), "opencode", "packages")
+stale = []
+if os.path.isdir(root):
+    for name in sorted(os.listdir(root)):
+        if not name.startswith("oh-my-openagent@"):
+            continue
+        ver = name.split("@", 1)[-1]
+        if want and ver != want:
+            stale.append(name)
+print(",".join(stale))
+PY
+)"
+  if [[ -n "$_stale_caches" ]]; then
+    soft "stale OmO plugin cache(s): ${_stale_caches//,/, } — bunx doctor may report 'outdated' falsely"
+    tip "prune: oc cleanup --yes   # keeps only $pin"
+  fi
+fi
+# bunx doctor: trust System OK; interpret "outdated" against pin cache + registry (not npm CLI cache)
+if command -v bunx >/dev/null 2>&1 && [[ -n "$pin" ]]; then
+  dout="$(bunx "$pin" doctor 2>/dev/null)"
+  if printf '%s' "$dout" | grep -q "System OK"; then
+    ok "plugin doctor: $(printf '%s' "$dout" | grep -iE 'System OK' | head -1 | sed 's/^[^A-Za-z]*//')"
+  elif printf '%s' "$dout" | grep -qi "outdated\|Loaded plugin is outdated"; then
+    _loaded="$(printf '%s' "$dout" | sed -nE 's/.*Loaded ([0-9][0-9.]*).*/\1/p' | head -1)"
+    _latest="$(printf '%s' "$dout" | sed -nE 's/.*[Ll]atest ([0-9][0-9.]*).*/\1/p' | head -1)"
+    if [[ -n "$_cache_ver" && -n "$pin_ver" && "$_cache_ver" == "$pin_ver" ]]; then
+      if [[ -n "$_latest" && "$_latest" != "$pin_ver" ]]; then
+        soft "plugin pin $pin_ver behind npm latest ${_latest} — bump versions.json + opencode.json together"
+        tip "after bump: oc setup && oc cleanup --yes && oc versions"
+      elif [[ -n "$_stale_caches" ]]; then
+        info "plugin doctor 'outdated' is stale-cache noise (pin cache is v$pin_ver; bunx saw ${_loaded:-old})"
+      else
+        info "plugin doctor reported outdated but pin cache is v$pin_ver — ignore or re-run after oc cleanup"
+      fi
+    elif [[ -n "$_loaded" && -n "$pin_ver" && "$_loaded" != "$pin_ver" ]]; then
+      opt "plugin doctor loaded v$_loaded but pin is $pin_ver — refresh cache: oc setup · oc cleanup --yes"
+    else
+      soft "plugin doctor: outdated report (pin=$pin_ver cache=${_cache_ver:-?} loaded=${_loaded:-?})"
+    fi
+    unset _loaded _latest
+  else
+    opt "plugin doctor: $(printf '%s' "$dout" | grep -iE 'issue' | head -1 | cut -c1-100)"
+  fi
+elif [[ -z "$pin" ]]; then
+  bad "no oh-my-openagent@… pin in opencode.json"
+else
+  opt "bun missing — cannot verify plugin version"
 fi
 # OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
 # When npm lags the CLI by a patch → WARN spam, not fatal. Align with: oc versions --fix
@@ -170,12 +220,15 @@ d=json.load(open(p)).get('dependencies') or {}
 print(d.get('@opencode-ai/plugin') or '')
 " 2>/dev/null || true)"
 if [[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" != "$_plugin_pin" ]]; then
-  info "@opencode-ai/plugin npm pin $_plugin_pin ≠ CLI $_cli_ver (known lag — OK if OmO cache populated)"
-  tip "log may show 'No matching version found for @opencode-ai/plugin@$_cli_ver' — scrub config package.json with oc cleanup if it appears"
+  soft "@opencode-ai/plugin npm pin $_plugin_pin ≠ CLI $_cli_ver (known lag — OK if OmO cache populated)"
+  tip "align: oc versions --fix   # or wait for npm; scrub config package.json with oc cleanup if it appears there"
 elif [[ -n "$_cli_ver" && -n "$_plugin_pin" ]]; then
   ok "@opencode-ai/plugin $_plugin_pin matches OpenCode CLI"
 fi
-unset _cli_ver _plugin_pin
+# Export for runtime-log section (suppress historical npm-miss when peer is aligned)
+OC_DOCTOR_PLUGIN_PEER_OK=0
+[[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" == "$_plugin_pin" ]] && OC_DOCTOR_PLUGIN_PEER_OK=1
+unset _cli_ver _plugin_pin _cache_ver _stale_caches pin_ver
 
 # ─── default_agent will resolve (static: defined in config + cache populated) ──
 # Note: `opencode agent list` registers plugin agents lazily/async and is racy,
@@ -745,15 +798,24 @@ if [[ -f "$LOG" ]]; then
       info "invented-task_id loop seen ($loop hits) — an agent used a label as task_id, not a ses_ id."
       tip "Sisyphus RECOVERY forbids inventing task_id; if it recurs, harden the offending worker prompt"
     fi
-    fmt_hits="$(printf '%s\n' "$tailn" | grep -c 'failed to format file' 2>/dev/null || true)"
+    fmt_hits="$(printf '%s\n' "$tailn" | grep -cE 'failed to format file|failed command=.*prettier' 2>/dev/null || true)"
+    bun_be="$(printf '%s\n' "$tailn" | grep -c 'BUN_BE_BUN' 2>/dev/null || true)"
     if [[ "${fmt_hits:-0}" -gt 5 ]]; then
-      tip "formatter noise (${fmt_hits} hits) — ensure prettier/ruff on PATH (Formatters section) or disable unused formatters"
+      soft "formatter noise (${fmt_hits} hits in log) — prettier/ruff PATH or formatter command env"
+      tip "ensure prettier + ruff on PATH; if BUN_BE_BUN appears, launch via oc launch (not raw bun-wrapped prettier)"
+    elif [[ "${bun_be:-0}" -gt 0 && "${fmt_hits:-0}" -gt 0 ]]; then
+      soft "prettier formatter failed with BUN_BE_BUN in log — use system prettier on PATH"
     fi
   fi
   # WARN signatures that matter for OpenConfig footguns
   plugin_miss="$(printf '%s\n' "$tailn" | grep -c 'No matching version found for @opencode-ai/plugin@' 2>/dev/null || true)"
   if [[ "${plugin_miss:-0}" -gt 0 ]]; then
-    info "recent @opencode-ai/plugin npm miss ($plugin_miss WARN) — CLI ahead of registry; harmless if OmO cache populated"
+    if [[ "${OC_DOCTOR_PLUGIN_PEER_OK:-0}" -eq 1 ]]; then
+      info "stale @opencode-ai/plugin npm-miss WARNs in log ($plugin_miss) — peer now matches CLI; ignore"
+    else
+      soft "recent @opencode-ai/plugin npm miss ($plugin_miss WARN) — CLI ahead of registry"
+      tip "align peer: oc versions --fix   # harmless if OmO cache populated"
+    fi
   fi
   goal_boom="$(printf '%s\n' "$tailn" | grep -c 'InvalidObjectiveError' 2>/dev/null || true)"
   if [[ "${goal_boom:-0}" -gt 0 ]]; then
@@ -902,6 +964,7 @@ conc_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
 import json, os, sys
 repo = sys.argv[1]
 omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
+oc = json.load(open(os.path.join(repo, "opencode.json")))
 bt = omo.get("background_task") or {}
 pc = bt.get("providerConcurrency") or {}
 mc = bt.get("modelConcurrency") or {}
@@ -912,6 +975,7 @@ exp = omo.get("experimental") or {}
 def bad(m): print("BAD|" + m)
 def ok(m): print("OK|" + m)
 def opt(m): print("OPT|" + m)
+def soft(m): print("SOFT|" + m)
 def tip(m): print("TIP|" + m)
 
 dc = bt.get("defaultConcurrency")
@@ -931,7 +995,21 @@ for prov, cap in (("openrouter", 6), ("openai", 4), ("anthropic", 2)):
     else:
         ok("providerConcurrency.%s=%s" % (prov, v))
 
-# Every referenced model should have a modelConcurrency entry
+# Referenced models = agents/categories (+fallbacks) + OpenCode whitelist.
+# Aliases: openai/X ↔ openrouter/openai/X (both keys are intentional for dual lane).
+def aliases(mid):
+    out = {mid}
+    if mid.startswith("openrouter/"):
+        bare = mid[len("openrouter/"):]
+        out.add(bare)
+        if bare.startswith("openai/"):
+            out.add(bare)
+    elif mid.startswith("openai/"):
+        out.add("openrouter/" + mid)
+    elif "/" in mid:
+        out.add("openrouter/" + mid)
+    return out
+
 ids = set()
 for section in ("agents", "categories"):
     for cfg in (omo.get(section) or {}).values():
@@ -941,8 +1019,19 @@ for section in ("agents", "categories"):
             for fb in cfg.get("fallback_models") or cfg.get("fallbacks") or []:
                 if isinstance(fb, str): ids.add(fb)
                 elif isinstance(fb, dict) and isinstance(fb.get("model"), str): ids.add(fb["model"])
-missing_mc = sorted(i for i in ids if i not in mc)
-orphan_mc = sorted(k for k in mc if k not in ids)
+try:
+    oc_wl = ((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist") or []
+    for w in oc_wl:
+        if isinstance(w, str):
+            ids.add(w)
+except Exception:
+    pass
+covered = set()
+for mid in ids:
+    covered |= aliases(mid)
+mc_keys = set(mc)
+missing_mc = sorted(i for i in ids if not (aliases(i) & mc_keys))
+orphan_mc = sorted(k for k in mc if k not in covered)
 if missing_mc:
     shown = ", ".join(missing_mc[:6]) + ("…" if len(missing_mc) > 6 else "")
     opt("modelConcurrency missing for: %s" % shown)
@@ -950,7 +1039,8 @@ else:
     ok("modelConcurrency covers %d referenced models" % len(ids))
 if orphan_mc:
     shown = ", ".join(orphan_mc[:4]) + ("…" if len(orphan_mc) > 4 else "")
-    opt("modelConcurrency orphans (unused): %s" % shown)
+    soft("modelConcurrency spare keys (not agent/whitelist-referenced): %s" % shown)
+    tip("safe if intentional dual-lane caps; remove with oc fix only when pruning unused models")
 
 mp = tm.get("max_parallel_members")
 mm = tm.get("max_members")
@@ -969,7 +1059,6 @@ else:
     ok("no ralph_loop (OmO 4.19 Goal replaced Ralph)")
 
 # Goal loop — DISABLED on OmO 4.19.x (chat hook treats /start-work template as objective)
-oc = json.load(open(os.path.join(repo, "opencode.json")))
 goal_md = os.path.join(repo, "prompts", "goal.md")
 oc_instr = oc.get("instructions") or []
 dm = omo.get("default_mode") or {}
@@ -1039,6 +1128,7 @@ else
     case "$kind" in
       OK) ok "$msg" ;;
       OPT) opt "$msg" ;;
+      SOFT) soft "$msg" ;;
       TIP) tip "$msg" ;;
       BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings + goal/ralph hygiene" ;;
       *) info "$msg" ;;
@@ -1557,6 +1647,23 @@ fi
 # ─── Auto-fix (optional) ─────────────────────────────────────────
 if [[ $DO_FIX -eq 1 ]]; then
   sec "Auto-fix"
+  # Prune sibling OmO caches that make bunx doctor cry "outdated"
+  _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
+  if [[ -n "$_pruned" ]]; then
+    ok "pruned stale OmO cache(s): $(printf '%s' "$_pruned" | tr '\n' ' ')"
+  else
+    info "no stale OmO plugin caches to prune"
+  fi
+  unset _pruned
+  if oc_ensure_omo_plugin_cache 2>/dev/null; then
+    ok "OmO plugin cache healthy for pin"
+  else
+    soft "OmO plugin cache ensure failed — run: oc setup"
+  fi
+  if [[ -x "$REPO/versions.sh" ]]; then
+    info "Aligning @opencode-ai/plugin peer (oc versions --fix)..."
+    "$REPO/versions.sh" --fix >/dev/null 2>&1 && ok "versions --fix ok" || soft "versions --fix reported issues (non-fatal)"
+  fi
   if [[ -x "$REPO/fix.sh" ]]; then
     info "Running fix.sh (colors, footguns, skills lock)..."
     "$REPO/fix.sh" 2>&1

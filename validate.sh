@@ -431,8 +431,17 @@ if omo:
         warn("start_work block missing — run: oc fix")
     else:
         ok(f"start_work.auto_commit={omo['start_work'].get('auto_commit')}")
-    # modelConcurrency should cover every referenced model id
+    # modelConcurrency should cover every referenced model id (openai/X ↔ openrouter/openai/X)
     mc = bt.get("modelConcurrency") or {}
+    def _mc_aliases(mid):
+        out = {mid}
+        if mid.startswith("openrouter/"):
+            out.add(mid[len("openrouter/"):])
+        elif mid.startswith("openai/"):
+            out.add("openrouter/" + mid)
+        elif "/" in mid:
+            out.add("openrouter/" + mid)
+        return out
     ref_ids = set()
     for section in ("agents", "categories"):
         for cfg in (omo.get(section) or {}).values():
@@ -443,7 +452,8 @@ if omo:
             for fb in cfg.get("fallback_models") or []:
                 if isinstance(fb, str):
                     ref_ids.add(fb)
-    miss_mc = sorted(i for i in ref_ids if i not in mc)
+    mc_keys = set(mc)
+    miss_mc = sorted(i for i in ref_ids if not (_mc_aliases(i) & mc_keys))
     if miss_mc:
         warn(f"modelConcurrency missing {len(miss_mc)} model(s): {', '.join(miss_mc[:5])}"
              + ("…" if len(miss_mc) > 5 else ""))
@@ -852,6 +862,7 @@ elif not missing_scripts:
 common_sh = open(os.path.join(repo, "lib/common.sh"), encoding="utf-8").read()
 missing_helpers = [fn for fn in (
     "oc_banner", "oc_projects_dir", "oc_ensure_launch_workspace", "oc_resolve_launch_dir",
+    "oc_prune_stale_omo_plugin_caches", "oc_ensure_omo_plugin_cache",
     "oc_version_ge", "oc_write_project_opencode_json", "oc_expand_path",
     "oc_set_env_key_if_unset", "oc_ensure_env_file", "oc_link_points_to", "oc_ensure_symlink",
     "oc_verify_signature", "oc_signature_compute", "oc_signature_refresh",

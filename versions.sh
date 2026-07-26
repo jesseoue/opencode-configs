@@ -285,6 +285,13 @@ PY
   else
     info "no plugin peer fix needed"
   fi
+  # Stale OmO sibling caches make bunx doctor report "Loaded old, latest pin"
+  _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
+  if [[ -n "$_pruned" ]]; then
+    ok "pruned stale OmO cache(s): $(printf '%s' "$_pruned" | tr '\n' ' ')"
+  fi
+  unset _pruned
+  oc_ensure_omo_plugin_cache >/dev/null 2>&1 && ok "OmO pin cache healthy" || warn "OmO pin cache ensure failed — run: oc setup"
 fi
 
 python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") else 1)' "$REPORT"
