@@ -259,7 +259,7 @@ oc_banner() {
   local c_b="${c_b:-}" c_p="${c_p:-}" c_dim="${c_dim:-}" c_bold="${c_bold:-}" c_0="${c_0:-}"
   # Soft colors when caller hasn't defined them yet
   if [[ -z "$c_b" && -t 1 && -z "${NO_COLOR:-}" ]]; then
-    c_b="\033[36m"; c_p="\033[35m"; c_dim="\033[2m"; c_bold="\033[1m"; c_0="\033[0m"
+    c_b=$'\033[36m'; c_p=$'\033[35m'; c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
   fi
   printf '%b\n' "${c_b}${c_bold}"
   cat <<'ASCII'

@@ -35,7 +35,7 @@ for a in "$@"; do case "$a" in
   *) echo "Unknown flag: $a"; exit 2 ;;
 esac; done
 
-c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"; c_0="\033[0m"
+c_g=$'\033[32m'; c_y=$'\033[33m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_0=$'\033[0m'
 sec(){ printf "\n${c_b}== %s ==${c_0}\n" "$*"; }
 ok(){ printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 fix(){ printf "  ${c_g}⟳ fixed:${c_0} %s\n" "$*"; }

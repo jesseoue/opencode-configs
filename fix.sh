@@ -46,7 +46,7 @@ esac; done
 export OC_FIX_STAMP="$STAMP"
 # OC_BACKUP_ROOT comes from lib/common.sh
 
-c_g="\033[32m"; c_y="\033[33m"; c_b="\033[36m"; c_0="\033[0m"
+c_g=$'\033[32m'; c_y=$'\033[33m'; c_b=$'\033[36m'; c_0=$'\033[0m'
 
 DRY=$DRY python3 - "$REPO" ${SETS[@]+"${SETS[@]}"} <<'PY'
 import json, sys, os, re, copy, shutil

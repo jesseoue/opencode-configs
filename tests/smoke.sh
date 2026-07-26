@@ -12,7 +12,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 source "$REPO/lib/common.sh"
 
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-  c_g="\033[32m"; c_r="\033[31m"; c_b="\033[36m"; c_bold="\033[1m"; c_0="\033[0m"
+  c_g=$'\033[32m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
 else
   c_g=""; c_r=""; c_b=""; c_bold=""; c_0=""
 fi

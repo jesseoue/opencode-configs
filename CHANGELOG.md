@@ -2,6 +2,13 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.37] — 2026-07-26
+
+### Color polish + `oc plugin`
+- Fix CLI help colors: use `$'\033[…m'` so `cat` heredocs emit real ANSI (was printing literal `\033[…]`)
+- Same quoting fix across doctor/versions/setup/install/cleanup/… scripts
+- Add `oc plugin doctor|cache|--fix` (alias `oc omo`) for OmO pin-cache doctor
+
 ## [1.5.36] — 2026-07-26
 
 ### Doctor harden

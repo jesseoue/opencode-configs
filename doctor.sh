@@ -41,8 +41,8 @@ done
 # --json suppresses human chrome; still runs every check.
 # Colors: ok=green, info=dim cyan, tip=bold cyan, soft/opt=yellow, bad=red
 if [[ -t 1 && -z "${NO_COLOR:-}" && $DO_JSON -eq 0 ]]; then
-  c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"
-  c_dim="\033[2m"; c_bold="\033[1m"; c_0="\033[0m"
+  c_g=$'\033[32m'; c_y=$'\033[33m'; c_r=$'\033[31m'; c_b=$'\033[36m'
+  c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
 else
   c_g=""; c_y=""; c_r=""; c_b=""; c_dim=""; c_bold=""; c_0=""
 fi

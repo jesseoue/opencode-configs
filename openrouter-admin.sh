@@ -24,7 +24,7 @@ oc_export_env_file "$ENV_FILE"
 API_KEY="${OPENROUTER_API_KEY:-}"
 MGMT_KEY="${OPENROUTER_MGMT_KEY:-}"
 
-c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"; c_0="\033[0m"
+c_g=$'\033[32m'; c_y=$'\033[33m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_0=$'\033[0m'
 ok(){ printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 opt(){ printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){ printf "  ${c_r}✗${c_0} %s\n" "$*"; }

@@ -21,6 +21,7 @@
 #   maintain [--check|--clean|--plans]    Clean sessions, caches, logs
 #   models [--catalog|--providers|--json|--upgrade]  OpenRouter catalog / providers
 #   versions [--check|--local|--fix|--json]  Package pins vs npm/GitHub
+#   plugin [doctor|cache]                 OmO plugin doctor / cache status
 #   run "<msg>" [-a agent] [-d dir]       Headless runner (run to completion)
 #   admin [status|health|ratelimit|...]   OpenRouter account admin
 #   launch [dir]                          Launch OpenCode (terminal-safe)
@@ -42,17 +43,18 @@ OC_VERSION="$(oc_versions_get opencode_configs 2>/dev/null || echo "1.5.0")"
 
 # ── Colors (respect non-tty) ──
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-  c_g="\033[32m"; c_y="\033[33m"; c_r="\033[31m"; c_b="\033[36m"; c_p="\033[35m"
-  c_bold="\033[1m"; c_dim="\033[2m"; c_0="\033[0m"
+  c_g=$'\033[32m'; c_y=$'\033[33m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_p=$'\033[35m'
+  c_bold=$'\033[1m'; c_dim=$'\033[2m'; c_0=$'\033[0m'
 else
   c_g=""; c_y=""; c_r=""; c_b=""; c_p=""; c_bold=""; c_dim=""; c_0=""
 fi
 
 # ── Helpers ──
 ok(){   printf "  ${c_g}✓${c_0} %s\n" "$*"; }
-info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
+info(){ printf "  ${c_dim}•${c_0} %s\n" "$*"; }
 opt(){  printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
+tip(){  printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
 
 header() {
   oc_banner "$OC_VERSION" "Pinned stack for OpenCode · OpenRouter · OmO"
@@ -102,6 +104,7 @@ ${c_bold}Models & Admin:${c_0}
                                          OpenRouter catalog / live provider health
   ${c_g}versions${c_0}  [--check|--local|--fix|--json]
                                          Package pins vs npm + GitHub (+ other repos)
+  ${c_g}plugin${c_0}    [doctor|cache|--fix]         OmO plugin doctor / pin cache
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter + direct OpenAI admin
 
 ${c_bold}Run & Launch:${c_0}
@@ -142,6 +145,7 @@ ${c_bold}Examples:${c_0}
   oc doctor --fix                 Repair configs + re-check
   oc versions                    Pins vs npm/GitHub + other opencode.json
   oc versions --fix               Align ~/.opencode @opencode-ai/plugin to CLI
+  oc plugin doctor               Upstream OmO plugin doctor (pin cache)
   oc fix                         Restore agent colors + footguns
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
@@ -158,6 +162,119 @@ ${c_bold}Auto/non-interactive:${c_0}
   oc install --quick · oc heal · oc locate · oc test · oc check --fix
 
 HELP
+}
+
+# ── OmO plugin doctor / cache (oc plugin doctor) ──
+do_plugin() {
+  local sub="${1:-doctor}" do_fix=0 pin pin_ver cdir ver dout loaded latest cache_ver a
+  [[ $# -gt 0 ]] && shift
+  for a in "$sub" "$@"; do
+    [[ "$a" == "--fix" || "$a" == "fix" ]] && do_fix=1
+  done
+  case "$sub" in
+    --fix|fix) sub=doctor ;;
+  esac
+
+  case "$sub" in
+    -h|--help|help)
+      cat <<PLUGINHELP
+${c_bold}oc plugin${c_0} — OmO (oh-my-openagent) pin cache + upstream doctor
+
+${c_bold}Usage:${c_0}
+  ${c_g}oc plugin doctor${c_0} [--fix]   bunx oh-my-openagent@pin doctor
+  ${c_g}oc plugin cache${c_0}            pin path + installed version
+  ${c_g}oc plugin --fix${c_0}              prune stale caches + ensure pin
+
+${c_dim}Full stack:${c_0} ${c_g}oc doctor${c_0}   ${c_dim}Pins:${c_0} ${c_g}oc versions${c_0}
+PLUGINHELP
+      return 0
+      ;;
+    cache|status)
+      pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
+      cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
+      printf "\n${c_b}${c_bold}== OmO plugin cache ==${c_0}\n"
+      info "pin: ${pin:-none}"
+      info "path: ${cdir:-?}"
+      if [[ -n "$cdir" && -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
+        ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
+        ok "installed v${ver:-?}"
+      else
+        bad "cache empty/broken — run: oc plugin --fix"
+      fi
+      printf '\n'
+      return 0
+      ;;
+    doctor|check) ;;
+    *)
+      header
+      printf "  ${c_r}Unknown plugin subcommand: %s${c_0}\n\n" "$sub"
+      do_plugin --help
+      exit 1
+      ;;
+  esac
+
+  pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
+  pin_ver="${pin#oh-my-openagent@}"
+  if [[ -z "$pin" ]]; then
+    header
+    bad "no oh-my-openagent@… pin in opencode.json"
+    exit 1
+  fi
+
+  if [[ $do_fix -eq 1 ]]; then
+    printf "\n${c_b}${c_bold}== OmO plugin fix ==${c_0}\n"
+    _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
+    if [[ -n "$_pruned" ]]; then
+      ok "pruned: $(printf '%s' "$_pruned" | tr '\n' ' ')"
+    else
+      info "no stale sibling caches"
+    fi
+    unset _pruned
+    if oc_ensure_omo_plugin_cache; then
+      ok "pin cache healthy ($pin)"
+    else
+      bad "could not ensure pin cache — check bun / network"
+      exit 1
+    fi
+  fi
+
+  if ! command -v bunx >/dev/null 2>&1; then
+    bad "bun/bunx required for plugin doctor"
+    exit 1
+  fi
+
+  printf "\n${c_b}${c_bold}== OmO plugin doctor ==${c_0} ${c_dim}$pin${c_0}\n"
+  cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
+  if [[ -f "${cdir:-}/node_modules/oh-my-openagent/package.json" ]]; then
+    ver="$(python3 -c "import json;print(json.load(open('${cdir}/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
+    ok "cache → v${ver:-?}"
+  else
+    opt "pin cache missing — run: oc plugin --fix"
+  fi
+
+  dout="$(bunx "$pin" doctor 2>&1)" || true
+  if printf '%s' "$dout" | grep -q "System OK"; then
+    ok "$(printf '%s' "$dout" | grep -iE 'System OK' | head -1 | sed 's/^[^A-Za-z]*//')"
+  elif printf '%s' "$dout" | grep -qi "outdated"; then
+    loaded="$(printf '%s' "$dout" | sed -nE 's/.*Loaded ([0-9][0-9.]*).*/\1/p' | head -1)"
+    latest="$(printf '%s' "$dout" | sed -nE 's/.*[Ll]atest ([0-9][0-9.]*).*/\1/p' | head -1)"
+    cache_ver="$(python3 -c "import json,os; p=os.path.join('${cdir}','node_modules/oh-my-openagent/package.json'); print(json.load(open(p)).get('version','') if os.path.isfile(p) else '')" 2>/dev/null || true)"
+    if [[ -n "$cache_ver" && "$cache_ver" == "$pin_ver" ]]; then
+      if [[ -n "$latest" && "$latest" != "$pin_ver" ]]; then
+        opt "pin $pin_ver behind npm latest $latest — bump versions.json + opencode.json"
+      else
+        info "bunx outdated noise — pin cache is v$pin_ver"
+        tip "oc plugin --fix   # prune stale sibling caches"
+      fi
+    else
+      opt "loaded ${loaded:-?} · pin $pin_ver · cache ${cache_ver:-?} — oc plugin --fix"
+    fi
+  else
+    printf '%s\n' "$dout" | sed 's/^/  /'
+  fi
+  printf '\n'
+  tip "stack health: oc doctor · pins: oc versions"
+  return 0
 }
 
 # ── Terminal-safe launch (thin wrapper → opencode.sh) ──
@@ -1002,6 +1119,7 @@ case "$cmd" in
   maintain)   dispatch maintain.sh "$@" ;;
   models)     dispatch models.sh "$@" ;;
   versions|pins) dispatch versions.sh "$@" ;;
+  plugin|omo) do_plugin "$@" ;;
   run)        dispatch run.sh "$@" ;;
   diagnose)   dispatch diagnose.sh "$@" ;;
   opencode)   dispatch opencode.sh "$@" ;;
@@ -1039,7 +1157,13 @@ case "$cmd" in
 
   *)
     header
-    printf "  ${c_r}Unknown command: %s${c_0}\n\n" "$cmd"
+    printf "  ${c_r}Unknown command: %s${c_0}\n" "$cmd"
+    case "$cmd" in
+      plug|plugins) tip "did you mean: ${c_g}oc plugin doctor${c_0}" ;;
+      ver|versioning) tip "did you mean: ${c_g}oc versions${c_0}" ;;
+      health|ready) tip "did you mean: ${c_g}oc doctor${c_0}  or  ${c_g}oc check${c_0}" ;;
+    esac
+    printf '\n'
     show_help
     exit 1
     ;;
