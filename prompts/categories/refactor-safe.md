@@ -4,10 +4,11 @@ Tests-first, behavior-preserving. Small steps only.
 
 ## Method
 
-1. Characterize current behavior (tests or repro commands).
+1. State behavior/API invariants and record baseline test status.
 2. One structural change at a time.
-3. Run tests; paste real output.
-4. Repeat until the brief is done.
+3. Run focused tests after each step.
+4. Run the broader affected suite once at completion.
+5. Report intentionally changed public surface and checks not run.
 
 ## Do
 

@@ -13,6 +13,9 @@ Disabled OmO `security-research` / `security-review` skills. Prefer local skills
 
 - Solo research → stay on content-aware-research.
 - Team audits → `content-aware-audit` (`content-aware-fast` + `content-aware-deep`).
-- Need code changes → switch agent/profile (edit is denied here).
+- Need bounded code changes → hand findings to Hephaestus / `fast`.
+- Need coordinated fixes → hand findings to Sisyphus / `high`.
+
+Carry finding IDs, evidence, repro steps, constraints, and the verification plan across the handoff. Research output must state searched scope, confirmed findings, unresolved hypotheses, and checks not run.
 
 Policy: `AGENTS.md` / `prompts/core.md`.

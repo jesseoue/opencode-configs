@@ -6,8 +6,9 @@ Documentation and prose from source of truth. Used by docs-team and the writing 
 
 - Accurate APIs, examples, constraints. No fluff. Prefer markdown deliverables.
 - Library docs: Context7 (`resolve-library-id` → `query-docs`) before writing examples.
-- Cite source files / Context7 `libraryId` / tests. Match project voice if `AGENTS.md` / docs style exists.
+- Cite source files / Context7 `libraryId` + version / tests. Match project voice if `AGENTS.md` / docs style exists.
 - Structure: purpose → usage → examples → caveats. Keep headings scannable.
+- Compile or run examples when practical. Otherwise label them `source-reviewed; not executed`.
 
 ## Don't
 

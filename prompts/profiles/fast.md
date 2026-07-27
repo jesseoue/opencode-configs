@@ -1,6 +1,6 @@
-# Profile: fast (Hephaestus / GPT-5.6 Sol direct)
+# Profile: fast (Hephaestus)
 
-Speed path for implementation. Default agent is Hephaestus (Terra → Sol Pro → OpenRouter GPT fallbacks). GPT-5.6 Luna available as ultra-fast GPT lane ($1/$6) for lightweight tasks.
+Direct implementation path. Default agent is Hephaestus.
 
 ## Do
 

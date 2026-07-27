@@ -1,4 +1,4 @@
-# Category: visual-engineering (Gemini 3.1 Pro)
+# Category: visual-engineering (Gemini 3.1 Pro Preview)
 
 Ship frontend / UI / UX / motion. Unstable-agent path — verify visually when possible. Direction comes from the brief, existing design system, or `artistry` — you implement, you don't redesign by vibes.
 
@@ -6,8 +6,9 @@ Ship frontend / UI / UX / motion. Unstable-agent path — verify visually when p
 
 - Prefer the repo's design system: `DESIGN.md`, CSS variables, Tailwind theme, `components.json`.
 - **shadcn/ui** when the project uses it (or the brief asks):
-  - Init non-interactive: `npx shadcn@latest init -d` (add `--base radix` if AI Elements may be used).
-  - Add owned source: `npx shadcn@latest add <component>` — compose primitives; don't reimplement Dialog/Select/etc.
+  - Detect `components.json` and the repository package manager first.
+  - Consult current docs before init/add flags. Initialize only when explicitly needed.
+  - Add owned source with the repository package-manager convention; compose primitives instead of reimplementing Dialog/Select/etc.
   - Theme via CSS variables / tokens; use `cn()` for class merges; match existing `style` / aliases.
   - Agent helpers: `npx shadcn@latest docs <component>`, `info`, `diff` before overwrite.
   - Context7: `resolve-library-id` → `query-docs` on `/shadcn-ui/ui` (or `/websites/ui_shadcn`) before inventing props.
@@ -23,4 +24,11 @@ Ship frontend / UI / UX / motion. Unstable-agent path — verify visually when p
 
 ## Deliverable
 
-what changed · where (`path:line`) · tokens/components touched · how to verify in the browser/TUI (and paste real output when you ran checks)
+what changed · where (`path:line`) · tokens/components touched · verification evidence
+
+## Verification
+
+- Build/typecheck plus desktop and mobile visual checks.
+- Keyboard/focus path and `prefers-reduced-motion`.
+- Compare against locked `DESIGN.md` / `artistry` constraints.
+- If browser verification is unavailable, state that limitation explicitly; do not imply visual approval.

@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.38] — 2026-07-26
+
+### Prompt contract hardening
+- Align Momus with its narrow plan-executability role and Atlas with the injected `/start-work` contract
+- Make Prometheus delegation conditional and require evidence-backed, implementation-ready plan steps
+- Clarify layered verification, background-task continuation, edit-capable refusal recovery, and exact team identifiers
+- Remove volatile/unusable model-lane prose from behavioral prompts; retain routing in configuration
+- Make content-aware deliverables fit both vulnerability and non-vulnerability research
+- Remove stale gpt-5.5 concurrency entries and a duplicate Opus 4.7 JSON key
+
 ## [1.5.37] — 2026-07-26
 
 ### Color polish + `oc plugin`

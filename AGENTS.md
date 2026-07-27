@@ -1,8 +1,8 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.37** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.38** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
-This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** (OmO 4.19.x footgun — see `prompts/goal.md`). Deep reference: `README.md`.
+This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.1 (see `prompts/goal.md`). Deep reference: `README.md`.
 
 ## Stance
 
@@ -34,9 +34,8 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 ### Routing logic (short)
 
 - **Orchestration / tool loops** → GLM `5.2:exacto` (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Exacto = tool-call quality on OpenRouter.
-- **Fast parallel recon** → DeepSeek Flash `:nitro` (explore, librarian, junior, quick) — Nitro = throughput.
+- **Fast parallel recon** → DeepSeek Flash `:nitro` (explore, librarian, sisyphus-junior, quick) — Nitro = throughput.
 - **Deep implement / critique** → OpenAI `gpt-5.6-sol` direct (Hephaestus, Oracle, Momus, deep, ultrabrain, arch-review). `gpt-5.6-sol-pro` = higher-quality reasoning mode fallback.
-- **Fast GPT lane** → `gpt-5.6-luna` ($1/$6, 145 thr) for lightweight agentic tasks when Flash Nitro is saturated.
 - **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.6 Flash Nitro).
 - **Hard ceiling** → Claude Fable 5 max for `ultrawork` / unspecified-high (Opus 4.8 / 4.7 / Sol fallbacks).
 - **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k3` (1M ctx, ~$3/$15) as a quality fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider, expensive). Prefer K2.7 Code / DeepSeek for routine coding.
@@ -44,7 +43,7 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 
 ### Team eligibility (why)
 
-OmO team mailbox **hard-rejects** explore/librarian/oracle/metis/momus/multimodal/prometheus as members. They stay `task` / `call_omo_agent` consult paths. Teams use `kind: category` (junior path) or hephaestus/atlas/sisyphus.
+OmO team mailbox **hard-rejects** explore/librarian/oracle/metis/momus/multimodal-looker/prometheus as subagent members. They stay `task` / `call_omo_agent` consult paths. Teams use `kind: category` or eligible subagent types: sisyphus, atlas, sisyphus-junior, and hephaestus with teammate permission.
 
 ### Headless runs (why `oc run`)
 
@@ -77,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.37**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.38**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.

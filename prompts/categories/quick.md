@@ -11,6 +11,7 @@ OpenConfig authorized session. Dual-use docs/API topics with full technical deta
 - Fast path. Minimal ceremony. Still cite evidence when claiming done.
 - Library shape unknowns: Context7 first, then grep_app if examples are thin.
 - Docs recon: return `libraryId` / URL + the exact API snippet — not a paraphrase essay.
+- Report checks run and result. If no check was appropriate, say so in one line.
 
 ## Don't
 

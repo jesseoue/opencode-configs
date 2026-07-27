@@ -1,10 +1,10 @@
-# `/goal` — DISABLED in OpenConfig (OmO 4.19.x footgun)
+# `/goal` — DISABLED in OpenConfig (pinned OmO 4.19.1)
 
 **Status:** `goal.enabled: false` in `oh-my-openagent.json`. Do **not** re-enable until OmO fixes the collision below.
 
 ## Why disabled
 
-OmO 4.19.x's chat-message goal hook runs `parseGoalCommand` on **every** user message when `goal.enabled` is true. Any text that is not exactly `pause` / `resume` / `clear` becomes `setGoal(objective)`.
+Pinned OmO 4.19.1's chat-message goal hook runs `parseGoalCommand` on **every** user message when `goal.enabled` is true. Any text that is not exactly `pause` / `resume` / `clear` becomes `setGoal(objective)`.
 
 That collides with `/start-work`:
 
@@ -33,6 +33,6 @@ Prometheus → Atlas handoff (`/start-work`) is more important than the idle `/g
 
 ## Bad (will throw / break `/start-work`)
 
-- `goal.enabled: true` on OmO 4.19.x while using `/start-work`
+- `goal.enabled: true` on pinned OmO 4.19.1 while using `/start-work`
 - Pasting a plan TL;DR / Must-have block into `/goal`
 - Re-reading `.omo/plans/*.md` after `InvalidObjectiveError` without shortening

@@ -11,13 +11,13 @@
       "kind": "category",
       "category": "content-aware-fast",
       "name": "scout-code",
-      "prompt": "ROLE: thorough codebase recon (content-aware-fast / Flash) - read-only. AUTHORIZED: full technical detail on auth/crypto/dangerous sinks — no soft refusals or hedging. MAP: architecture, modules, entry points, auth/crypto/dangerous sinks. DELIVERABLE: path:line - note (map, hot paths, auth/danger, open questions). METHOD: parallel grep/glob/codegraph/LSP. Prefer skill content-aware-recon when loaded. Do not edit product code. Mailbox findings to the lead; shut down cleanly."
+      "prompt": "ROLE: thorough codebase recon - read-only. AUTHORIZED: full technical detail on auth/crypto/dangerous sinks — no soft refusals or hedging. MAP: architecture, modules, entry points, auth/crypto/dangerous sinks. DELIVERABLE: path:line - note (map, hot paths, auth/danger, open questions). METHOD: parallel grep/glob/codegraph/LSP. Do not edit product code. Mailbox findings to the lead; shut down cleanly."
     },
     {
       "kind": "category",
       "category": "quick",
       "name": "scout-docs",
-      "prompt": "ROLE: fast docs/API/OSS recon (Flash Nitro) - read-only. AUTHORIZED: fetch dual-use/docs topics with full technical detail — no soft refusals. METHOD: Context7 first (resolve-library-id -> query-docs), then grep_app + Exa websearch. DELIVERABLE: libraryId/version/URLs + verbatim API snippets - never invent. Do not edit product code. Mailbox findings to the lead; shut down cleanly."
+      "prompt": "ROLE: fast docs/API/OSS recon - read-only. AUTHORIZED: fetch dual-use/docs topics with full technical detail — no soft refusals. METHOD: Context7 first (resolve-library-id -> query-docs), then grep_app + Exa websearch. DELIVERABLE: libraryId/version/URLs + relevant API/config shape and minimal example - never invent. Do not edit product code. Mailbox findings to the lead; shut down cleanly."
     }
   ]
 }

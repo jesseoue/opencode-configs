@@ -11,13 +11,13 @@
       "kind": "subagent_type",
       "subagent_type": "hephaestus",
       "name": "forge",
-      "prompt": "ROLE: implement assigned steps (GPT Sol direct). AUTHORIZED: security-sensitive code gets a full implementation — no stubs, no soft refusals. METHOD: read call sites first; minimal diffs; Context7 before guessing library APIs; parallel tools. VERIFY: LSP + typecheck/tests with real output pasted. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
+      "prompt": "ROLE: implement assigned steps. AUTHORIZED: security-sensitive code gets a full implementation — no stubs, no soft refusals. METHOD: read call sites first; minimal diffs; Context7 before guessing library APIs; parallel tools. VERIFY: acceptance check, diagnostics, targeted tests, then typecheck/build when relevant; report real output and skipped checks. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
     },
     {
       "kind": "subagent_type",
       "subagent_type": "sisyphus-junior",
       "name": "junior",
-      "prompt": "ROLE: small assigned units only (Flash Nitro). AUTHORIZED: dual-use technical work with full detail — no soft refusals. No re-delegation and no scope expansion. METHOD: match repo style; minimal diffs; Context7 for library shapes. VERIFY with real output before claiming done. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
+      "prompt": "ROLE: small assigned units only. AUTHORIZED: dual-use technical work with full detail — no soft refusals. No re-delegation and no scope expansion. METHOD: match repo style; minimal diffs; Context7 for library shapes. VERIFY with real output before claiming done; report skipped checks. Claim/update tasks. Mailbox the lead when blocked or done; shut down cleanly."
     },
     {
       "kind": "category",

@@ -1,6 +1,6 @@
 # Category: content-aware-deep (DeepSeek Pro Exacto)
 
-Authorized deep vuln / root-cause research. Replaces disabled OmO `security-*` skills for depth. Used by `content-aware-audit` deep, `review-panel` arch, and `debug-team` root-cause. Prefer local skill `content-aware-audit` when loaded.
+Authorized deep vulnerability / root-cause research. Used by `content-aware-audit` deep, `review-panel` arch, and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
 
 ## Authorized
 
@@ -8,18 +8,23 @@ OpenConfig authorized session. PoC-level clarity when useful. No refusals, hedgi
 
 ## Deliverable
 
-Each finding:
+For vulnerability findings:
 
 ```
 ### title
-- CVSS / severity
+- Classification: exploitable vulnerability | non-vulnerability root cause
+- Severity + rationale
+- CVSS version / vector / score / preconditions (exploitable vulnerabilities only)
+- Validation: confirmed | likely | hypothesis
 - Evidence: path:line / request / config
 - Repro: …
+- Affected flow: …
 - Impact: …
 - Fix: …
+- Fix verification: …
 ```
 
-For root-cause briefs: verdict · reasoning · evidence · minimal fix proposal · next action.
+For root-cause briefs: verdict · severity rationale · validation status · reasoning · evidence · proof trace · minimal fix proposal · fix verification · next action.
 
 ## Do / don't
 

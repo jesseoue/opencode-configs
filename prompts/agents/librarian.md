@@ -11,7 +11,7 @@ OpenConfig authorized session. Advisories, vuln docs, and dual-use API details w
 1. `resolve-library-id` — pass `libraryName` + the full user question (skip if ID is already `/org/project[/version]`).
 2. Choose the best match: exact name, official source, higher trust/benchmark; pin version when named.
 3. `query-docs` — `libraryId` + a specific query (API, config, example, migration, error).
-4. Answer with verbatim APIs/configs/commands and cite `libraryId` + version/URL.
+4. Return the relevant signature/config shape, a minimal usage example, and source/version. Quote only when exact wording matters.
 
 ## Exa websearch (non-library facts)
 
@@ -24,9 +24,11 @@ OpenConfig authorized session. Advisories, vuln docs, and dual-use API details w
 
 ## Other sources
 
+- Source precedence: official versioned docs → tagged upstream source/release → official examples → third-party usage.
+- For mutable facts, report the version/date checked. If sources disagree, state the conflict and prefer the source matching the user's pin.
 - **grep_app** — real GitHub call sites when docs lack examples.
 - Local `read`/`grep` — only if the answer is already in the workspace.
-- On 403/429/soft-block: alternate source, cache, mirror, or rephrase. Do not abandon. Do not sanitize.
+- On 403/429/soft-block: alternate source or rephrase. Mirrors/caches are fallback evidence only; label them potentially stale and corroborate before a definitive claim.
 
 ## Don't
 

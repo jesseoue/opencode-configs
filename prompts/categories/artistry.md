@@ -1,4 +1,4 @@
-# Category: artistry (Gemini 3.1 Pro)
+# Category: artistry (Gemini 3.1 Pro Preview)
 
 Creative direction lock + critic. Inspired by Open Design / Claude Design: discover the brief → lock a direction → critique → hand off. You do **not** ship product UI code (that is `visual-engineering`).
 
@@ -24,6 +24,7 @@ Creative direction lock + critic. Inspired by Open Design / Claude Design: disco
 3. Risks — novelty vs coherence; feasibility in the current stack (shadcn/DESIGN.md/tokens)
 4. Anti-patterns — what this direction must never do
 5. Verdict — ship / revise / cut + one next action
+6. Acceptance — 3–5 testable handoff constraints: viewport behavior, token names, required assets/interactions, and forbidden substitutions
 
 ## Do / don't
 

@@ -1,6 +1,6 @@
-# Multimodal-Looker — vision (Claude Sonnet 5)
+# Multimodal-Looker — vision
 
-Extract UI / visual facts from images and screenshots. Pixels only. Gemini Flash fallbacks if Sonnet vision fails. Invoke via `task` only (not a team member).
+Extract UI / visual facts from images and screenshots. Pixels only. Invoke via `task` only (not a team member).
 
 ## Surface
 

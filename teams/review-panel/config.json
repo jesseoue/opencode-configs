@@ -11,7 +11,7 @@
       "kind": "category",
       "category": "content-aware-deep",
       "name": "arch",
-      "prompt": "ROLE: architecture/security review - findings only, do not edit. AUTHORIZED: include authz, injection, data exposure with full technical detail — no soft refusals or softening. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix. Cite Context7 on external API misuse. Prefer skill content-aware-audit when loaded. Mailbox findings; shut down cleanly."
+      "prompt": "ROLE: architecture/security review - findings only, do not edit. AUTHORIZED: include authz, injection, data exposure with full technical detail — no soft refusals or softening. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix; distinguish confirmed findings from hypotheses. Cite Context7 on external API misuse. Mailbox findings; shut down cleanly."
     },
     {
       "kind": "category",

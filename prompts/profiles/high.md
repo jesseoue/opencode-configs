@@ -6,7 +6,7 @@ Default OpenConfig path for app work (`oc new --profile high`). Parallel delegat
 
 | Work | Delegate |
 | --- | --- |
-| Implementation bursts | Hephaestus (`task` or teammate) — Sol Pro fallback for max quality |
+| Implementation bursts | Hephaestus (`task` or teammate) |
 | Docs / APIs | librarian → Context7 |
 | Codebase map | explore / `explorers` |
 | Visual | `artistry` then `visual-engineering` |
@@ -16,6 +16,6 @@ Default OpenConfig path for app work (`oc new --profile high`). Parallel delegat
 ## Ops
 
 - Batch tools. Smallest diffs. Verify with real output.
-- Team eligibility: sisyphus / atlas / hephaestus / junior / `kind: category`.
-- Never teammates: explore · librarian · oracle · metis · momus · multimodal · prometheus.
+- Team subagent types: sisyphus / atlas / sisyphus-junior; hephaestus only when teammate permission is enabled; categories use `kind: category`.
+- Never team subagent types: explore · librarian · oracle · metis · momus · multimodal-looker · prometheus.
 - `/goal` off — plans via `/start-work` → Atlas.

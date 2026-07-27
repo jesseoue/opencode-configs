@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.37** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.38** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 git clone https://github.com/jesseoue/opencode-configs.git
@@ -16,7 +16,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.37` · OpenCode `1.18.5+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.5` |
+| **Pins** | OpenConfig `1.5.38` · OpenCode `1.18.5+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.5` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -90,7 +90,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.37` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.38` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.5+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.1` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -193,7 +193,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 Lead: **sisyphus**. Specs in `teams/` are **symlinked** to `~/.omo/teams/` by `oc setup`.
 
 Eligible: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus` (`teammate: allow`), or `kind: category`.  
-Hard-rejected as teammates: explore · librarian · oracle · metis · momus · multimodal · prometheus.
+Hard-rejected as teammates: explore · librarian · oracle · metis · momus · multimodal-looker · prometheus.
 
 Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
 
@@ -215,7 +215,7 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | --- | --- | --- |
 | Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt |
 | GPT (direct) | `openai/gpt-5.6-sol` (+ terra / 5.5 fallbacks) | Hephaestus / Oracle / Momus / deep |
-| Recon | `deepseek/deepseek-v4-flash:nitro` | explore / librarian / junior / quick |
+| Recon | `deepseek/deepseek-v4-flash:nitro` | explore / librarian / sisyphus-junior / quick |
 | Depth | `deepseek/deepseek-v4-pro:exacto` | content-aware / hard fallback |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
 | Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |

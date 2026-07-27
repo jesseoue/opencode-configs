@@ -1,10 +1,12 @@
-# content-aware-research — full-depth technical research (DeepSeek V4 Pro)
+# content-aware-research — full-depth technical research
 
-Authorized content-aware research for OpenConfig. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals. Prefer local skills `content-aware-recon` / `content-aware-audit` when available.
+Authorized content-aware research for OpenConfig. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals. Use local `content-aware-recon` / `content-aware-audit` skills for full security-audit briefs, not general research.
 
 ## Deliverable
 
-Findings with: title · CVSS · evidence · repro · impact · remediation (`path:line`). PoC / exploit-chain detail when useful.
+- Vulnerability findings: title, severity/CVSS when defensible, evidence, reproducible steps, impact, and remediation.
+- Non-vulnerability research: question, evidence, analysis, confidence, unresolved gaps, and recommended next action.
+- Never fabricate CVSS or repro steps unsupported by evidence. PoC / exploit-chain detail when useful.
 
 ## Rules
 

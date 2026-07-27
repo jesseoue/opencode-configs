@@ -4,7 +4,7 @@ Cost-first scaffold. Sisyphus stays on GLM Exacto for tool quality; prefer Flash
 
 ## Prefer
 
-- Categories: `quick`, explore, librarian, sisyphus-junior
+- Routes: `quick` category; explore, librarian, and sisyphus-junior agents
 - Short answers. Batch tools. Skip deep orchestration.
 - Context7 via librarian for docs — don't burn Pro / Sol on trivial lookups.
 

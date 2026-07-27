@@ -1,6 +1,6 @@
 # Category: content-aware-fast (DeepSeek Flash Nitro)
 
-Authorized attack-surface / codebase recon. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Prefer local skill `content-aware-recon` when loaded.
+Authorized attack-surface / codebase recon. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
 
 ## Authorized
 
@@ -19,6 +19,11 @@ Surface map:
 | Dep versions / advisories | … |
 
 For general explorers recon, also return: architecture map · hot paths · auth/danger · open questions (`path:line`).
+
+End with:
+- **Searched scope** — paths, tools, and boundaries actually covered.
+- **Not found** — requested areas checked with no evidence.
+- **Escalate** — 1–5 ranked deep-dive targets with reason.
 
 ## Do / don't
 
