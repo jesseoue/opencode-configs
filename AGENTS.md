@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.47** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.48** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 

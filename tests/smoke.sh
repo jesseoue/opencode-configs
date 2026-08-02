@@ -114,6 +114,21 @@ else
   bad "goal/ralph/plugins hygiene incomplete (goal must be off; ralph_loop must be gone)"
 fi
 
+# Fast concurrency pins (background_task + provider caps)
+if python3 -c '
+import json, sys
+omo=json.load(open(sys.argv[1]))
+bt=omo.get("background_task") or {}
+pc=bt.get("providerConcurrency") or {}
+ok=(bt.get("defaultConcurrency")==6
+    and pc.get("openrouter")==8 and pc.get("openai")==6 and pc.get("anthropic")==4)
+sys.exit(0 if ok else 1)
+' "$REPO/oh-my-openagent.json"; then
+  ok "fast concurrency pins (default=6 openrouter=8)"
+else
+  bad "concurrency drift — run: oc fix"
+fi
+
 # Team mode schema + ~/.omo/teams symlinks (not directory copies)
 if python3 - "$REPO" <<'PY'
 import json, os, sys

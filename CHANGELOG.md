@@ -2,6 +2,13 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.48] — 2026-08-01
+
+### Fast provider concurrency
+- Raise parallel throughput: `defaultConcurrency` **6**, `providerConcurrency` openrouter **8** / openai **6** / anthropic **4**
+- Model caps tuned for speed: Flash/Luna **6**, GLM Exacto/MiniMax **5**, Pro/Sol/Terra **3**, Opus/Fable/Kimi **1**
+- `oc fix` / `validate` / `doctor` pin the new ceilings (OpenRouter-only; circuit breaker unchanged)
+
 ## [1.5.47] — 2026-08-01
 
 ### Sisyphus fix + OpenRouter-only hardening

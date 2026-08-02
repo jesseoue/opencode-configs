@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.47** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.48** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
@@ -236,9 +236,9 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 | Knob | Value |
 | --- | --- |
-| `background_task.defaultConcurrency` | **4** |
-| OpenRouter / dormant OpenAI / Anthropic | **6 / 4 / 2** |
-| Flash / Exacto / Sol / Fable | **4 / 3 / 3 / 1** |
+| `background_task.defaultConcurrency` | **6** |
+| OpenRouter / dormant OpenAI / Anthropic | **8 / 6 / 4** |
+| Flash / Exacto / Pro / Fable | **6 / 5 / 3 / 1** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
 
