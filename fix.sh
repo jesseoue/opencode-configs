@@ -517,11 +517,11 @@ if isinstance(tx, dict):
 # Background-task runaway guard — keep concurrency / tool budgets bounded
 bt = omo.setdefault("background_task", {})
 if isinstance(bt, dict):
-    if not isinstance(bt.get("defaultConcurrency"), int) or bt.get("defaultConcurrency") > 4:
-        bt["defaultConcurrency"] = 4; changes.append("background_task.defaultConcurrency capped -> 4")
+    if not isinstance(bt.get("defaultConcurrency"), int) or bt.get("defaultConcurrency") != 6:
+        bt["defaultConcurrency"] = 6; changes.append("background_task.defaultConcurrency -> 6 (fast parallel default)")
     pc = bt.setdefault("providerConcurrency", {})
     if isinstance(pc, dict):
-        want_pc = {"openrouter": 6, "openai": 4, "anthropic": 2}
+        want_pc = {"openrouter": 8, "openai": 6, "anthropic": 4}
         for prov, cap in want_pc.items():
             if pc.get(prov) != cap:
                 pc[prov] = cap
@@ -535,11 +535,11 @@ if isinstance(bt, dict):
         def _mc_cap(model_key):
             low = str(model_key).lower()
             if any(x in low for x in ("flash", "floor", "luna", "gemini-3.6-flash", "gemini-3-flash")):
-                return 4
+                return 6
             if any(x in low for x in ("exacto", "minimax", "glm")):
-                return 3
+                return 5
             if any(x in low for x in ("sonnet", "deepseek-v4-pro", "sol", "terra", "gemini-3.1-pro")):
-                return 2
+                return 3
             return 1
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
         want_mc = {f"openrouter/{w}": _mc_cap(w) for w in wl if isinstance(w, str)}
