@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.49** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.50** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
@@ -17,7 +17,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.46` · OpenCode `1.18.11+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.11` |
+| **Pins** | OpenConfig `1.5.50` · OpenCode `1.18.11+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.11` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -63,7 +63,7 @@ oc heal                # probe-first self-repair
 oc launch [dir]        # TUI (never starts in the config repo)
 oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
-oc admin health        # live OpenRouter + OpenAI probes
+oc admin health        # live OpenRouter model probes + rate limits
 oc models --probe       # fast parallel live test (latency + moderation flags)
 oc models --moderation  # provider moderation/data-policy catalog (no chat calls)
 oc models --providers   # OpenRouter endpoint health for routed models
@@ -78,6 +78,8 @@ oc doctor --quick --json   # machine summary (heal/check tooling)
 ```
 
 Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
+
+**Aliases:** `oc health`/`ready` → check · `oc repair` → heal · `oc verify` → validate · `oc where` → locate · `oc sig` → signature · `oc pins` → versions · `oc omo` → plugin
 
 ---
 
@@ -94,7 +96,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.46` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.50` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.11+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |

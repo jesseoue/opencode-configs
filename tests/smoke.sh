@@ -39,6 +39,29 @@ run_step() {
 }
 
 run_step "bash -n oc" bash -n "$REPO/oc"
+
+# oc aliases dispatch to the right handlers (no full doctor run — help only)
+if "$REPO/oc" health --help 2>&1 | grep -q 'oc check'; then
+  ok "oc health → check"
+else
+  bad "oc health alias broken"
+fi
+if "$REPO/oc" repair --help 2>&1 | grep -q 'oc heal'; then
+  ok "oc repair → heal"
+else
+  bad "oc repair alias broken"
+fi
+if "$REPO/oc" verify --help 2>&1 | grep -q 'validate'; then
+  ok "oc verify → validate"
+else
+  bad "oc verify alias broken"
+fi
+if "$REPO/oc" help 2>&1 | grep -q 'health, ready'; then
+  ok "oc help lists aliases"
+else
+  bad "oc help missing aliases section"
+fi
+
 run_step "bash -n doctor.sh" bash -n "$REPO/doctor.sh"
 run_step "bash -n locate.sh" bash -n "$REPO/locate.sh"
 run_step "bash -n versions.sh" bash -n "$REPO/versions.sh"

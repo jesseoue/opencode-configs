@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.50] — 2026-08-01
+
+### CLI clarity — aliases + OpenRouter-only help
+- Add `oc` aliases: `health`/`ready` → check, `repair` → heal, `verify` → validate (plus existing `where`, `sig`, `pins`, `omo`)
+- Help/examples: remove stale direct-OpenAI wording; document aliases; list `runtime` in `oc test`
+- Unknown-command tips for `clean`, `probe`, `repair`, `verify`
+- README/AGENTS version sync
+
 ## [1.5.49] — 2026-08-01
 
 ### OpenRouter-only — no GPT models
