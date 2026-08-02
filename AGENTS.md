@@ -1,8 +1,8 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.38** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.46** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
-This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.1 (see `prompts/goal.md`). Deep reference: `README.md`.
+This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
 ## Stance
 
@@ -20,8 +20,8 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 | --- | --- | --- |
 | Runtime | [OpenCode](https://opencode.ai) | Provider-agnostic coding agent TUI/CLI; config-as-code; LSP; MCP |
 | Orchestration | [oh-my-openagent (OmO)](https://omo.vibetip.help/docs) | Multi-model agents, categories, team mode, ultrawork, hyperplan — docs on VibeTip |
-| Model gateway | [OpenRouter](https://openrouter.ai) | One key for GLM Exacto, DeepSeek Nitro, Claude, Gemini, MiniMax; Exacto/Nitro variants |
-| GPT lane | Direct [OpenAI](https://platform.openai.com) | Hephaestus/Oracle/Momus/deep/ultrabrain need Sol quality; OpenRouter GPT is fallback only |
+| Model gateway | [OpenRouter](https://openrouter.ai) | One key for GLM Exacto, DeepSeek Nitro/Floor, Claude, Gemini, MiniMax; adaptive quality/speed/price routing |
+| GPT lane | [OpenRouter](https://openrouter.ai) | Hephaestus/Oracle use Sol; Momus/deep use Terra; direct OpenAI stays defined but disabled until explicitly enabled |
 | Docs truth | [Context7](https://context7.com) MCP | Versioned library docs via `resolve-library-id` → `query-docs` — stop inventing APIs |
 | Web | [Exa](https://exa.ai) via OmO `websearch` | Ideal-page queries; `category:company\|people\|news…`; then webfetch |
 | GitHub code | OmO `grep_app` | Real call-site examples across public repos |
@@ -34,8 +34,9 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 ### Routing logic (short)
 
 - **Orchestration / tool loops** → GLM `5.2:exacto` (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Exacto = tool-call quality on OpenRouter.
-- **Fast parallel recon** → DeepSeek Flash `:nitro` (explore, librarian, sisyphus-junior, quick) — Nitro = throughput.
-- **Deep implement / critique** → OpenAI `gpt-5.6-sol` direct (Hephaestus, Oracle, Momus, deep, ultrabrain, arch-review). `gpt-5.6-sol-pro` = higher-quality reasoning mode fallback.
+- **Fast parallel recon** → DeepSeek Flash `:nitro` (sisyphus-junior, quick, content-aware-fast) — Nitro = throughput. **Smart recon** → DeepSeek Pro (explore, librarian, content-aware-deep) — unmoderated, first-party only.
+- **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep, content-aware-* — DeepSeek / GLM Exacto / MiniMax / Gemini; never Claude/GPT primaries on recon chains.
+- **Deep implement / critique** → OpenRouter `gpt-5.6-sol` (Hephaestus, Oracle, ultrabrain, arch-review) and `gpt-5.6-terra` (Momus, deep); direct OpenAI is dormant unless its provider is explicitly enabled.
 - **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.6 Flash Nitro).
 - **Hard ceiling** → Claude Fable 5 max for `ultrawork` / unspecified-high (Opus 4.8 / 4.7 / Sol fallbacks).
 - **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k3` (1M ctx, ~$3/$15) as a quality fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider, expensive). Prefer K2.7 Code / DeepSeek for routine coding.
@@ -76,7 +77,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.38**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.46**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.
@@ -86,7 +87,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - Allow-everything on this trusted local box (no interactive prompts for normal tools).
 - Hard-deny catastrophic bash: `rm -rf /`, `rm -rf ~`, `mkfs`, `sudo`, `git push --force`, `gh repo delete`.
 - External directories, team tools, LSP, MCP allowed: Context7 · Exa websearch · grep_app · codegraph · lsp (OmO builtins + `opencode.json` Context7).
-- Keys in `.env` (never commit): `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `EXA_API_KEY`, `CONTEXT7_API_KEY`.
+- Keys in `.env` (never commit): `OPENROUTER_API_KEY`, `EXA_API_KEY`, `CONTEXT7_API_KEY`. GPT models route via OpenRouter only — no `OPENAI_API_KEY`.
 
 ## Commands
 

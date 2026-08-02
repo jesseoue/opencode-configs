@@ -52,6 +52,9 @@ run_step "setup --check" "$REPO/setup.sh" --check
 run_step "doctor --quick" "$REPO/doctor.sh" --quick
 run_step "versions --local" "$REPO/versions.sh" --local
 
+run_step "bash -n models.sh" bash -n "$REPO/models.sh"
+run_step "models --moderation" "$REPO/models.sh" --moderation >/dev/null
+
 # doctor --json schema (machine summary for heal/check tooling)
 if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '
 import json,sys
@@ -104,7 +107,7 @@ sys.exit(0 if ok else 1)
   && grep -q 'plugins' "$REPO/.gitignore" \
   && grep -qE '^/\*$' "$REPO/.gitignore" \
   && grep -q '!prompts/' "$REPO/.gitignore" \
-  && ! grep -qE '~/Projects/(lm-agents|test-speed)' "$REPO/zshrc.snippet" \
+  && ! grep -qE '/Users/[A-Za-z0-9_-]+/' "$REPO/zshrc.snippet" \
   && grep -q 'plugins' "$REPO/lib/common.sh"; then
   ok "goal off + ralph removed + plugins scrubbed + deny-all gitignore + no host paths"
 else

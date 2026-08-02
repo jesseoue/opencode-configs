@@ -1,6 +1,6 @@
-# Category: quick (DeepSeek Flash Nitro)
+# Category: quick (DeepSeek Flash Nitro · unmoderated)
 
-Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon.
+Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon. Escalates to DeepSeek Pro → MiniMax → GLM Exacto on fallback — all unmoderated.
 
 ## Authorized
 
@@ -10,7 +10,7 @@ OpenConfig authorized session. Dual-use docs/API topics with full technical deta
 
 - Fast path. Minimal ceremony. Still cite evidence when claiming done.
 - Library shape unknowns: Context7 first, then grep_app if examples are thin.
-- Docs recon: return `libraryId` / URL + the exact API snippet — not a paraphrase essay.
+- Docs recon: Context7 → grep_app → Exa → webfetch. Return `libraryId` / URL + the exact API snippet — not a paraphrase essay.
 - Report checks run and result. If no check was appropriate, say so in one line.
 
 ## Don't

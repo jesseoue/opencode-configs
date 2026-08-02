@@ -1,10 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "shell": "/bin/zsh",
-  "logLevel": "WARN",
+  "logLevel": "ERROR",
   "username": "user",
   "model": "openrouter/z-ai/glm-5.2-exacto",
-  "small_model": "openrouter/deepseek/deepseek-v4-flash",
+  "small_model": "openrouter/deepseek/deepseek-v4-flash-floor",
   "default_agent": "sisyphus",
   "autoupdate": false,
   "share": "disabled",
@@ -15,8 +15,7 @@
     "mdns": false
   },
   "enabled_providers": [
-    "openrouter",
-    "openai"
+    "openrouter"
   ],
   "instructions": [
     "AGENTS.md",
@@ -24,7 +23,7 @@
     "prompts/goal.md"
   ],
   "plugin": [
-    "oh-my-openagent@4.19.1"
+    "oh-my-openagent@4.19.4"
   ],
   "skills": {
     "paths": [
@@ -34,17 +33,17 @@
   },
   "agent": {
     "title": {
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash-floor",
       "temperature": 0.1,
       "steps": 1
     },
     "summary": {
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash-floor",
       "temperature": 0.2,
       "steps": 1
     },
     "compaction": {
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash-floor",
       "temperature": 0.1,
       "steps": 1
     },
@@ -60,16 +59,15 @@
       "whitelist": [
         "z-ai/glm-5.2-exacto",
         "deepseek/deepseek-v4-flash",
+        "deepseek/deepseek-v4-flash-floor",
         "deepseek/deepseek-v4-pro",
         "minimax/minimax-m3",
         "openai/gpt-5.6-sol",
         "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.6-terra",
         "openai/gpt-5.6-luna",
-        "openai/gpt-5.5",
         "google/gemini-3.1-pro-preview",
         "google/gemini-3.6-flash",
-        "google/gemini-3.5-flash",
         "google/gemini-3-flash-preview",
         "anthropic/claude-sonnet-5",
         "anthropic/claude-opus-4.8",
@@ -80,9 +78,9 @@
       ],
       "options": {
         "apiKey": "{env:OPENROUTER_API_KEY}",
-        "timeout": 900000,
-        "headerTimeout": 900000,
-        "chunkTimeout": 900000,
+        "timeout": 300000,
+        "headerTimeout": 300000,
+        "chunkTimeout": 60000,
         "setCacheKey": true,
         "headers": {
           "HTTP-Referer": "https://github.com/jesseoue/opencode-configs",
@@ -103,7 +101,7 @@
           "status": "active",
           "limit": {
             "context": 1048576,
-            "output": 65536
+            "output": 131072
           },
           "options": {
             "reasoning": {
@@ -112,40 +110,7 @@
             "provider": {
               "require_parameters": true,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "order": [
-                "baseten",
-                "cloudflare",
-                "fireworks",
-                "venice",
-                "morph",
-                "streamlake",
-                "z-ai",
-                "baidu",
-                "novita",
-                "alibaba"
-              ],
-              "ignore": [
-                "parasail",
-                "ionstream",
-                "chutes",
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "phala",
-                "inceptron",
-                "wafer",
-                "decart",
-                "deepinfra",
-                "atlas-cloud",
-                "gmicloud",
-                "io-net",
-                "siliconflow",
-                "wandb",
-                "friendli",
-                "together",
-                "coreweave"
-              ]
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -182,41 +147,15 @@
           "status": "active",
           "limit": {
             "context": 1048576,
-            "output": 65536
+            "output": 393216
           },
           "options": {
             "provider": {
-              "require_parameters": true,
+              "require_parameters": false,
               "data_collection": "allow",
               "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 30
-              },
-              "preferred_max_latency": {
-                "p50": 2,
-                "p90": 4
-              },
-              "order": [
-                "deepseek",
-                "baidu",
-                "alibaba",
-                "novita",
-                "fireworks",
-                "siliconflow",
-                "streamlake",
-                "cloudflare",
-                "morph",
-                "venice"
-              ],
-              "ignore": [
-                "parasail",
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "io-net",
-                "atlas-cloud",
-                "wandb"
+              "only": [
+                "deepseek"
               ]
             }
           },
@@ -243,6 +182,30 @@
             }
           }
         },
+        "deepseek/deepseek-v4-flash-floor": {
+          "id": "deepseek/deepseek-v4-flash:floor",
+          "name": "DeepSeek V4 Flash Floor",
+          "family": "deepseek",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1048576,
+            "output": 393216
+          },
+          "options": {
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "only": [
+                "deepseek"
+              ]
+            }
+          }
+        },
         "deepseek/deepseek-v4-pro": {
           "id": "deepseek/deepseek-v4-pro:exacto",
           "name": "DeepSeek V4 Pro Exacto",
@@ -254,41 +217,18 @@
           "status": "active",
           "limit": {
             "context": 1048576,
-            "output": 131072
+            "output": 384000
           },
           "options": {
             "reasoning": {
               "effort": "low"
             },
             "provider": {
-              "require_parameters": true,
+              "require_parameters": false,
               "data_collection": "allow",
               "allow_fallbacks": true,
-              "order": [
-                "deepseek",
-                "novita",
-                "baidu",
-                "alibaba",
-                "gmicloud",
-                "siliconflow",
-                "streamlake",
-                "venice"
-              ],
-              "ignore": [
-                "parasail",
-                "ionstream",
-                "together",
-                "fireworks",
-                "wandb",
-                "digitalocean",
-                "atlas-cloud",
-                "deepinfra",
-                "ambient",
-                "akashml",
-                "phala",
-                "baseten",
-                "wafer",
-                "coreweave"
+              "only": [
+                "deepseek"
               ]
             }
           },
@@ -335,21 +275,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 30
-              },
-              "preferred_max_latency": {
-                "p50": 6,
-                "p90": 10
-              },
-              "allow_fallbacks": true,
-              "order": [
-                "google-vertex",
-                "anthropic",
-                "amazon-bedrock",
-                "azure"
-              ]
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -395,21 +321,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "preferred_min_throughput": {
-                "p50": 50,
-                "p90": 40
-              },
-              "preferred_max_latency": {
-                "p50": 3,
-                "p90": 6
-              },
-              "allow_fallbacks": true,
-              "order": [
-                "google-vertex",
-                "anthropic",
-                "amazon-bedrock",
-                "azure"
-              ]
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -455,18 +367,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "order": [
-                "anthropic"
-              ],
-              "preferred_min_throughput": {
-                "p50": 70,
-                "p90": 50
-              },
-              "preferred_max_latency": {
-                "p50": 1.5,
-                "p90": 3
-              }
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -512,79 +413,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "order": [
-                "google-vertex",
-                "anthropic",
-                "amazon-bedrock",
-                "azure"
-              ],
-              "preferred_min_throughput": {
-                "p50": 50,
-                "p90": 40
-              },
-              "preferred_max_latency": {
-                "p50": 3,
-                "p90": 6
-              }
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "openai/gpt-5.5": {
-          "id": "openai/gpt-5.5",
-          "name": "GPT-5.5 (OpenRouter)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "options": {
-            "provider": {
-              "require_parameters": false,
-              "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 25,
-                "p90": 17
-              },
-              "preferred_max_latency": {
-                "p50": 6,
-                "p90": 10
-              },
-              "order": [
-                "openai",
-                "azure"
-              ]
-            },
-            "reasoning": {
-              "effort": "high"
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -627,19 +456,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 30,
-                "p90": 21
-              },
-              "preferred_max_latency": {
-                "p50": 8,
-                "p90": 12
-              },
-              "order": [
-                "google-ai-studio",
-                "google-vertex"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "high"
@@ -679,32 +496,13 @@
           "status": "active",
           "limit": {
             "context": 1048576,
-            "output": 65536
+            "output": 65535
           },
           "options": {
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 40
-              },
-              "preferred_max_latency": {
-                "p50": 2,
-                "p90": 4
-              },
-              "order": [
-                "google-ai-studio",
-                "google-vertex"
-              ],
-              "ignore": [
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "phala",
-                "cloudflare"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "medium"
@@ -739,7 +537,7 @@
           "family": "gpt",
           "reasoning": true,
           "tool_call": true,
-          "temperature": true,
+          "temperature": false,
           "attachment": true,
           "status": "active",
           "limit": {
@@ -750,19 +548,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 25,
-                "p90": 17
-              },
-              "preferred_max_latency": {
-                "p50": 6,
-                "p90": 10
-              },
-              "order": [
-                "openai",
-                "azure"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "high"
@@ -797,7 +583,7 @@
           "family": "gpt",
           "reasoning": true,
           "tool_call": true,
-          "temperature": true,
+          "temperature": false,
           "attachment": true,
           "status": "active",
           "limit": {
@@ -808,19 +594,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 25,
-                "p90": 17
-              },
-              "preferred_max_latency": {
-                "p50": 6,
-                "p90": 10
-              },
-              "order": [
-                "openai",
-                "azure"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "high"
@@ -855,7 +629,7 @@
           "family": "gpt",
           "reasoning": true,
           "tool_call": true,
-          "temperature": true,
+          "temperature": false,
           "attachment": true,
           "status": "active",
           "limit": {
@@ -866,19 +640,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 30
-              },
-              "preferred_max_latency": {
-                "p50": 3,
-                "p90": 6
-              },
-              "order": [
-                "openai",
-                "azure"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "medium"
@@ -913,7 +675,7 @@
           "family": "gpt",
           "reasoning": true,
           "tool_call": true,
-          "temperature": true,
+          "temperature": false,
           "attachment": true,
           "status": "active",
           "limit": {
@@ -924,84 +686,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 25,
-                "p90": 17
-              },
-              "preferred_max_latency": {
-                "p50": 6,
-                "p90": 10
-              },
-              "order": [
-                "openai",
-                "azure"
-              ]
-            },
-            "reasoning": {
-              "effort": "medium"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "google/gemini-3.5-flash": {
-          "id": "google/gemini-3.5-flash:nitro",
-          "name": "Gemini 3.5 Flash Nitro",
-          "family": "gemini",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1048576,
-            "output": 65536
-          },
-          "options": {
-            "provider": {
-              "require_parameters": false,
-              "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 40
-              },
-              "preferred_max_latency": {
-                "p50": 2,
-                "p90": 4
-              },
-              "order": [
-                "google-vertex",
-                "google-ai-studio"
-              ],
-              "ignore": [
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "phala",
-                "cloudflare"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "medium"
@@ -1050,21 +735,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 30
-              },
-              "preferred_max_latency": {
-                "p50": 8,
-                "p90": 14
-              },
-              "order": [
-                "amazon-bedrock",
-                "google-vertex",
-                "anthropic",
-                "azure"
-              ]
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -1101,38 +772,13 @@
           "status": "active",
           "limit": {
             "context": 1048576,
-            "output": 65536
+            "output": 512000
           },
           "options": {
             "provider": {
               "require_parameters": true,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 30
-              },
-              "preferred_max_latency": {
-                "p50": 2,
-                "p90": 4
-              },
-              "order": [
-                "minimax",
-                "atlas-cloud",
-                "deepinfra",
-                "together",
-                "novita",
-                "venice",
-                "morph"
-              ],
-              "ignore": [
-                "parasail",
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "phala",
-                "gmicloud"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "high"
@@ -1181,10 +827,7 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "order": [
-                "moonshotai"
-              ]
+              "allow_fallbacks": true
             }
           },
           "variants": {
@@ -1227,243 +870,10 @@
             "provider": {
               "require_parameters": false,
               "data_collection": "allow",
-              "allow_fallbacks": true,
-              "preferred_min_throughput": {
-                "p50": 40,
-                "p90": 40
-              },
-              "preferred_max_latency": {
-                "p50": 2,
-                "p90": 4
-              },
-              "order": [
-                "google-vertex",
-                "google-ai-studio"
-              ],
-              "ignore": [
-                "ambient",
-                "digitalocean",
-                "akashml",
-                "phala",
-                "cloudflare"
-              ]
+              "allow_fallbacks": true
             },
             "reasoning": {
               "effort": "medium"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        }
-      }
-    },
-    "openai": {
-      "name": "OpenAI",
-      "env": [
-        "OPENAI_API_KEY"
-      ],
-      "options": {
-        "apiKey": "{env:OPENAI_API_KEY}",
-        "timeout": 900000,
-        "headerTimeout": 900000,
-        "chunkTimeout": 900000
-      },
-      "models": {
-        "gpt-5.6-sol": {
-          "name": "GPT-5.6 Sol (direct)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "high"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "gpt-5.6-sol-pro": {
-          "name": "GPT-5.6 Sol Pro (direct)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "high"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "gpt-5.6-luna": {
-          "name": "GPT-5.6 Luna (direct)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "medium"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "gpt-5.6-terra": {
-          "name": "GPT-5.6 Terra (direct)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "high"
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "gpt-5.5": {
-          "name": "GPT-5.5 (direct)",
-          "family": "gpt",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": true,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 400000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "high"
             }
           },
           "variants": {
@@ -1578,8 +988,8 @@
     "preserve_recent_tokens": 10000
   },
   "tool_output": {
-    "max_lines": 100,
-    "max_bytes": 4096
+    "max_lines": 300,
+    "max_bytes": 12000
   },
   "watcher": {
     "ignore": [
@@ -1608,6 +1018,7 @@
       "headers": {
         "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
       },
+      "oauth": false,
       "enabled": true,
       "timeout": 30000
     }
@@ -1799,21 +1210,13 @@
     "batch_tool": true,
     "continue_loop_on_deny": false,
     "disable_paste_summary": true,
-    "mcp_timeout": 12000,
+    "mcp_timeout": 30000,
     "openTelemetry": false,
-    "compaction": {
-      "autocontinue": true
-    },
     "policies": [
       {
         "effect": "allow",
         "action": "provider.use",
         "resource": "openrouter"
-      },
-      {
-        "effect": "allow",
-        "action": "provider.use",
-        "resource": "openai"
       },
       {
         "effect": "deny",

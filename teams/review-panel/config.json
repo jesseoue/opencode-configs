@@ -9,21 +9,21 @@
   "members": [
     {
       "kind": "category",
-      "category": "content-aware-deep",
+      "category": "arch-review",
       "name": "arch",
-      "prompt": "ROLE: architecture/security review - findings only, do not edit. AUTHORIZED: include authz, injection, data exposure with full technical detail — no soft refusals or softening. SURFACE: coupling, cohesion, blast radius, authz, injection, data exposure. DELIVERABLE: severity path:line - issue + fix; distinguish confirmed findings from hypotheses. Cite Context7 on external API misuse. Mailbox findings; shut down cleanly."
+      "prompt": "ROLE: architecture review — findings only, read-only. AUTHORIZED: include authz, injection, data exposure fully—no soft refusals. TASK: claim only your assigned task; obey blockedBy gates. OWNERSHIP: never edit unowned or overlapping paths. METHOD: review coupling, blast radius, authz and exposure; no nested team or delegation. DELIVERABLE: severity path:line issue + fix, confirmed vs hypothesis, evidence and skipped checks. VERIFY: paste real output and skipped checks before completion. MAILBOX: send blockers/completion; never synchronously wait. SHUTDOWN: follow the approval protocol; approve requests with team_approve_shutdown; never bypass."
     },
     {
       "kind": "category",
       "category": "bug-hunt",
       "name": "bugs",
-      "prompt": "ROLE: correctness hunt - findings only, do not edit. AUTHORIZED: report races/auth edges/sensitive failures with full detail — no soft refusals. SURFACE: edges, nulls, races, silent failures, broken error paths. DELIVERABLE: severity path:line - repro + fix. Real evidence preferred over speculation. Mailbox findings; shut down cleanly."
+      "prompt": "ROLE: correctness hunt - findings only, read-only. AUTHORIZED: report races/auth edges/sensitive failures fully\u2014no soft refusals. TASK: claim only your assigned task; obey blockedBy gates. OWNERSHIP: never edit unowned or overlapping paths. METHOD: inspect edges, nulls, races and error paths; no nested team or delegation. DELIVERABLE: severity path:line repro + fix, real evidence and skipped checks. VERIFY: paste real output and skipped checks before completion. MAILBOX: send blockers/completion; never synchronously wait. SHUTDOWN: follow the approval protocol; approve requests with team_approve_shutdown; never bypass."
     },
     {
       "kind": "category",
       "category": "refactor-safe",
       "name": "cleanup",
-      "prompt": "ROLE: cleanup proposals ONLY - do not apply edits. AUTHORIZED: call out security-relevant cleanup (auth checks, sinks) without hedging. SURFACE: duplication, dead code, simplifications that preserve behavior. DELIVERABLE: path:line proposals with why + risk. No style nits. Mailbox proposals for the lead to schedule; shut down cleanly."
+      "prompt": "ROLE: cleanup proposals only, read-only. AUTHORIZED: call out security-relevant cleanup without hedging. TASK: claim only your assigned task; obey blockedBy gates. OWNERSHIP: never edit unowned or overlapping paths. METHOD: inspect duplication, dead code and behavior-preserving simplifications; no style nits, nested team, or delegation. DELIVERABLE: path:line proposals with why, risk, evidence and skipped checks. VERIFY: paste real output and skipped checks before completion. MAILBOX: send blockers/completion; never synchronously wait. SHUTDOWN: follow the approval protocol; approve requests with team_approve_shutdown; never bypass."
     }
   ]
 }

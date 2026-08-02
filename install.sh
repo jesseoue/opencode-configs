@@ -7,7 +7,7 @@
 #   ./install.sh [--dir PATH] [--skip-cli] [--yes] [--lazy|--full]
 #
 # Fresh machine (distribution URL is base64 — keeps tree free of host-owner literals):
-#   curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3MvbWFpbi9pbnN0YWxsLnNo' | base64 -d)" | bash
+#   curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
 #
 # Safety:
 #   • Refuses root; umask 077 for secret files
@@ -59,7 +59,7 @@ install.sh — OpenConfig (oc) installer
   ./install.sh [--dir PATH] [--log PATH] [--skip-cli] [--yes] [--lazy|--full]
 
   # Fresh machine (decode distribution raw URL, then pipe):
-  curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3MvbWFpbi9pbnN0YWxsLnNo' | base64 -d)" | bash
+  curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
 
 Flags:
   --dir PATH   install/clone location (default: repo dir if local, else ~/opencode-configs)
@@ -74,7 +74,7 @@ Lazy defaults: install CLI=yes · zshrc=yes · tmux/ghostty=yes when present · 
 optional keys=skip · OpenRouter required (prompt; Enter skips with warning).
 
 Env (pre-seed keys, no paste needed):
-  OPENROUTER_API_KEY  OPENAI_API_KEY  EXA_API_KEY  CONTEXT7_API_KEY
+  OPENROUTER_API_KEY  EXA_API_KEY  CONTEXT7_API_KEY
 
 Safety: refuses root; never deletes sessions; backs up replaced configs.
 Logs:   ~/.opencode-backups/logs/install-latest.log (no secrets)
@@ -666,18 +666,14 @@ echo "  File: $ENV_FILE (chmod 600, gitignored)"
 
 # Prefer env pre-seed so lazy users can: OPENROUTER_API_KEY=… ./install.sh
 seed_key_from_env OPENROUTER_API_KEY
-seed_key_from_env OPENAI_API_KEY
 seed_key_from_env EXA_API_KEY
 seed_key_from_env CONTEXT7_API_KEY
 seed_key_from_env OPENROUTER_MGMT_KEY
 
 if $DO_KEYS; then
   prompt_api_key OPENROUTER_API_KEY \
-    "OpenRouter (required — GLM/Flash/Claude/Gemini/…)" \
+    "OpenRouter (required — GLM/Flash/Claude/Gemini/GPT/…)" \
     "https://openrouter.ai/keys" true
-  prompt_api_key OPENAI_API_KEY \
-    "OpenAI (recommended — direct GPT lane / Hephaestus)" \
-    "https://platform.openai.com/api-keys" false
   prompt_api_key EXA_API_KEY \
     "Exa (recommended — web search)" \
     "https://exa.ai" false
@@ -845,10 +841,6 @@ fi
 step=1
 if $missing_or; then
   echo "  $step. Edit $LINK/.env — add OPENROUTER_API_KEY (required)"
-  step=$((step + 1))
-fi
-if [[ -z "$(oc_get_env_key "$ENV_FILE" OPENAI_API_KEY 2>/dev/null || true)" ]]; then
-  echo "  $step. Optional: add OPENAI_API_KEY for the direct GPT lane (Hephaestus/Oracle/…)"
   step=$((step + 1))
 fi
 echo "  $step. Restart shell (or: source ~/.zshrc)"

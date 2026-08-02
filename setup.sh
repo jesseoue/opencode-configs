@@ -186,8 +186,14 @@ echo ""
 # ─── 5b. CodeGraph (OmO code intelligence) ────────────────────────
 echo "Step 5b: CodeGraph"
 CG_BIN="${HOME}/.omo/codegraph/bin/codegraph"
+CG_WANT="$(oc_version_get codegraph.pin 2>/dev/null || true)"
 if [[ -x "$CG_BIN" ]]; then
-  ok "codegraph $($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r')"
+  CG_HAVE="$($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r')"
+  if [[ -n "$CG_WANT" && "$CG_HAVE" != "$CG_WANT" ]]; then
+    opt "codegraph $CG_HAVE != OmO pin $CG_WANT (next OmO session auto-provisions it)"
+  else
+    ok "codegraph $CG_HAVE"
+  fi
 elif [[ -x "${HOME}/.omo/codegraph/bin/codegraph" ]]; then
   ok "codegraph present"
 else
@@ -209,8 +215,12 @@ if bad and ("/.cache/opencode/codegraph" in str(bad) or str(bad).startswith("~/.
     print(f"  ⚠ codegraph.install_dir={bad!r} is wrong — OmO default is ~/.omo/codegraph")
 elif cg.get("enabled") is False:
     print("  ⚠ codegraph.enabled is false")
+elif cg.get("auto_provision") is not True:
+    print("  ⚠ codegraph.auto_provision must be true")
+elif cg.get("daemon") is not True:
+    print("  ⚠ codegraph.daemon must be true")
 else:
-    print("  ✓ codegraph config OK (enabled, default ~/.omo/codegraph)")
+    print("  ✓ codegraph config OK (managed daemon, default ~/.omo/codegraph)")
 PY
 echo ""
 

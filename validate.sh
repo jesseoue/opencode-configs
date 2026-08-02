@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO="${OC_VALIDATE_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 QUIET=""
@@ -72,6 +72,45 @@ if oc:
         err("opencode.json: provider.openrouter.options.managementKey is not a real key. Remove it.")
     if "defaultHeaders" in popts:
         err("opencode.json: provider.openrouter.options.defaultHeaders is invalid — rename to 'headers'.")
+    for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+        if popts.get(timeout_key) != expected:
+            err(f"opencode.json: provider.openrouter.options.{timeout_key} must be {expected}.")
+    import base64
+    sig_path = os.path.join(repo, "signature.json")
+    want_referer = "https://github.com/jesseoue/opencode-configs"
+    if os.path.isfile(sig_path):
+        try:
+            sig = load(sig_path)
+            b64 = (sig.get("github_b64") or "").strip()
+            if b64:
+                want_referer = base64.b64decode(b64).decode("ascii").rstrip("/")
+        except Exception:
+            pass
+    hdrs = popts.get("headers") if isinstance(popts.get("headers"), dict) else {}
+    if hdrs.get("HTTP-Referer") != want_referer:
+        err(f"opencode.json: openrouter.headers.HTTP-Referer must match signature github_b64 ({want_referer}). Run: oc fix")
+    elif hdrs.get("X-Title") != "OpenConfig":
+        err("opencode.json: openrouter.headers.X-Title must be OpenConfig")
+    else:
+        ok("openrouter attribution headers aligned with signature")
+    direct_opts = ((oc.get("provider") or {}).get("openai") or {}).get("options") or {}
+    enabled_providers = oc.get("enabled_providers")
+    openai_enabled = isinstance(enabled_providers, list) and "openai" in enabled_providers
+    if openai_enabled:
+        for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+            if direct_opts.get(timeout_key) != expected:
+                err(f"opencode.json: provider.openai.options.{timeout_key} must be {expected}.")
+    elif (oc.get("provider") or {}).get("openai"):
+        err("opencode.json: provider.openai present but direct OpenAI disabled — remove block (OpenRouter-only).")
+    else:
+        ok("direct OpenAI provider absent (OpenRouter-only)")
+    tool_output = oc.get("tool_output") or {}
+    if tool_output.get("max_lines") != 300 or tool_output.get("max_bytes") != 12000:
+        err("opencode.json: tool_output must be 300 lines / 12000 bytes.")
+    if (oc.get("experimental") or {}).get("mcp_timeout") != 30000:
+        err("opencode.json: experimental.mcp_timeout must match the 30000ms Context7 timeout.")
+    if oc.get("logLevel") != "ERROR":
+        err("opencode.json: logLevel must be ERROR to minimize sensitive runtime logging.")
 
     # LSP: OpenCode starts with ALL builtins enabled; we must disable extras.
     lsp = oc.get("lsp")
@@ -123,14 +162,32 @@ if oc:
         pv = o.get("provider", {})
         q = pv.get("quantizations")
         fam = m.get("family")
+        if pv.get("order"):
+            err(f"opencode.json[{mid}]: provider.order disables adaptive load balancing — remove it.")
+        if pv.get("data_collection") != "allow":
+            err(f"opencode.json[{mid}]: provider.data_collection must be 'allow' for full provider availability.")
+        if "zdr" in pv:
+            err(f"opencode.json[{mid}]: provider.zdr restricts the provider pool — remove it for availability.")
+        expected_require_parameters = fam in ("glm", "minimax")
+        if fam == "deepseek":
+            if pv.get("only") != ["deepseek"]:
+                err(f"opencode.json[{mid}]: deepseek must pin provider.only=['deepseek'] (first-party; no proxy moderation). Run: oc fix")
+            if pv.get("require_parameters") is not False:
+                err(f"opencode.json[{mid}]: deepseek provider.require_parameters must be false. Run: oc fix")
+        elif pv.get("require_parameters") is not expected_require_parameters:
+            err(
+                f"opencode.json[{mid}]: provider.require_parameters must be "
+                f"{str(expected_require_parameters).lower()} for {fam} routing."
+            )
         # Exacto: OpenRouter docs say append :exacto to the slug (quality-first tool routing).
         # Do NOT also set sort to price/throughput/latency — that overrides Exacto.
         # Soft preferred_* / tight quant filters fight Exacto's provider ranking.
         api_id = m.get("id") or mid
         is_exacto = api_id.endswith(":exacto") or pv.get("sort") == "exacto" or mid.endswith("-exacto") or mid.endswith(":exacto")
         is_nitro = api_id.endswith(":nitro") or pv.get("sort") == "throughput" or mid.endswith("-nitro") or mid.endswith(":nitro")
-        if is_exacto and is_nitro:
-            err(f"opencode.json[{mid}]: cannot combine Exacto and Nitro — pick quality (:exacto) or speed (:nitro).")
+        is_floor = api_id.endswith(":floor") or pv.get("sort") == "price" or mid.endswith("-floor") or mid.endswith(":floor")
+        if sum((is_exacto, is_nitro, is_floor)) > 1:
+            err(f"opencode.json[{mid}]: cannot combine Exacto, Nitro, and Floor routing modes.")
         if is_exacto:
             if not str(api_id).endswith(":exacto"):
                 err(f"opencode.json[{mid}]: Exacto models must use id ending in ':exacto' (got '{api_id}'). See https://openrouter.ai/docs/guides/routing/model-variants/exacto")
@@ -139,6 +196,10 @@ if oc:
                 err(f"opencode.json[{mid}]: provider.sort={sort!r} overrides Exacto — remove sort (the :exacto suffix already sets quality-first routing).")
             if sort == "exacto":
                 warn(f"opencode.json[{mid}]: provider.sort='exacto' is redundant with id ':exacto' — drop sort.")
+            if pv.get("order"):
+                err(f"opencode.json[{mid}]: provider.order overrides Exacto quality ranking — remove order.")
+            if pv.get("ignore"):
+                err(f"opencode.json[{mid}]: provider.ignore narrows Exacto fallback coverage — remove it.")
             if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
                 err(f"opencode.json[{mid}]: Exacto + preferred_min_throughput/preferred_max_latency fights quality ranking — remove soft prefs.")
             if q is not None:
@@ -151,6 +212,24 @@ if oc:
                 err(f"opencode.json[{mid}]: provider.sort={sort!r} fights Nitro throughput routing — remove sort (or use :nitro only).")
             if sort == "throughput":
                 warn(f"opencode.json[{mid}]: provider.sort='throughput' is redundant with id ':nitro' — drop sort.")
+            if pv.get("order"):
+                err(f"opencode.json[{mid}]: provider.order overrides Nitro throughput ranking — remove order.")
+            if pv.get("ignore"):
+                err(f"opencode.json[{mid}]: provider.ignore narrows Nitro fallback coverage — remove it.")
+            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
+                err(f"opencode.json[{mid}]: Nitro + preferred_* fights native :nitro throughput ranking — remove (run: oc fix)")
+        if is_floor:
+            if not str(api_id).endswith(":floor") and pv.get("sort") != "price":
+                err(f"opencode.json[{mid}]: cost routes must use id ending in ':floor' (got '{api_id}').")
+            if pv.get("order"):
+                err(f"opencode.json[{mid}]: provider.order overrides Floor price ranking — remove order.")
+            if pv.get("ignore"):
+                err(f"opencode.json[{mid}]: provider.ignore narrows Floor fallback coverage — remove it.")
+            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
+                err(f"opencode.json[{mid}]: Floor + preferred_* fights native :floor price ranking — remove (run: oc fix)")
+        if not is_exacto and not is_nitro and not is_floor:
+            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
+                err(f"opencode.json[{mid}]: preferred_* on auto-routed models fights OpenRouter adaptive ranking — remove (run: oc fix)")
         # Claude and DeepSeek have first-party endpoints reporting quant 'unknown'
         # (DeepSeek first-party is the cheapest + best cache) — filtering without
         # 'unknown' matches ZERO providers for them. GLM excluding low quant
@@ -228,6 +307,8 @@ if omo:
         )
     elif "oh-my-opencode.schema.json" not in schema:
         warn(f"oh-my-openagent.json: unexpected $schema URL: {schema}")
+    elif os.environ.get("OC_VALIDATE_OFFLINE") == "1":
+        ok("$schema URL shape valid (reachability skipped by OC_VALIDATE_OFFLINE)")
     else:
         try:
             import urllib.request
@@ -243,15 +324,45 @@ if omo:
 
     hexre = re.compile(r"^#[0-9A-Fa-f]{6}$")
     agents = omo.get("agents", {})
+    disabled_agents = {str(a).lower() for a in (omo.get("disabled_agents") or [])}
     for n, a in agents.items():
         c = a.get("color")
         if c is not None and not hexre.match(str(c)):
             err(f"oh-my-openagent.json[{n}]: color '{c}' is not hex #RRGGBB — the ENTIRE agents section will be dropped at runtime.")
+        if isinstance(a, dict) and "reasoningEffort" in a:
+            err(f"oh-my-openagent.json agents.{n}: reasoningEffort deprecated on OmO 4.19.4 — use reasoning (run: oc fix)")
         for bad in ("hidden", "steps", "providerOptions"):
             if bad in a:
                 warn(f"oh-my-openagent.json[{n}]: key '{bad}' is not in the plugin agent schema (stripped/ignored).")
     if agents:
         ok(f"{len(agents)} plugin agents, all colors valid")
+
+    # Sisyphus is the only supported default/team lead in this pinned stack.
+    default_agent = (oc or {}).get("default_agent")
+    if default_agent != "sisyphus":
+        err(f"opencode.json: default_agent must be 'sisyphus' (got {default_agent!r})")
+    if omo.get("default_run_agent") != "sisyphus":
+        err(f"oh-my-openagent.json: default_run_agent must be 'sisyphus' (got {omo.get('default_run_agent')!r})")
+    order = omo.get("agent_order") or []
+    if not isinstance(order, list) or not order or order[0] != "sisyphus":
+        err("oh-my-openagent.json: agent_order must start with 'sisyphus'")
+    elif not all(isinstance(name, str) and name for name in order):
+        err("oh-my-openagent.json: agent_order entries must be non-empty strings")
+    elif len(order) != len(set(order)):
+        err("oh-my-openagent.json: agent_order contains duplicate agents")
+    elif any(name not in agents for name in order):
+        err(f"oh-my-openagent.json: agent_order references undeclared agents: {sorted(set(order) - set(agents))}")
+    else:
+        ok("Sisyphus is first in agent_order and all ordered agents resolve")
+    sis = agents.get("sisyphus")
+    if not isinstance(sis, dict):
+        err("oh-my-openagent.json: agents.sisyphus missing")
+    elif sis.get("mode") != "primary":
+        err("oh-my-openagent.json: agents.sisyphus.mode must be 'primary'")
+    elif "sisyphus" in disabled_agents:
+        err("oh-my-openagent.json: sisyphus must not appear in disabled_agents")
+    else:
+        ok("Sisyphus declared primary and enabled")
 
     # OmO injects security-* via a loopback skills.urls server; OpenCode can
     # deadlock fetching that index during `opencode run` bootstrap. Keep them disabled.
@@ -284,6 +395,10 @@ if omo:
     cg = omo.get("codegraph") or {}
     if cg.get("enabled") is False:
         err("oh-my-openagent.json: codegraph.enabled is false")
+    elif cg.get("auto_provision") is not True:
+        err("oh-my-openagent.json: codegraph.auto_provision must be true (keeps OmO's pinned runtime current)")
+    elif cg.get("daemon") is not True:
+        err("oh-my-openagent.json: codegraph.daemon must be true (OmO 4.19.4 managed-daemon default)")
     else:
         idir = cg.get("install_dir")
         if idir and "cache/opencode/codegraph" in str(idir):
@@ -298,6 +413,8 @@ if omo:
     def _check_fallbacks(kind, name, primary, fallbacks):
         if not primary or not isinstance(fallbacks, list):
             return
+        if len(fallbacks) > 3:
+            err(f"oh-my-openagent.json[{kind}.{name}]: fallback_models exceeds three attempts")
         primary_l = str(primary).lower()
         for fb in fallbacks:
             if str(fb).lower() == primary_l:
@@ -310,9 +427,55 @@ if omo:
     for n, a in (omo.get("agents") or {}).items():
         _check_fallbacks("agents", n, a.get("model"), a.get("fallback_models"))
     for n, c in (omo.get("categories") or {}).items():
-        _check_fallbacks("categories", n, c.get("model"), c.get("fallback_models"))
+        if isinstance(c, dict) and "reasoningEffort" in c:
+            err(f"oh-my-openagent.json categories.{n}: reasoningEffort deprecated on OmO 4.19.4 — use reasoning (run: oc fix)")
+        _check_fallbacks("categories", n, c.get("model") if isinstance(c, dict) else None, (c.get("fallback_models") if isinstance(c, dict) else None))
     ok("agent/category fallback lists have no primary duplicates")
 
+    # Fast/recon routes must not fall back to slow/premium models (availability + latency).
+    SLOW_IN_FAST = ("kimi-k3", "claude-opus", "claude-fable", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-sol-pro")
+    FAST_ROUTES = {"librarian", "explore", "sisyphus-junior", "quick", "unspecified-low", "content-aware-fast"}
+    RECON_ROUTES = FAST_ROUTES | {"content-aware-deep", "content-aware-research", "deep", "arch-review", "metis", "multimodal-looker"}
+    MODERATED_MARKERS = ("anthropic/claude", "openai/gpt", "meta-llama/", "cohere/")
+    slow_fb_ok = True
+    mod_recon_ok = True
+    for n in FAST_ROUTES:
+        cfg = (agents or {}).get(n) or (omo.get("categories") or {}).get(n)
+        if not isinstance(cfg, dict):
+            continue
+        for fb in cfg.get("fallback_models") or []:
+            low = str(fb).lower()
+            if any(s in low for s in SLOW_IN_FAST):
+                slow_fb_ok = False
+                err(f"oh-my-openagent.json: slow model {fb!r} in fast route '{n}' fallbacks — use Flash/Nitro/Exacto/MiniMax")
+    for n in RECON_ROUTES:
+        cfg = (agents or {}).get(n) or (omo.get("categories") or {}).get(n)
+        if not isinstance(cfg, dict):
+            continue
+        for slot, model_ref in (("model", cfg.get("model")),):
+            if not model_ref:
+                continue
+            low = str(model_ref).lower()
+            if any(m in low for m in MODERATED_MARKERS):
+                mod_recon_ok = False
+                err(f"oh-my-openagent.json: moderated primary {model_ref!r} on recon route '{n}' — use DeepSeek/GLM/MiniMax/Gemini")
+        for fb in cfg.get("fallback_models") or []:
+            low = str(fb).lower()
+            if any(m in low for m in MODERATED_MARKERS):
+                mod_recon_ok = False
+                err(f"oh-my-openagent.json: moderated fallback {fb!r} on recon route '{n}' — use DeepSeek/GLM/MiniMax/Gemini")
+    for section, items in (("agents", agents or {}), ("categories", omo.get("categories") or {})):
+        for n, cfg in items.items():
+            if not isinstance(cfg, dict):
+                continue
+            for fb in cfg.get("fallback_models") or []:
+                if "kimi-k3" in str(fb).lower():
+                    slow_fb_ok = False
+                    err(f"oh-my-openagent.json[{section}.{n}]: kimi-k3 in fallback_models — whitelist-only (slow, single-provider)")
+    if slow_fb_ok:
+        ok("fast routes avoid slow/premium fallbacks; kimi-k3 not in routine chains")
+    if mod_recon_ok:
+        ok("recon routes use unmoderated primaries and fallbacks (DeepSeek/GLM/MiniMax/Gemini)")
 
     kd = omo.get("keyword_detector", {})
     allowed = {"ultrawork", "team", "hyperplan", "hyperplan-ultrawork"}
@@ -322,9 +485,12 @@ if omo:
             err(f"oh-my-openagent.json: keyword_detector.enabled_expansions has invalid value '{v}' — the section drops and ALL expansions fire. Allowed: {sorted(allowed)}.")
 
     # hyperplan prerequisites (OmO skill: team + 4 required categories + demoted plan handoff)
-    disabled_agents = {str(a).lower() for a in (omo.get("disabled_agents") or [])}
     tm = omo.get("team_mode") or {}
     cats = omo.get("categories") or {}
+    for cname, category in cats.items():
+        cap = category.get("maxTokens") if isinstance(category, dict) else None
+        if not isinstance(cap, int) or cap < 1 or cap > 32768:
+            err(f"category {cname!r}: maxTokens must be an explicit 1–32768 cost ceiling (got {cap!r}).")
     sa = omo.get("sisyphus_agent") or {}
     hp_on = "hyperplan" in expansions
     if hp_on:
@@ -360,8 +526,15 @@ if omo:
         v = pc.get(prov)
         if not isinstance(v, int) or v < 1 or v > cap:
             err(f"providerConcurrency.{prov} must be 1–{cap} (got {v!r})")
+        elif v != cap:
+            err(f"providerConcurrency.{prov} must be {cap} (got {v!r}) — run: oc fix")
         else:
             ok(f"providerConcurrency.{prov}={v}")
+    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 200:
+        err(f"background_task.maxToolCalls must be ≤200 (got {bt.get('maxToolCalls')!r})")
+    circuit = bt.get("circuitBreaker") or {}
+    if not isinstance(circuit.get("maxToolCalls"), int) or circuit.get("maxToolCalls") > 160:
+        err(f"background_task.circuitBreaker.maxToolCalls must be ≤160 (got {circuit.get('maxToolCalls')!r})")
     mp = tm.get("max_parallel_members")
     if isinstance(mp, int) and (mp < 1 or mp > 4):
         err(f"team_mode.max_parallel_members={mp} — want 1–4")
@@ -375,6 +548,9 @@ if omo:
     ):
         if k not in tm:
             err(f"team_mode.{k} missing — run: oc fix")
+    for key, expected in (("max_messages_per_run", 2000), ("max_wall_clock_minutes", 45), ("max_member_turns", 150)):
+        if tm.get(key) != expected:
+            err(f"team_mode.{key} must be {expected} (got {tm.get(key)!r})")
     if tm.get("enabled") is not True:
         err("team_mode.enabled must be true")
     if not isinstance(tm.get("tmux_visualization"), bool):
@@ -389,6 +565,16 @@ if omo:
         err("team_mode.base_dir must be a non-empty string (want ~/.omo)")
     else:
         ok(f"team_mode.base_dir={base}")
+    runtime_fallback = omo.get("runtime_fallback") or {}
+    if runtime_fallback.get("retry_on_errors") != [408, 429, 500, 502, 503, 504]:
+        err("runtime_fallback.retry_on_errors must contain transient HTTP failures only.")
+    if runtime_fallback.get("max_fallback_attempts") != 3:
+        err("runtime_fallback.max_fallback_attempts must be 3.")
+    if runtime_fallback.get("timeout_seconds") != 120:
+        err("runtime_fallback.timeout_seconds must be 120.")
+    omo_experimental = omo.get("experimental") or {}
+    if omo_experimental.get("aggressive_truncation") is not False or omo_experimental.get("truncate_all_tool_outputs") is not False:
+        err("OmO blanket tool-output truncation must stay disabled; use dynamic_context_pruning.")
     tx = omo.get("tmux") or {}
     if tx.get("enabled") is True and tx.get("layout") == "main-vertical" and tx.get("isolation") in ("inline", "window", "session"):
         ok(f"tmux team panes ready (layout={tx.get('layout')} isolation={tx.get('isolation')})")
@@ -420,13 +606,11 @@ if omo:
         err("opencode.json instructions[] must include prompts/goal.md")
     else:
         ok("goal footgun documented (prompts/goal.md in instructions)")
-    allow = set(omo.get("mcp_env_allowlist") or [])
-    need_env = {"CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"}
-    miss_env = sorted(need_env - allow)
-    if miss_env:
-        warn(f"mcp_env_allowlist missing: {', '.join(miss_env)} — run: oc fix")
+    allow = list(omo.get("mcp_env_allowlist") or [])
+    if allow:
+        err(f"mcp_env_allowlist must be empty so imported MCP configs cannot access secrets: {allow}")
     else:
-        ok("mcp_env_allowlist covers Context7/Exa/OpenAI/OpenRouter")
+        ok("mcp_env_allowlist empty (imported MCPs receive no API keys)")
     if not isinstance(omo.get("start_work"), dict):
         warn("start_work block missing — run: oc fix")
     else:
@@ -468,6 +652,15 @@ if omo:
         "oracle", "librarian", "explore", "multimodal-looker",
         "metis", "momus", "prometheus", "plan",
     }
+    TEAM_KEYS = {"version", "name", "description", "lead", "members"}
+    LEAD_KEYS = {"kind", "subagent_type", "category", "prompt"}
+    MEMBER_KEYS = {"kind", "subagent_type", "category", "name", "prompt"}
+    DEPENDENCY_GATES = {
+        "debug-team": {"root-cause": "reproducer"},
+        "refactor-team": {"executor": "analyzer"},
+        "content-aware-audit": {"deep": "recon"},
+        "ship-feature": {"verifier": "forge"},
+    }
     NAME_RE = re.compile(r"^[a-z0-9-]+$")
     team_cfgs = sorted(glob.glob(os.path.join(repo, "teams", "*", "config.json")))
     if not team_cfgs:
@@ -481,6 +674,13 @@ if omo:
             except Exception as e:
                 err(f"{rel}: invalid JSON ({e})")
                 continue
+            unknown = sorted(set(team) - TEAM_KEYS)
+            if unknown:
+                err(f"{rel}: unknown top-level keys: {unknown}")
+            if team.get("version") != 1:
+                err(f"{rel}: version must be 1 (got {team.get('version')!r})")
+            if not isinstance(team.get("description"), str) or not team.get("description", "").strip():
+                err(f"{rel}: description must be a non-empty string")
             tname = team.get("name") or ""
             dirname = os.path.basename(os.path.dirname(cfg_path))
             if tname != dirname:
@@ -489,6 +689,9 @@ if omo:
                 err(f"{rel}: name must match ^[a-z0-9-]+$")
             lead = team.get("lead") or {}
             if lead:
+                lead_unknown = sorted(set(lead) - LEAD_KEYS)
+                if lead_unknown:
+                    err(f"{rel}: lead has unknown keys: {lead_unknown}")
                 lk = lead.get("kind")
                 if lk == "subagent_type":
                     lst = lead.get("subagent_type")
@@ -498,11 +701,20 @@ if omo:
                         err(f"{rel}: lead subagent_type '{lst}' is not team-eligible (use sisyphus/atlas/sisyphus-junior/hephaestus)")
                     elif lst == "hephaestus" and hep_perm != "allow":
                         err(f"{rel}: lead hephaestus needs agents.hephaestus.permission.teammate=allow")
+                    elif lst in disabled_agents:
+                        err(f"{rel}: lead subagent_type '{lst}' is disabled")
+                    elif lst not in agents:
+                        err(f"{rel}: lead subagent_type '{lst}' is not declared in agents")
                 elif lk == "category":
-                    if not lead.get("category") or not lead.get("prompt"):
+                    lcat = lead.get("category")
+                    if not lcat or not lead.get("prompt"):
                         err(f"{rel}: lead kind=category requires category + prompt")
+                    elif lcat not in cats:
+                        err(f"{rel}: lead category '{lcat}' is not declared")
                 else:
                     err(f"{rel}: lead.kind must be subagent_type or category")
+            else:
+                err(f"{rel}: lead must be a non-empty object")
             members = team.get("members") or []
             if not isinstance(members, list) or not (1 <= len(members) <= 8):
                 err(f"{rel}: members must be an array of length 1..8 (got {len(members) if isinstance(members, list) else type(members).__name__})")
@@ -512,6 +724,9 @@ if omo:
                 if not isinstance(m, dict):
                     err(f"{rel}: members[{i}] must be an object")
                     continue
+                member_unknown = sorted(set(m) - MEMBER_KEYS)
+                if member_unknown:
+                    err(f"{rel}: members[{i}] has unknown keys: {member_unknown}")
                 mname = m.get("name") or ""
                 if not mname or not NAME_RE.match(mname):
                     err(f"{rel}: members[{i}].name must match ^[a-z0-9-]+$")
@@ -523,11 +738,21 @@ if omo:
                 prompt = (m.get("prompt") or "").strip()
                 if not prompt:
                     err(f"{rel}: members[{i}] ({mname or i}) requires non-empty inline prompt")
-                elif "ROLE:" not in prompt or "Mailbox" not in prompt:
-                    warn(
-                        f"{rel}: members[{i}] ({mname}) prompt should include ROLE: … and Mailbox … "
-                        "(OpenConfig team prompt shape)"
-                    )
+                else:
+                    clauses = {
+                        "ROLE:": "ROLE:" in prompt,
+                        "METHOD:/DELIVERABLE:": "METHOD:" in prompt or "DELIVERABLE:" in prompt,
+                        "OWNERSHIP:": "OWNERSHIP:" in prompt,
+                        "Mailbox": "mailbox" in prompt.lower(),
+                        "VERIFY:": "VERIFY:" in prompt,
+                        "SHUTDOWN:": "SHUTDOWN:" in prompt and "approval" in prompt.lower(),
+                    }
+                    missing_clauses = [name for name, present in clauses.items() if not present]
+                    if missing_clauses:
+                        err(
+                            f"{rel}: members[{i}] ({mname}) prompt missing team contract clauses: "
+                            f"{', '.join(missing_clauses)}"
+                        )
                 if kind == "category":
                     cat = m.get("category")
                     if not cat:
@@ -543,9 +768,45 @@ if omo:
                             err(f"{rel}: members[{i}] hephaestus needs agents.hephaestus.permission.teammate=allow")
                     elif st not in TEAM_ELIGIBLE:
                         err(f"{rel}: members[{i}] subagent_type '{st}' not team-eligible (sisyphus/atlas/sisyphus-junior/hephaestus)")
+                    elif st in disabled_agents:
+                        err(f"{rel}: members[{i}] subagent_type '{st}' is disabled")
+                    elif st not in agents:
+                        err(f"{rel}: members[{i}] subagent_type '{st}' is not declared in agents")
                 else:
                     err(f"{rel}: members[{i}].kind must be category or subagent_type")
-        ok(f"{len(team_cfgs)} team spec(s) pass OmO eligibility rules")
+
+            # Dependency-gated phases must name their upstream owner explicitly.
+            by_name = {m.get("name"): m for m in members if isinstance(m, dict)}
+            for downstream, upstream in DEPENDENCY_GATES.get(tname, {}).items():
+                prompt = str((by_name.get(downstream) or {}).get("prompt") or "")
+                if "DEPENDENCY:" not in prompt or upstream not in prompt:
+                    err(
+                        f"{rel}: member '{downstream}' must include DEPENDENCY: naming upstream '{upstream}'"
+                    )
+
+            # Two editing members cannot claim the same explicit ownership scope.
+            ownership = {}
+            for m in members:
+                if not isinstance(m, dict):
+                    continue
+                prompt = str(m.get("prompt") or "")
+                low = prompt.lower()
+                read_only = any(marker in low for marker in (
+                    "read-only", "do not edit", "findings only", "proposals only",
+                    "reproduce only", "plan only",
+                ))
+                match = re.search(r"OWNERSHIP:\s*([^.\n]+)", prompt, re.I)
+                if read_only or not match:
+                    continue
+                scope = re.sub(r"\s+", " ", match.group(1).strip().lower())
+                if scope in ownership:
+                    err(
+                        f"{rel}: overlapping edit ownership '{scope}' for "
+                        f"'{ownership[scope]}' and '{m.get('name')}'"
+                    )
+                else:
+                    ownership[scope] = m.get("name")
+        ok(f"{len(team_cfgs)} team spec(s) checked against OmO eligibility and lifecycle rules")
         # Provisioned ~/.omo/teams entries must be symlinks into this repo
         base = (tm.get("base_dir") or "~/.omo")
         if isinstance(base, str) and base.startswith("~/"):
@@ -581,16 +842,27 @@ if omo:
             if isinstance(uw, dict) and uw.get("model"): out.append(uw["model"])
             return [r for r in out if r]
         unknown = set()
+        disabled_provider_refs = set()
+        enabled_providers = oc.get("enabled_providers")
+        enabled_providers = set(enabled_providers) if isinstance(enabled_providers, list) else None
         for n, a in agents.items():
             for r in refs_of(a):
                 if r not in defined_models: unknown.add(f"{n}->{r}")
+                if enabled_providers is not None and r.split("/", 1)[0] not in enabled_providers:
+                    disabled_provider_refs.add(f"{n}->{r}")
         for cn, cv in omo.get("categories", {}).items():
             for r in refs_of(cv):
                 if r not in defined_models: unknown.add(f"category:{cn}->{r}")
+                if enabled_providers is not None and r.split("/", 1)[0] not in enabled_providers:
+                    disabled_provider_refs.add(f"category:{cn}->{r}")
         if unknown:
             err(f"oh-my-openagent.json: model references not defined in opencode.json: {sorted(unknown)}")
         else:
             ok("all agent/category model references resolve to opencode.json models")
+        if disabled_provider_refs:
+            err(f"oh-my-openagent.json: active routes use disabled providers: {sorted(disabled_provider_refs)}")
+        else:
+            ok("all active model routes use enabled providers")
 
 # ---- 4. config-only purity (install artifacts must stay gitignored + absent) ----
 STRAYS = (
@@ -687,6 +959,14 @@ for pj in sorted(glob.glob(os.path.join(repo, "profiles", "*.json"))):
     except Exception as e:
         err(f"profiles/{os.path.basename(pj)}: invalid JSON ({e})")
         continue
+    for model_field in ("model", "small_model"):
+        model_ref = pdata.get(model_field)
+        if not model_ref:
+            continue
+        if model_ref not in defined_models:
+            err(f"profiles/{os.path.basename(pj)}: {model_field} references undefined model {model_ref!r}")
+        if enabled_providers is not None and model_ref.split("/", 1)[0] not in enabled_providers:
+            err(f"profiles/{os.path.basename(pj)}: {model_field} uses disabled provider {model_ref!r}")
     for instr in pdata.get("instructions") or []:
         if not isinstance(instr, str) or not instr.strip():
             continue
@@ -767,7 +1047,7 @@ if not os.path.isfile(versions_cfg):
 else:
     try:
         vdata = json.load(open(versions_cfg))
-        for path in ("opencode.min", "oh_my_openagent.pin", "ghostty.min", "tmux.min"):
+        for path in ("opencode.min", "oh_my_openagent.pin", "codegraph.pin", "ghostty.min", "tmux.min"):
             cur = vdata
             ok_path = True
             for part in path.split("."):
@@ -863,6 +1143,7 @@ common_sh = open(os.path.join(repo, "lib/common.sh"), encoding="utf-8").read()
 missing_helpers = [fn for fn in (
     "oc_banner", "oc_projects_dir", "oc_ensure_launch_workspace", "oc_resolve_launch_dir",
     "oc_prune_stale_omo_plugin_caches", "oc_ensure_omo_plugin_cache",
+    "oc_agent_visibility_report", "oc_log_misuse_report",
     "oc_version_ge", "oc_write_project_opencode_json", "oc_expand_path",
     "oc_set_env_key_if_unset", "oc_ensure_env_file", "oc_link_points_to", "oc_ensure_symlink",
     "oc_verify_signature", "oc_signature_compute", "oc_signature_refresh",
@@ -926,7 +1207,7 @@ for rel, label in (
         ok(f"{label} present")
 
 env_ex = open(os.path.join(repo, ".env.example"), encoding="utf-8").read()
-for key in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "EXA_API_KEY", "CONTEXT7_API_KEY", "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE"):
+for key in ("OPENROUTER_API_KEY", "EXA_API_KEY", "CONTEXT7_API_KEY", "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE"):
     if key not in env_ex:
         err(f".env.example missing {key}")
 if "OPENROUTER_API_KEY" in env_ex and "OC_PROJECTS_DIR" in env_ex and "OC_DEFAULT_WORKSPACE" in env_ex:
@@ -980,6 +1261,8 @@ if omo:
 tel_issues = []
 if oc.get("share") != "disabled":
     tel_issues.append(f"share={oc.get('share')!r} (want disabled)")
+if oc.get("logLevel") != "ERROR":
+    tel_issues.append(f"logLevel={oc.get('logLevel')!r} (want ERROR)")
 if oc.get("autoupdate") is not False:
     tel_issues.append("autoupdate not false")
 if (oc.get("experimental") or {}).get("openTelemetry") is not False:
@@ -998,6 +1281,8 @@ if omo:
         tel_issues.append("git_master.include_co_authored_by not false")
     if (omo.get("experimental") or {}).get("disable_omo_env") is not True:
         tel_issues.append("experimental.disable_omo_env not true")
+    if omo.get("mcp_env_allowlist"):
+        tel_issues.append("mcp_env_allowlist must be empty")
     dmcps = set(omo.get("disabled_mcps") or [])
     for must in ("posthog:posthog", "sentry:sentry"):
         if must not in dmcps:

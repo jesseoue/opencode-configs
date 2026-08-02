@@ -216,7 +216,6 @@ fi
 # Never dump the whole .env (DB URLs, company secrets, etc.) into the process environment.
 OC_ENV_ALLOWLIST=(
   OPENROUTER_API_KEY
-  OPENAI_API_KEY
   EXA_API_KEY
   CONTEXT7_API_KEY
   OPENROUTER_MGMT_KEY
@@ -815,6 +814,75 @@ except Exception:
 PY
 }
 
+# Remove KEY from a dotenv file (no-op if missing).
+# Usage: oc_remove_env_key "$file" KEY
+oc_remove_env_key() {
+  local file="${1:?}" key="${2:?}"
+  [[ -f "$file" ]] || return 0
+  [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || {
+    echo "oc: invalid env key: $key" >&2
+    return 1
+  }
+  python3 - "$file" "$key" <<'PY'
+import os, sys, tempfile
+path, key = sys.argv[1], sys.argv[2]
+lines = []
+removed = False
+with open(path, encoding="utf-8") as f:
+    for raw in f:
+        line = raw.rstrip("\n")
+        stripped = line.strip()
+        body = stripped[7:].lstrip() if stripped.startswith("export ") else stripped
+        if body and not body.startswith("#") and "=" in body:
+            k = body.split("=", 1)[0].strip()
+            if k == key:
+                removed = True
+                continue
+        lines.append(line)
+if not removed:
+    sys.exit(0)
+dir_name = os.path.dirname(path) or "."
+fd, tmp = tempfile.mkstemp(prefix=".env.", dir=dir_name, text=True)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as out:
+        if lines:
+            out.write("\n".join(lines) + "\n")
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+except Exception:
+    try:
+        os.unlink(tmp)
+    except OSError:
+        pass
+    raise
+PY
+}
+
+# OpenRouter-only stack: strip OPENAI_API_KEY from .env (prevents direct-lane 401 noise).
+# Prints: CLEARED|reason  or  OK|reason
+# Usage: oc_scrub_openai_env_key "$repo/opencode.json" "$repo/.env"
+oc_scrub_openai_env_key() {
+  local oc_json="${1:?}" env_file="${2:?}"
+  [[ -f "$oc_json" && -f "$env_file" ]] || return 0
+  local active oai
+  active="$(python3 - "$oc_json" <<'PY' 2>/dev/null || echo 0
+import json, sys
+cfg = json.load(open(sys.argv[1], encoding="utf-8"))
+enabled = cfg.get("enabled_providers")
+print(1 if isinstance(enabled, list) and "openai" in enabled else 0)
+PY
+)"
+  oai="$(oc_get_env_key "$env_file" OPENAI_API_KEY 2>/dev/null || true)"
+  [[ -n "$oai" ]] || { printf 'OK|OPENAI_API_KEY unset\n'; return 0; }
+  if [[ "$active" == "1" ]]; then
+    printf 'OK|direct OpenAI enabled — key kept\n'
+    return 0
+  fi
+  oc_backup_copy "$env_file" "openai-key-scrub" >/dev/null 2>&1 || true
+  oc_remove_env_key "$env_file" OPENAI_API_KEY
+  printf 'CLEARED|OpenRouter-only — removed OPENAI_API_KEY from .env\n'
+}
+
 # Ensure every KEY= from .env.example exists in dest .env.
 # Never overwrites a non-empty value. Safe for upgrades when new keys are added.
 # Usage: oc_ensure_env_keys_from_example "$env_file" "$example_file"
@@ -1045,6 +1113,15 @@ oc_strip_ansi() {
   printf '%s' "$*" | sed $'s/\x1b\\[[0-9;]*[A-Za-z]//g'
 }
 
+# Redact credentials before any text reaches a maintenance log.
+oc_redact_secrets() {
+  sed -E \
+    -e 's/(Authorization:[[:space:]]*Bearer[[:space:]]+)[A-Za-z0-9._~+\/=-]+/\1<redacted>/Ig' \
+    -e 's/((API[_-]?KEY|TOKEN|SECRET|PASSWORD|AUTH|CREDENTIAL)[A-Za-z0-9_-]*[[:space:]]*[:=][[:space:]]*)[^[:space:]\"'\"']+/\1<redacted>/Ig' \
+    -e 's/(sk-(or-v1-|proj-)?)[A-Za-z0-9_-]{16,}/\1<redacted>/g' \
+    -e 's/(gh[pousr]_)[A-Za-z0-9]{16,}/\1<redacted>/g'
+}
+
 # Open OC_LOG_FILE (create dir, chmod 600, write header). Sets OC_LOG_FILE + OC_LOG_DIR.
 # Usage: oc_log_open [kind] [optional explicit path]
 oc_log_open() {
@@ -1061,8 +1138,6 @@ oc_log_open() {
   {
     echo "# opencode-configs ${kind} log"
     echo "# started: $(oc_log_ts)"
-    echo "# host: $(uname -n 2>/dev/null || echo unknown)"
-    echo "# user: $(id -un 2>/dev/null || echo unknown)"
     echo "# pid: $$"
     echo "# ----"
   } >"$OC_LOG_FILE"
@@ -1077,7 +1152,7 @@ oc_log() {
   local level="${1:-INFO}"
   shift || true
   [[ -n "${OC_LOG_FILE:-}" ]] || return 0
-  printf '%s [%s] %s\n' "$(oc_log_ts)" "$level" "$(oc_strip_ansi "$*")" >>"$OC_LOG_FILE" 2>/dev/null || true
+  printf '%s [%s] %s\n' "$(oc_log_ts)" "$level" "$(oc_strip_ansi "$*" | oc_redact_secrets)" >>"$OC_LOG_FILE" 2>/dev/null || true
 }
 
 oc_log_section() {
@@ -1090,7 +1165,7 @@ oc_log_blob() {
   [[ -n "${OC_LOG_FILE:-}" ]] || return 0
   {
     echo "$(oc_log_ts) [BLOB:${label}] begin"
-    oc_strip_ansi "$(cat)"
+    oc_strip_ansi "$(cat)" | oc_redact_secrets
     echo ""
     echo "$(oc_log_ts) [BLOB:${label}] end"
   } >>"$OC_LOG_FILE" 2>/dev/null || true
@@ -1642,7 +1717,7 @@ sys.exit(0)
 PY
 }
 
-# OmO plugin cache path for a pin like oh-my-openagent@4.19.1
+# OmO plugin cache path for a pin like oh-my-openagent@4.19.4
 oc_omo_plugin_cache_dir() {
   local pin="${1:-}"
   if [[ -z "$pin" ]]; then
@@ -1652,12 +1727,117 @@ oc_omo_plugin_cache_dir() {
   printf '%s\n' "${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/$pin"
 }
 
-# True when the pin's cache has a real oh-my-openagent install (not an empty dir).
+# True when main + platform packages match the pin and the native launcher exists.
+# Accept both current oh-my-openagent-* and legacy oh-my-opencode-* platform names.
 oc_omo_plugin_cache_ok() {
-  local pin="${1:-}" cdir pkg
+  local pin="${1:-}" cdir ver
   cdir="$(oc_omo_plugin_cache_dir "$pin")" || return 1
-  pkg="$cdir/node_modules/oh-my-openagent/package.json"
-  [[ -f "$pkg" ]]
+  [[ -n "$pin" ]] || pin="$(basename "$cdir")"
+  ver="${pin#oh-my-openagent@}"
+  python3 - "$cdir" "$ver" <<'PY' >/dev/null 2>&1
+import json, os, platform, sys
+
+cdir, want = sys.argv[1:3]
+
+def package_ok(name):
+    pkg = os.path.join(cdir, "node_modules", name, "package.json")
+    try:
+        return str(json.load(open(pkg, encoding="utf-8")).get("version")) == want
+    except Exception:
+        return False
+
+if not package_ok("oh-my-openagent"):
+    raise SystemExit(1)
+
+system = platform.system().lower()
+machine = platform.machine().lower()
+if system == "darwin":
+    suffix = "darwin-arm64" if machine == "arm64" else "darwin-x64"
+elif system == "linux":
+    suffix = "linux-arm64" if machine in ("aarch64", "arm64") else "linux-x64"
+else:
+    raise SystemExit(1)
+
+for prefix in ("oh-my-openagent", "oh-my-opencode"):
+    name = f"{prefix}-{suffix}"
+    bindir = os.path.join(cdir, "node_modules", name, "bin")
+    if package_ok(name) and os.path.isdir(bindir):
+        if any(os.path.isfile(os.path.join(bindir, f)) and os.access(os.path.join(bindir, f), os.X_OK)
+               for f in os.listdir(bindir)):
+            raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+# Cost-free runtime visibility probe. Loads agent declarations only; never starts
+# an agent or sends a model request. Output is KIND|message for doctor/tests.
+oc_agent_visibility_report() {
+  local bin="${1:-${OC_CLI_BIN:-opencode}}" repo="${2:-${REPO:-.}}" timeout_s="${3:-8}"
+  python3 - "$bin" "$repo" "$timeout_s" <<'PY'
+import glob, json, os, re, subprocess, sys, time
+oc, repo, timeout_s = sys.argv[1], sys.argv[2], float(sys.argv[3])
+expected = {"sisyphus"}
+for path in glob.glob(os.path.join(repo, "teams", "*", "config.json")):
+    try:
+        team = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        continue
+    for route in [team.get("lead") or {}, *(team.get("members") or [])]:
+        if isinstance(route, dict) and route.get("kind") == "subagent_type":
+            expected.add(str(route.get("subagent_type") or "").lower())
+started = time.monotonic()
+try:
+    proc = subprocess.run(
+        [oc, "agent", "list"], cwd=repo, capture_output=True, text=True, timeout=timeout_s,
+        env={**os.environ, "TERM": os.environ.get("TERM", "xterm-256color")},
+    )
+except subprocess.TimeoutExpired:
+    print("OPT|runtime visibility probe timed out after %ss — restart OpenCode, then run: opencode agent list" % int(timeout_s))
+    raise SystemExit
+except Exception as exc:
+    print("OPT|runtime visibility probe failed (%s)" % str(exc)[:120])
+    raise SystemExit
+if proc.returncode:
+    detail = (proc.stderr or proc.stdout or "no output").strip().splitlines()
+    print("OPT|runtime visibility probe exited %d: %s" % (proc.returncode, (detail[-1] if detail else "no output")[:120]))
+    raise SystemExit
+visible = set()
+for line in proc.stdout.splitlines():
+    match = re.match(r"^(.+?) \((?:primary|subagent)\)\s*$", line)
+    if match:
+        visible.add(match.group(1).split(" - ", 1)[0].strip().lower())
+missing = sorted(expected - visible)
+print("OK|probe completed in %.2fs without starting a model" % (time.monotonic() - started))
+print("OK|runtime-visible team agents: %s" % ", ".join(sorted(expected & visible)))
+if missing:
+    print("BAD|declared/cache-ready but not runtime-visible: %s — close stale OpenCode processes and relaunch" % ", ".join(missing))
+PY
+}
+
+# Summarize the bounded tail of an OpenCode log into actionable id-lifecycle
+# diagnostics. This is static log analysis and never contacts a provider.
+oc_log_misuse_report() {
+  local log="${1:-${XDG_DATA_HOME:-$HOME/.local/share}/opencode/log/opencode.log}"
+  python3 - "$log" <<'PY'
+import collections, re, sys
+try:
+    with open(sys.argv[1], encoding="utf-8", errors="replace") as fh:
+        text = "".join(collections.deque(fh, maxlen=20000))
+except OSError:
+    raise SystemExit
+ses = len(re.findall(r"Expected a string starting with .ses|task_id.*must.*ses_", text, re.I))
+bg = len(re.findall(r"Expected a string starting with .bg|task_id.*must.*bg_", text, re.I))
+poll = len(re.findall(r"background_output[^\n]*block=true|block=true[^\n]*background_output", text, re.I))
+if ses:
+    print(f"OPT|task resume id misuse ({ses} hits): task(task_id=…) requires the real ses_… returned by task")
+    print("TIP|never pass a bg_… id or descriptive label to task; start fresh only when the ses_… session is gone")
+if bg:
+    print(f"OPT|background transcript id misuse ({bg} hits): background_output(task_id=…) accepts only real bg_… ids")
+    print("TIP|do not convert ses_… to bg_… or invent an id; retain the exact bg_… returned at launch")
+if poll:
+    print(f"OPT|blocking background_output misuse ({poll} hits) can stall orchestration")
+    print("TIP|use block=false only for an immediate peek; otherwise end the turn and consume the completion notification")
+PY
 }
 
 # Remove oh-my-openagent@* cache dirs that are not the current pin.

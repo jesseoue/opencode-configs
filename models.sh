@@ -11,7 +11,9 @@
 # Usage:
 #   ./models.sh              audit configured models + recommend per role
 #   ./models.sh --catalog    just the ranked recommendations
-#   ./models.sh --providers  live endpoint health vs provider.order/ignore
+#   ./models.sh --providers  live endpoint health + native routing eligibility
+#   ./models.sh --probe      fast parallel live probes (latency + moderation)
+#   ./models.sh --moderation provider moderation + data-policy catalog (no chat calls)
 #   ./models.sh --json       machine-readable output
 #   ./models.sh --upgrade    detect NEWER versions of the models we pin
 #   ./models.sh --upgrade --apply   apply the version bumps (backs up + validates)
@@ -23,18 +25,327 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 
-MODE="audit"; APPLY=0
+MODE="audit"; APPLY=0; DO_JSON=0
 for a in "$@"; do case "$a" in
   --catalog) MODE="catalog" ;;
   --providers) MODE="providers" ;;
-  --json) MODE="json" ;;
+  --probe) MODE="probe" ;;
+  --moderation) MODE="moderation" ;;
+  --json) DO_JSON=1; [[ "$MODE" == "audit" ]] && MODE="json" ;;
   --upgrade) MODE="upgrade" ;;
   --apply) APPLY=1 ;;
   -h|--help) oc_print_script_help "$0"; exit 0 ;;
   *) echo "Unknown flag: $a"; exit 2 ;;
 esac; done
 
-# ── Live provider health vs configured order/ignore ─────────────────
+# ── Moderation catalog (public APIs — no key required) ───────────────
+if [[ "$MODE" == "moderation" ]]; then
+  DO_JSON=$DO_JSON REPO="$REPO" python3 - <<'PY'
+import base64, json, os, sys, urllib.request
+
+repo = os.environ["REPO"]
+do_json = os.environ.get("DO_JSON") == "1"
+tty = sys.stdout.isatty() and not do_json
+
+def col(c, s):
+    return f"\033[{c}m{s}\033[0m" if tty else s
+G = lambda s: col("32", s)
+Y = lambda s: col("33", s)
+R = lambda s: col("31", s)
+B = lambda s: col("36;1", s)
+D = lambda s: col("2", s)
+
+def fetch(url, headers=None, timeout=45):
+    req = urllib.request.Request(url, headers=headers or {})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.load(r)
+
+oc = json.load(open(os.path.join(repo, "opencode.json"), encoding="utf-8"))
+models = oc["provider"]["openrouter"]["models"]
+catalog = {m["id"]: m for m in fetch("https://openrouter.ai/api/v1/models").get("data") or []}
+providers = {
+    (p.get("slug") or p.get("name") or "").lower(): p
+    for p in (fetch("https://openrouter.ai/api/frontend/v1/all-providers").get("data") or [])
+}
+
+def route_label(prov):
+    only = prov.get("only") or []
+    if only:
+        return "only:" + ",".join(only)
+    order = prov.get("order") or []
+    if order:
+        return "order:" + ",".join(order[:4]) + ("…" if len(order) > 4 else "")
+    rid = prov.get("_route_id") or ""
+    variant = rid.rsplit(":", 1)[-1]
+    if variant in ("exacto", "nitro", "floor"):
+        return f":{variant}"
+    return "auto"
+
+def prov_policy(slug):
+    p = providers.get(slug) or {}
+    dp = p.get("dataPolicy") or {}
+    return {
+        "moderation_required": bool(p.get("moderationRequired")),
+        "trains": dp.get("training"),
+        "retains": dp.get("retainsPrompts"),
+        "retention_days": dp.get("retentionDays"),
+        "display": p.get("displayName") or slug,
+    }
+
+rows = []
+for key, cfg in sorted(models.items()):
+    rid = cfg.get("id") or key
+    bare = rid.split(":", 1)[0]
+    fam = cfg.get("family") or "?"
+    prov = dict((cfg.get("options") or {}).get("provider") or {})
+    prov["_route_id"] = rid
+    cat = catalog.get(bare) or catalog.get(rid) or {}
+    tp = cat.get("top_provider") or {}
+    pinned = (prov.get("only") or [None])[0]
+    pin_pol = prov_policy(pinned) if pinned else None
+    rows.append({
+        "config_key": key,
+        "route_id": rid,
+        "family": fam,
+        "is_moderated": tp.get("is_moderated"),
+        "routing": route_label(prov),
+        "pinned_provider": pinned,
+        "pinned_policy": pin_pol,
+    })
+
+if do_json:
+    print(json.dumps({"ok": True, "models": rows, "moderation_required_providers": sorted(
+        slug for slug, p in providers.items() if p.get("moderationRequired")
+    )}, indent=2))
+    sys.exit(0)
+
+print(B("== Moderation + routing (OpenRouter catalog) =="))
+print(D("  is_moderated = model default host · moderationRequired = provider policy · no chat calls"))
+print()
+for r in rows:
+    mod = r["is_moderated"]
+    mark = Y("MOD") if mod else G("---")
+    route = r["routing"]
+    print(f"  {mark} {r['route_id']:<42} route={route}")
+    if r["pinned_provider"]:
+        pp = r["pinned_policy"] or {}
+        mflag = "modReq" if pp.get("moderation_required") else "open"
+        print(f"      pin→ {r['pinned_provider']} ({mflag} · train={pp.get('trains')} · retain={pp.get('retains')})")
+
+print()
+print(B("== Providers with moderationRequired=true =="))
+for slug in sorted(providers):
+    if providers[slug].get("moderationRequired"):
+        dp = providers[slug].get("dataPolicy") or {}
+        print(f"  {slug:22} {providers[slug].get('displayName')} · retain={dp.get('retainsPrompts')} · train={dp.get('training')}")
+print()
+print(D("  Account guardrails (Settings → Privacy) can still block before any provider."))
+print(D("  Docs: https://openrouter.ai/docs/guides/features/guardrails"))
+PY
+  exit 0
+fi
+
+# ── Fast parallel live probes (latency + moderation) ─────────────────
+if [[ "$MODE" == "probe" ]]; then
+  oc_export_env_file "$REPO/.env" 2>/dev/null || true
+  KEY="$(oc_get_env_key "$REPO/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
+  [[ -z "$KEY" ]] && KEY="${OPENROUTER_API_KEY:-}"
+  [[ -n "$KEY" ]] || { echo "  ✗ OPENROUTER_API_KEY required for --probe"; exit 1; }
+  OC_PROBE_KEY_B64="$(printf '%s' "$KEY" | base64 | tr -d '\n')"
+  DO_JSON=$DO_JSON REPO="$REPO" OC_PROBE_KEY_B64="$OC_PROBE_KEY_B64" python3 - <<'PY'
+import base64, json, os, sys, time, urllib.error, urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+repo = os.environ["REPO"]
+do_json = os.environ.get("DO_JSON") == "1"
+tty = sys.stdout.isatty() and not do_json
+workers = min(8, max(2, (os.cpu_count() or 4)))
+
+b64 = (os.environ.get("OC_PROBE_KEY_B64") or "").strip()
+if not b64:
+    print("  ✗ OPENROUTER_API_KEY required for --probe", file=sys.stderr)
+    sys.exit(1)
+key = base64.b64decode(b64).decode("ascii")
+api_key = key
+
+def col(c, s):
+    return f"\033[{c}m{s}\033[0m" if tty else s
+G = lambda s: col("32", s)
+Y = lambda s: col("33", s)
+R = lambda s: col("31", s)
+B = lambda s: col("36;1", s)
+D = lambda s: col("2", s)
+
+def fetch(url, headers=None, timeout=45):
+    req = urllib.request.Request(url, headers=headers or {})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.load(r)
+
+def github_referer():
+    try:
+        sig = json.load(open(os.path.join(repo, "signature.json"), encoding="utf-8"))
+        b64 = (sig.get("github_b64") or "").strip()
+        if b64:
+            return base64.b64decode(b64).decode("ascii").rstrip("/")
+    except Exception:
+        pass
+    return "https://github.com/jesseoue/opencode-configs"
+
+referer = github_referer()
+oc = json.load(open(os.path.join(repo, "opencode.json"), encoding="utf-8"))
+models = oc["provider"]["openrouter"]["models"]
+catalog = {m["id"]: m for m in fetch("https://openrouter.ai/api/v1/models").get("data") or []}
+
+def route_label(prov, rid):
+    only = prov.get("only") or []
+    if only:
+        return "only:" + ",".join(only)
+    order = prov.get("order") or []
+    if order:
+        return "order:" + ",".join(order[:3])
+    variant = rid.rsplit(":", 1)[-1]
+    if variant in ("exacto", "nitro", "floor"):
+        return f":{variant}"
+    return "auto"
+
+def probe(rid):
+    body = json.dumps({
+        "model": rid,
+        "messages": [{"role": "user", "content": "ping"}],
+        "max_tokens": 1,
+    }).encode()
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": referer,
+        "X-Title": "OpenConfig",
+    }
+    t0 = time.perf_counter()
+    try:
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions",
+            data=body, headers=headers, method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=45) as r:
+            r.read()
+            ms = round((time.perf_counter() - t0) * 1000)
+            return {"http": r.status, "ms": ms, "ok": r.status == 200}
+    except urllib.error.HTTPError as e:
+        ms = round((time.perf_counter() - t0) * 1000)
+        err = e.read(240).decode("utf-8", errors="replace")
+        return {"http": e.code, "ms": ms, "ok": False, "error": err[:120]}
+    except Exception as e:
+        ms = round((time.perf_counter() - t0) * 1000)
+        return {"http": 0, "ms": ms, "ok": False, "error": str(e)[:120]}
+
+def fastest_endpoint(bare):
+    try:
+        req = urllib.request.Request(
+            f"https://openrouter.ai/api/v1/models/{bare}/endpoints",
+            headers={"Authorization": f"Bearer {api_key}"},
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            eps = (json.load(r).get("data") or {}).get("endpoints") or []
+    except Exception:
+        return None
+    best = None
+    for e in eps:
+        if (e.get("status") or 0) != 0:
+            continue
+        if "tools" not in set(e.get("supported_parameters") or []):
+            continue
+        tps = (e.get("throughput_last_30m") or {}).get("p50") or 0
+        tag = (e.get("tag") or "").split("/")[0]
+        if not tag:
+            continue
+        if best is None or tps > best["tps"]:
+            best = {"host": tag, "tps": tps}
+    return best
+
+items = []
+for cfg_key, cfg in sorted(models.items()):
+    rid = cfg.get("id") or cfg_key
+    bare = rid.split(":", 1)[0]
+    prov = (cfg.get("options") or {}).get("provider") or {}
+    cat = catalog.get(bare) or {}
+    tp = cat.get("top_provider") or {}
+    items.append({
+        "key": cfg_key,
+        "route_id": rid,
+        "bare": bare,
+        "routing": route_label(prov, rid),
+        "is_moderated": tp.get("is_moderated"),
+    })
+
+t0 = time.perf_counter()
+results = {}
+with ThreadPoolExecutor(max_workers=workers) as ex:
+    futs = {ex.submit(probe, it["route_id"]): it["route_id"] for it in items}
+    for fut in as_completed(futs):
+        results[futs[fut]] = fut.result()
+
+fastest = {}
+with ThreadPoolExecutor(max_workers=workers) as ex:
+    futs = {ex.submit(fastest_endpoint, it["bare"]): it["bare"] for it in items}
+    for fut in as_completed(futs):
+        fastest[futs[fut]] = fut.result()
+
+elapsed = round((time.perf_counter() - t0) * 1000)
+ok_n = sum(1 for it in items if results.get(it["route_id"], {}).get("ok"))
+out_rows = []
+for it in items:
+    pr = results.get(it["route_id"], {})
+    fe = fastest.get(it["bare"])
+    row = {
+        **it,
+        "http": pr.get("http"),
+        "latency_ms": pr.get("ms"),
+        "ok": pr.get("ok", False),
+        "error": pr.get("error"),
+        "fastest_host": fe.get("host") if fe else None,
+        "fastest_tps": fe.get("tps") if fe else None,
+    }
+    out_rows.append(row)
+
+if do_json:
+    print(json.dumps({
+        "ok": ok_n == len(items),
+        "probed": len(items),
+        "passed": ok_n,
+        "elapsed_ms": elapsed,
+        "workers": workers,
+        "models": out_rows,
+    }, indent=2))
+    sys.exit(0 if ok_n == len(items) else 1)
+
+print(B(f"== Fast probe ({len(items)} models · {workers} workers · {elapsed}ms) =="))
+for row in out_rows:
+    pr = results[row["route_id"]]
+    mark = G("✓") if pr.get("ok") else R("✗")
+    mod = Y("mod") if row["is_moderated"] else "open"
+    ms = pr.get("ms", "?")
+    http = pr.get("http", "?")
+    speed = ""
+    if row.get("fastest_host"):
+        tps = row.get("fastest_tps") or 0
+        speed = f" · fastest={row['fastest_host']}" + (f" {tps:.0f}t/s" if tps else "")
+    print(f"  {mark} {row['route_id']:<42} {ms:>5}ms HTTP {http}  {mod:<4}  {row['routing']}{speed}")
+    if not pr.get("ok") and pr.get("error"):
+        print(f"      {D(pr['error'])}")
+
+print()
+if ok_n == len(items):
+    print(G(f"  {ok_n}/{len(items)} passed · ready"))
+else:
+    print(Y(f"  {ok_n}/{len(items)} passed · {len(items)-ok_n} failed"))
+    print(D("  Run: oc models --moderation   ·   check OpenRouter guardrails if 403"))
+print(D("  mod=top_provider.is_moderated · open=no provider moderation flag on catalog default"))
+sys.exit(0 if ok_n == len(items) else 1)
+PY
+  exit $?
+fi
+
+# ── Live provider health vs configured routing constraints ──────────
 if [[ "$MODE" == "providers" ]]; then
   KEY="$(oc_get_env_key "$REPO/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
   [[ -z "$KEY" ]] && KEY="${OPENROUTER_API_KEY:-}"
@@ -75,20 +386,31 @@ for key,cfg in models.items():
         status=e.get("status") or 0
         tps=(e.get("throughput_last_30m") or {}).get("p50") or 0
         up=e.get("uptime_last_30m") or 0
+        lat=(e.get("latency_last_30m") or {}).get("p50") or 0
         quant=e.get("quantization") or "unknown"
+        pricing=e.get("pricing") or {}
+        def per_million(value):
+            try: return float(value or 0)*1_000_000
+            except (TypeError, ValueError): return 0
+        prompt_price=per_million(pricing.get("prompt"))
+        completion_price=per_million(pricing.get("completion"))
         score=(1000 if status==0 and tools else 0) + min(tps,200) + up*0.5
         if status!=0: score-=500
         if not tools: score-=300
         if quant in ("fp4","int4"): score-=40
         cur=by.get(b)
         if not cur or score>cur["score"]:
-            by[b]={"score":score,"status":status,"tools":tools,"tps":tps,"up":up,"quant":quant}
+            by[b]={"score":score,"status":status,"tools":tools,"tps":tps,"up":up,
+                   "lat":lat,"prompt":prompt_price,"completion":completion_price,"quant":quant}
     healthy=sorted([b for b,v in by.items() if v["status"]==0 and v["tools"]],
                    key=lambda b: -by[b]["score"])
     dead=[p for p in order if p not in by]
     unhealthy=[p for p in order if p in by and (by[p]["status"]!=0 or not by[p]["tools"])]
-    reachable=[p for p in order if p in by and by[p]["status"]==0 and by[p]["tools"] and p not in ignore]
-    top3=healthy[:3]
+    eligible=[p for p in healthy if p not in ignore]
+    reachable=[p for p in order if p in eligible] if order else eligible
+    top3=eligible[:3]
+    priced=[p for p in eligible if by[p]["completion"] > 0]
+    cheapest=min(priced, key=lambda b:(by[b]["completion"],by[b]["prompt"])) if priced else None
     flags=[]
     if dead: flags.append("dead="+",".join(dead)); issues+=1
     if unhealthy: flags.append("unhealthy="+",".join(unhealthy)); issues+=1
@@ -97,16 +419,25 @@ for key,cfg in models.items():
         flags.append(f"prefer {top3[0]} over {order[0]}")
     mark=G("✓") if not flags else Y("⚠")
     print(f"  {mark} {cfg.get('id') or key}")
-    print(f"      order→ {', '.join(order[:6])}{'…' if len(order)>6 else ''}")
-    print(f"      live→  {', '.join(top3) if top3 else '(none)'}")
+    variant=(cfg.get("id") or "").rsplit(":",1)[-1]
+    route=(f"native :{variant}" if variant in ("exacto","nitro","floor") and not order
+           else (", ".join(order[:6])+("…" if len(order)>6 else "") if order else "OpenRouter auto"))
+    def endpoint_text(name):
+        v=by[name]
+        latency=f"{v['lat']/1000:.2f}s" if v["lat"] else "n/a"
+        speed=f"{v['tps']:.0f}t/s" if v["tps"] else "t/s n/a"
+        return f"{name} {speed} {latency} ${v['prompt']:.3g}/${v['completion']:.3g}"
+    print(f"      route→ {route}")
+    print(f"      live→  {' · '.join(endpoint_text(p) for p in top3) if top3 else '(none)'}")
+    if cheapest: print(f"      cheap→ {endpoint_text(cheapest)}")
     if flags: print(f"      {Y(' '.join(flags))}")
 print()
 D=lambda s: col("2",s)
 if issues:
-    print(Y(f"  {issues} drift signal(s) — review order/ignore; Auto Exacto still helps on tool calls."))
-    print(D("  Re-tune carefully; do not chase every throughput blip."))
+    print(Y(f"  {issues} routing health signal(s) — review only explicit constraints."))
+    print(D("  Native :nitro/:exacto routing adapts automatically; do not pin transient endpoint rankings."))
 else:
-    print(G("  All configured orders reach healthy providers. Ready."))
+    print(G("  All configured routes reach healthy providers. Ready."))
 print()
 PY
   exit 0
@@ -296,7 +627,7 @@ d_rid=rid_of(default_model); s_rid=rid_of(small_model)
 d_bare, s_bare = bare(d_rid), bare(s_rid)
 w_ids=[m["id"] for m in rank("workhorse")[:5]]
 s_ids=[m["id"] for m in rank("small")[:5]]
-# Exacto/Nitro are routing suffixes — compare bare catalog ids for drift.
+# Exacto/Nitro/Floor are routing suffixes — compare bare catalog ids for drift.
 # GLM Exacto as default is an intentional quality pick (tool-call reliability > cheapest).
 if d_rid:
     if d_bare in w_ids or d_rid in w_ids or "glm-5" in d_bare or ":exacto" in d_rid:
@@ -305,11 +636,12 @@ if d_rid:
         print("  "+Y("⚠")+f" default '{d_rid}' not in the top-5 workhorse tier; cheapest strong pick: '{w_ids[0]}' → ./fix.sh --set model=openrouter/{w_ids[0]}")
 if s_rid:
     if s_bare in s_ids or s_rid in s_ids:
-        print("  "+G("✓")+f" small_model '{s_rid}' is a top-tier cheap pick (Nitro = throughput)")
+        mode="Floor = price-first" if ":floor" in s_rid else "Nitro = throughput"
+        print("  "+G("✓")+f" small_model '{s_rid}' is a top-tier cheap pick ({mode})")
     else:
         print("  "+Y("⚠")+f" small_model '{s_rid}' not in the top-5 cheap tier; best: '{s_ids[0]}' → ./fix.sh --set small_model=openrouter/{s_ids[0]}")
 print("\n  "+D("Quality is heuristic (gated to proven coder families; the API has no benchmarks). Treat as cost guidance, verify quality yourself."))
-print("  "+D(":exacto = quality-first provider sort · :nitro = throughput sort · Auto Exacto is on by default for tool calls."))
+print("  "+D(":exacto = tool quality · :nitro = throughput · :floor = price · Auto Exacto covers bare tool calls."))
 print()
 PY
 

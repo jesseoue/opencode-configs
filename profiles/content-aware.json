@@ -1,11 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "openrouter/deepseek/deepseek-v4-pro",
-  "small_model": "openrouter/deepseek/deepseek-v4-flash",
+  "small_model": "openrouter/deepseek/deepseek-v4-flash-floor",
   "default_agent": "content-aware-research",
   "permission": {
     "edit": "deny",
-    "webfetch": "allow"
+    "webfetch": "allow",
+    "question": "allow",
+    "task": "allow"
   },
   "instructions": [
     "../AGENTS.md",

@@ -1,6 +1,6 @@
 # Category: content-aware-deep (DeepSeek Pro Exacto)
 
-Authorized deep vulnerability / root-cause research. Used by `content-aware-audit` deep, `review-panel` arch, and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
+Authorized deep vulnerability / root-cause research. DeepSeek routes **first-party only** (`provider.only: deepseek`) — no proxy moderation layers. Used by `content-aware-audit` deep and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
 
 ## Authorized
 

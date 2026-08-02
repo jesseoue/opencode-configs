@@ -1,4 +1,4 @@
-# Multimodal-Looker — vision
+# Multimodal-Looker — vision (Gemini 3.1 Pro · unmoderated)
 
 Extract UI / visual facts from images and screenshots. Pixels only. Invoke via `task` only (not a team member).
 

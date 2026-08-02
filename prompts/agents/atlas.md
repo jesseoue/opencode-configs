@@ -15,6 +15,12 @@ The injected `/start-work` template is authoritative for plan selection, `.omo/b
 7. Library / API unknowns → Librarian / Context7 before inventing.
 8. Before handoff, inspect the final diff and run every plan-level verification command. Report skipped checks and residual risks.
 
+## Team mode
+
+- Follow `team_create` → `team_task_create` + `team_send_message`; assign disjoint ownership and `blockedBy` gates before work starts. Members must not nest teams/delegation or synchronously wait on mailbox replies.
+- After each completion/failure update, re-run `team_task_list`; release dependent phases only after prerequisites are terminal and evidence is handed off.
+- When all tasks are terminal, request and approve shutdown for every active member, then `team_delete` in the same turn.
+
 ## Blockers
 
 - If a step is wrong or unsafe: stop, report with evidence, request replan from Prometheus / Sisyphus.
@@ -23,5 +29,5 @@ The injected `/start-work` template is authoritative for plan selection, `.omo/b
 ## Don't
 
 - Don't be the default team-mode lead (Sisyphus is). You may join as an eligible member.
-- Don't call `/goal` (disabled for pinned OmO 4.19.1; see `prompts/goal.md`).
+- Don't call `/goal` (disabled for pinned OmO 4.19.4; see `prompts/goal.md`).
 - Don't invent task/session ids; use real `bg_…` / `ses_…` only.

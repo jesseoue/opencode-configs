@@ -2,38 +2,40 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.38** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.46** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
-git clone https://github.com/jesseoue/opencode-configs.git
+# Clone (after forking, refresh signature.json → github_b64 to your repo URL)
+git clone <your-repo-url> opencode-configs
 cd opencode-configs
-oc install --quick          # or: ./install.sh --yes
+./install.sh --yes          # or: oc install --quick
 
-# Fresh machine
-curl -fsSL https://raw.githubusercontent.com/jesseoue/opencode-configs/main/install.sh | bash
+# Fresh machine — bootstrap URL is base64 in install.sh (no plaintext host in source)
+curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
 source ~/.zshrc && oc doctor && oc launch
 ```
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.38` · OpenCode `1.18.5+` · OmO `oh-my-openagent@4.19.1` · `@opencode-ai/plugin` `1.18.5` |
+| **Pins** | OpenConfig `1.5.46` · OpenCode `1.18.11+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.11` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
-| **Health** | `oc doctor` · `oc versions` · `oc test` |
+| **Health** | `oc doctor` · `oc versions` · `oc test` · `oc models --probe` |
 
 > Plugin name must stay **`oh-my-openagent@…`** (not legacy `oh-my-opencode`).  
 > Schema URL basename stays `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s).
 
 Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompts/core.md) · Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
+**Forking:** update `signature.json` → `github_b64` to your repo URL, then `oc fix && oc signature --refresh`.
+
 ---
 
 ## Install
 
 ```bash
-export OPENROUTER_API_KEY=…     # required
-export OPENAI_API_KEY=…         # GPT lane (Hephaestus / Oracle / Momus / …)
+export OPENROUTER_API_KEY=…     # required — all models (incl. GPT) via OpenRouter
 export EXA_API_KEY=…            # OmO websearch
 export CONTEXT7_API_KEY=…       # library docs
 
@@ -62,13 +64,15 @@ oc launch [dir]        # TUI (never starts in the config repo)
 oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter + OpenAI probes
-oc models --providers  # OpenRouter provider health for routed models
+oc models --probe       # fast parallel live test (latency + moderation flags)
+oc models --moderation  # provider moderation/data-policy catalog (no chat calls)
+oc models --providers   # OpenRouter endpoint health for routed models
 oc versions            # pins vs npm + GitHub (+ other opencode.json)
 oc versions --fix       # align ~/.opencode @opencode-ai/plugin to CLI
 oc plugin doctor       # OmO pin-cache doctor (also: oc plugin --fix)
 oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
-oc test                # smoke + idempotency
+oc test                # smoke + idempotency + runtime diagnostics
 oc doctor              # full readiness
 oc doctor --quick --json   # machine summary (heal/check tooling)
 ```
@@ -90,12 +94,12 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.38` |
-| OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.5+` |
-| OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.1` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.46` |
+| OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.11+` |
+| OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
 
-`oc versions` also lists other `opencode.json` files under `~/Projects` and `~/Projects`. Those are project overlays — OmO stays pinned globally here.
+`oc versions` also lists other `opencode.json` files under your projects home (`projects.json` → `projects_dir`, override with `OC_PROJECTS_DIR`). Those are project overlays — OmO stays pinned globally here.
 
 ---
 
@@ -116,7 +120,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 | --- | --- |
 | Context7 MCP | Enabled (`CONTEXT7_API_KEY`) |
 | Exa websearch | Enabled (`EXA_API_KEY`) |
-| codegraph | Enabled · telemetry off · `~/.omo/codegraph` |
+| codegraph | OmO-managed 1.4.1 daemon · auto-index off · telemetry off · `~/.omo/codegraph` |
 | LSP | TypeScript · Python · Go only |
 | Formatters | Prettier + Ruff |
 | Skills | `content-aware-recon` · `content-aware-audit` under `skills/` (fenced) |
@@ -137,7 +141,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | Agent | Model | Role |
 | --- | --- | --- |
 | **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead |
-| **hephaestus** | GPT-5.6 Sol (direct OpenAI) | Implementation |
+| **hephaestus** | GPT-5.6 Sol (OpenRouter) | Implementation |
 | **prometheus** | GLM 5.2 Exacto | Planner |
 | **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
 | **content-aware-research** | DeepSeek V4 Pro | Full-depth research (edit denied) |
@@ -147,11 +151,11 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | Agent | Model | Role |
 | --- | --- | --- |
 | oracle | GPT-5.6 Sol | Critique / adjudication |
-| librarian | DeepSeek Flash Nitro | Docs (Context7-first) |
-| explore | DeepSeek Flash Nitro | Codebase map |
-| multimodal-looker | Claude Sonnet 5 | Vision (`look_at`) |
-| metis | Claude Sonnet 5 | Pre-planning critic |
-| momus | GPT-5.6 Sol max | Plan / review gate |
+| librarian | DeepSeek Pro Exacto | Docs / OSS (Context7-first, unmoderated) |
+| explore | DeepSeek Pro Exacto | Codebase + web recon (edit denied, unmoderated) |
+| multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
+| metis | GLM Exacto | Pre-planning critic (unmoderated) |
+| momus | GPT-5.6 Terra max | Plan / review gate |
 | sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
@@ -164,14 +168,15 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | --- | --- | --- |
 | `bug-hunt` | GLM Exacto | Reproduce → root cause → fix |
 | `refactor-safe` | GLM Exacto | Behavior-preserving refactors |
-| `arch-review` | GPT-5.6 Sol | Coupling / blast radius |
+| `arch-review` | GLM Exacto | Coupling / blast radius (unmoderated) |
 | `content-aware-fast` | DeepSeek Flash Nitro | Attack-surface recon |
 | `content-aware-deep` | DeepSeek Pro Exacto | Deep vuln research |
 | `writing` | Gemini 3.6 Flash Nitro | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
 | `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
-| `deep` / `ultrabrain` | GPT-5.6 Sol | Heavy / max reasoning |
+| `deep` | DeepSeek Pro Exacto | Autonomous problem-solving (unmoderated) |
+| `ultrabrain` | GPT-5.6 Sol | Heavy / max reasoning |
 | `unspecified-low` / `unspecified-high` | Flash / Claude Fable | Hyperplan critics |
 
 ---
@@ -184,7 +189,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `team` | Team-mode expansion |
 | `hyperplan` / `hpp` / `/hyperplan` | Adversarial planning (from **sisyphus**) |
 | `/goal` | **Disabled** — OmO 4.19 goal hook breaks `/start-work`. Use `/start-work` → Atlas (`prompts/goal.md`) |
-| `/start-work` | Atlas executes an approved Prometheus plan |
+| `/start-work [plan] [--worktree <path>] [--make-pr\|--ship]` | Atlas executes an approved plan and preserves the requested delivery mode |
 
 ---
 
@@ -192,8 +197,8 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 Lead: **sisyphus**. Specs in `teams/` are **symlinked** to `~/.omo/teams/` by `oc setup`.
 
-Eligible: `sisyphus`, `atlas`, `sisyphus-junior`, `hephaestus` (`teammate: allow`), or `kind: category`.  
-Hard-rejected as teammates: explore · librarian · oracle · metis · momus · multimodal-looker · prometheus.
+Direct members use `kind: subagent_type`: `sisyphus`, `atlas`, `sisyphus-junior`, or `hephaestus` (`teammate: allow`). Categories use `kind: category` and require a prompt.
+Hard-rejected as direct teammates: explore · librarian · oracle · metis · momus · multimodal-looker · prometheus.
 
 Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · tmux `main-vertical` / `inline`.
 
@@ -202,7 +207,7 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | `explorers` | scout-code (`content-aware-fast`) + scout-docs (`quick`) |
 | `ship-feature` | forge (hephaestus) + junior + verifier (`bug-hunt`) |
 | `debug-team` | reproducer (`bug-hunt`) + root-cause (`content-aware-deep`) |
-| `review-panel` | arch (`content-aware-deep`) + bugs (`bug-hunt`) + cleanup (`refactor-safe`) |
+| `review-panel` | arch (`arch-review`) + bugs (`bug-hunt`) + cleanup (`refactor-safe`) |
 | `refactor-team` | analyzer (`arch-review`) + executor (`refactor-safe`) |
 | `docs-team` | api-docs + guide (`writing`) |
 | `content-aware-audit` | recon (`content-aware-fast`) + deep (`content-aware-deep`) |
@@ -213,14 +218,17 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 | Lane | Models | Used for |
 | --- | --- | --- |
-| Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt |
-| GPT (direct) | `openai/gpt-5.6-sol` (+ terra / 5.5 fallbacks) | Hephaestus / Oracle / Momus / deep |
-| Recon | `deepseek/deepseek-v4-flash:nitro` | explore / librarian / sisyphus-junior / quick |
-| Depth | `deepseek/deepseek-v4-pro:exacto` | content-aware / hard fallback |
+| Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
+| GPT (moderated) | OpenRouter Sol / Terra | Hephaestus / Oracle / Momus / ultrabrain |
+| **Recon (unmoderated)** | DeepSeek Pro → Flash → GLM → MiniMax → Gemini | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
+| Fast parallel | `deepseek/deepseek-v4-flash:nitro` | sisyphus-junior / quick / content-aware-fast |
+| Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
 | Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |
 
-OpenRouter is primary. GPT agents prefer **direct OpenAI**. Fallbacks + `runtime_fallback` on API errors. Stream timeouts: **900s**.
+Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
+
+OpenRouter serves every active lane. Native `:nitro`, `:exacto`, and `:floor` routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Direct OpenAI stays defined but disabled by default. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
@@ -229,7 +237,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | Knob | Value |
 | --- | --- |
 | `background_task.defaultConcurrency` | **4** |
-| OpenRouter / OpenAI / Anthropic | **6 / 4 / 2** |
+| OpenRouter / dormant OpenAI / Anthropic | **6 / 4 / 2** |
 | Flash / Exacto / Sol / Fable | **4 / 3 / 3 / 1** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
@@ -240,8 +248,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 | Key | Required | Enables |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | **yes** | OpenRouter models |
-| `OPENAI_API_KEY` | **yes** for GPT lane | Hephaestus / Oracle / Momus / deep / … |
+| `OPENROUTER_API_KEY` | **yes** | All models (GLM, GPT, Claude, Gemini, …) via OpenRouter |
 | `EXA_API_KEY` | for websearch | OmO Exa |
 | `CONTEXT7_API_KEY` | recommended | Context7 |
 | `OPENROUTER_MGMT_KEY` | optional | `oc admin` |
@@ -333,7 +340,7 @@ opencode-configs/
 
 ```bash
 oc signature && oc test && oc validate && oc versions && oc doctor
-bunx oh-my-openagent@4.19.1 doctor   # upstream: System OK
+bunx oh-my-openagent@4.19.4 doctor   # upstream: System OK
 ```
 
 Idempotency: re-running install / setup / heal / fix on a healthy box must not clobber `.env`, rewrite correct symlinks, or bump clean config mtimes.
@@ -350,7 +357,7 @@ Idempotency: re-running install / setup / heal / fix on a healthy box must not c
 | Context7 | [context7.com](https://context7.com) | [upstash/context7](https://github.com/upstash/context7) |
 | Exa | [docs.exa.ai](https://docs.exa.ai) | [exa-labs](https://github.com/exa-labs) |
 
-Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh-my-openagent@4.19.1` only.
+Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh-my-openagent@4.19.4` only.
 
 ---
 

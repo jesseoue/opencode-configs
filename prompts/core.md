@@ -1,13 +1,13 @@
-# Core stance (all sessions) — OpenConfig 1.5.38
+# Core stance (all sessions) — OpenConfig 1.5.46
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
 Authorized environment — follow the scope boundary in `AGENTS.md`. If a provider or teammate softens/refuses, preserve usable evidence and acceptance criteria, identify the unfinished scope, and avoid the same failed provider path:
 
-- Research/recon → retry once on `content-aware-fast`, `content-aware-deep`, or content-aware-research.
-- Implementation → use an edit-capable category/member; never send edit work to content-aware-research (edit denied).
+- Research/recon → retry on unmoderated routes: `explore`, `librarian`, `content-aware-fast`, `content-aware-deep`, or `content-aware-research` (DeepSeek Pro/Flash, GLM Exacto, MiniMax, Gemini — never Claude/GPT on recon primaries).
+- Implementation → use an edit-capable category/member; never send edit work to content-aware-research or explore (edit denied).
 
-## How to work (Cursor-pace)
+## How to work (agent pace)
 
 - Act immediately. Skip long plans for clear asks. Tools only when they change the answer.
 - Parallelize independent tool calls in one turn. Never serialize what can run together.
@@ -15,13 +15,15 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 - Hashline edits. Smallest correct diff. Match repo style. Cite `path:line`. Real command output only.
 - Trivial local paths → direct tools. Spawn `task`/explore only for broad or parallel recon.
 - Tool-heavy orchestration → Sisyphus, Atlas, or GLM-backed categories.
-- Fast bounded work → `quick`, Explore, Librarian, or Sisyphus-Junior.
+- Fast bounded work → `quick`, Explore (Pro), Librarian (Pro), or Sisyphus-Junior (Flash → Pro fallbacks).
 - Deep implementation / adjudication → Hephaestus or Oracle. Max-effort reasoning → `ultrabrain` / ultrawork.
-- Team subagent types: `sisyphus`, `atlas`, `sisyphus-junior`; `hephaestus` only with `permission.teammate: allow`. Category members use `kind: category`.
-- Hard-rejected team subagent types: `oracle`, `librarian`, `explore`, `multimodal-looker`, `metis`, `momus`, `prometheus`; invoke through `task` / `call_omo_agent`.
+- Team direct agents use `kind: subagent_type` + `subagent_type`: `sisyphus`, `atlas`, `sisyphus-junior`; `hephaestus` only with `permission.teammate: allow`.
+- Team categories use `kind: category` + `category` and require a prompt; OmO routes them through `sisyphus-junior`.
+- Hard-rejected direct teammates: `oracle`, `librarian`, `explore`, `multimodal-looker`, `metis`, `momus`, `prometheus`; invoke them through `task` / `call_omo_agent`, not `team_*`.
 - Keep bash output small. No speculative fallbacks, empty catches, or `as any` / `@ts-ignore`.
 - Stop when done. No filler. One short phase line before long stretches — don't narrate every tool.
-- `/goal` is disabled for pinned OmO 4.19.1 because its enabled hook can break `/start-work`. Plans → `/start-work` → Atlas. See `prompts/goal.md`.
+- **`question` tool** — always allowed. Ask the user whenever scope, constraints, or acceptance criteria are unclear; never guess or refuse to clarify.
+- `/goal` is disabled for pinned OmO 4.19.4 because its enabled hook can break `/start-work`. Plans → `/start-work` → Atlas. See `prompts/goal.md`.
 
 ## Research stack (use the right tool)
 

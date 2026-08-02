@@ -21,7 +21,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
-OC_BIN="$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")"
+OC_BIN="${OC_DIAGNOSE_BIN:-$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")}"
 ENV_FILE="$REPO/.env"
 
 AI=1; DOFIX=0; AGENTFIX=0; YES=0; AIMODEL=""
@@ -53,6 +53,7 @@ printf "${B}${BD}│${Z} %-51s ${B}${BD}│${Z}\n" "$REPO"
 printf "${B}${BD}└─────────────────────────────────────────────────────┘${Z}\n"
 
 ORKEY="$(getkey OPENROUTER_API_KEY)"; [[ -z "$ORKEY" ]] && ORKEY="${OPENROUTER_API_KEY:-}"
+OAIKEY="$(getkey OPENAI_API_KEY)"; [[ -z "$OAIKEY" ]] && OAIKEY="${OPENAI_API_KEY:-}"
 if [[ -z "$ORKEY" ]]; then
   warn "no OPENROUTER_API_KEY in .env or environment"
   [[ $YES -eq 0 ]] && tty && ORKEY="$(askval 'Paste an OpenRouter key for live checks (or blank to skip):')"
@@ -60,12 +61,12 @@ fi
 
 FIXFILE="$(mktemp)"; ISSUEFILE="$(mktemp)"; HEALTHYFILE="$(mktemp)"; trap 'rm -f "$FIXFILE" "$ISSUEFILE" "$HEALTHYFILE"' EXIT
 
-AI="$AI" AIMODEL="$AIMODEL" ORKEY="$ORKEY" OC_BIN="$OC_BIN" REPO="$REPO" \
+AI="$AI" AIMODEL="$AIMODEL" ORKEY="$ORKEY" OAIKEY="$OAIKEY" OC_BIN="$OC_BIN" REPO="$REPO" \
 FIXOUT="$FIXFILE" ISSUEOUT="$ISSUEFILE" HEALTHYOUT="$HEALTHYFILE" TTY="$([[ -t 1 ]] && echo 1 || echo 0)" NO_COLOR="${NO_COLOR:-}" \
 python3 - <<'PY'
-import json, os, subprocess, urllib.request, urllib.error, re
+import collections, glob, json, os, platform, subprocess, urllib.request, urllib.error, re
 
-repo=os.environ["REPO"]; oc=os.environ["OC_BIN"]; key=os.environ["ORKEY"]
+repo=os.environ["REPO"]; oc=os.environ["OC_BIN"]; key=os.environ["ORKEY"]; oai_key=os.environ["OAIKEY"]
 ai_on=os.environ["AI"]=="1"; aimodel=os.environ["AIMODEL"]
 color=os.environ["TTY"]=="1" and not os.environ.get("NO_COLOR")
 def c(code,s): return f"\033[{code}m{s}\033[0m" if color else s
@@ -89,18 +90,58 @@ sec("opencode")
 rc,out=run(oc,"--version"); ver=out.splitlines()[0] if out else "?"; sig["opencode_version"]=ver
 li("✓" if rc==0 else "✗", f"CLI {ver}", G if rc==0 else R)
 pin=next((p for p in conf.get("plugin",[]) if "oh-my" in p),""); sig["plugin_pin"]=pin
-cdir=os.path.expanduser(f"~/.cache/opencode/packages/{pin}")
-cache_ok=os.path.isdir(cdir) and bool(os.listdir(cdir)); sig["plugin_cache_populated"]=cache_ok
-li("✓" if cache_ok else "✗", f"plugin {pin} cache {'populated' if cache_ok else 'EMPTY → agents will NOT load'}", G if cache_ok else R)
+croot=os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+cdir=os.path.join(os.path.expanduser(croot), "opencode", "packages", pin)
+want=pin.rsplit("@",1)[-1]
+def package_version(name):
+    try: return str(json.load(open(os.path.join(cdir,"node_modules",name,"package.json"), encoding="utf-8")).get("version") or "")
+    except Exception: return ""
+system=platform.system().lower(); machine=platform.machine().lower()
+suffix=("darwin-" if system=="darwin" else "linux-")+("arm64" if machine in ("arm64","aarch64") else "x64")
+def native_ok(name):
+    bindir=os.path.join(cdir,"node_modules",name,"bin")
+    return package_version(name)==want and os.path.isdir(bindir) and any(
+        os.path.isfile(os.path.join(bindir,f)) and os.access(os.path.join(bindir,f),os.X_OK)
+        for f in os.listdir(bindir)
+    )
+native=next((n for n in (f"oh-my-openagent-{suffix}",f"oh-my-opencode-{suffix}") if native_ok(n)),None) if system in ("darwin","linux") else None
+cache_ok=package_version("oh-my-openagent")==want and native is not None
+sig["plugin_cache_ready"]=cache_ok
+li("✓" if cache_ok else "✗", f"plugin cache {'ready (main + native)' if cache_ok else 'BROKEN/EMPTY → agents will NOT load'} at {cdir}", G if cache_ok else R)
 da=conf.get("default_agent",""); da_def = da in (omo.get("agents") or {}) or da in {"build","plan","general"}
-sig["default_agent"]=da; sig["default_agent_defined"]=da_def
-sig["agents_will_load"]= bool(cache_ok and da_def)
-li("✓" if da_def else "✗", f"default_agent '{da}' {'defined' if da_def else 'NOT defined → falls back to build'}", G if da_def else R)
+sig["default_agent"]=da; sig["default_agent_declared"]=da_def
+sig["static_agent_ready"]=bool(cache_ok and da_def)
+li("✓" if da_def else "✗", f"declaration: default_agent '{da}' {'defined' if da_def else 'NOT defined → falls back to build'}", G if da_def else R)
 rc,out=run(oc,"debug","config")
 try: cnt=len(json.loads(out).get("agent") or {}) if out else 0
 except: cnt=0
 info["debug_config_agent_count_RACY"]=cnt
-li("✓","authoritative: agents will load = "+("yes" if sig['agents_will_load'] else "NO")+D(f"  (debug-config count {cnt} is async-racy, ignored)"), G if sig['agents_will_load'] else R)
+li("✓" if sig["static_agent_ready"] else "✗","static declared/cache-ready = "+("yes" if sig["static_agent_ready"] else "NO")+D(f"  (debug-config count {cnt} is async-racy context only)"), G if sig["static_agent_ready"] else R)
+
+expected={"sisyphus"}
+for path in glob.glob(os.path.join(repo,"teams","*","config.json")):
+    try: team=json.load(open(path,encoding="utf-8"))
+    except Exception: continue
+    for route_cfg in [team.get("lead") or {},*(team.get("members") or [])]:
+        if isinstance(route_cfg,dict) and route_cfg.get("kind")=="subagent_type":
+            expected.add(str(route_cfg.get("subagent_type") or "").lower())
+rc,out=run(oc,"agent","list",timeout=8)
+agent_probe_ok=rc==0
+visible=set()
+if agent_probe_ok:
+    for line in out.splitlines():
+        match=re.match(r"^(.+?) \((?:primary|subagent)\)\s*$",line)
+        if match: visible.add(match.group(1).split(" - ",1)[0].strip().lower())
+missing_visible=sorted(expected-visible) if agent_probe_ok else sorted(expected)
+sig["runtime_agent_probe_ok"]=agent_probe_ok
+sig["runtime_visible_team_agents"]=sorted(expected & visible)
+sig["runtime_missing_team_agents"]=missing_visible
+if agent_probe_ok and not missing_visible:
+    li("✓",f"runtime visibility: {', '.join(sorted(expected))} (bounded agent list; no model call)",G)
+elif agent_probe_ok:
+    li("✗",f"runtime missing: {', '.join(missing_visible)} → restart stale OpenCode processes",R)
+else:
+    li("▲",f"runtime visibility probe failed/timed out: {out[:100]}",Y)
 
 # ── OpenRouter account ──
 def orget(p):
@@ -122,6 +163,29 @@ if key:
         sig["or_key_error"]=str(e); li("✗", f"key check failed: {e}", R)
 else:
     sec("OpenRouter account"); li("▲","skipped (no key)", Y)
+
+# OpenRouter-only: skip direct OpenAI credential probe (GPT via openrouter/openai/*).
+sec("OpenAI credential")
+enabled = conf.get("enabled_providers")
+openai_on = isinstance(enabled, list) and "openai" in enabled
+if openai_on and oai_key:
+    rq=urllib.request.Request("https://api.openai.com/v1/models",headers={"Authorization":f"Bearer {oai_key}"})
+    try:
+        urllib.request.urlopen(rq,timeout=15).close()
+        sig["openai_credential"]="OK"; li("✓","key accepted (external credential)",G)
+    except urllib.error.HTTPError as e:
+        sig["openai_credential"]=f"HTTP {e.code}"
+        li("✗",f"key rejected (HTTP {e.code}) — external credential issue; update OPENAI_API_KEY",R)
+    except Exception as e:
+        sig["openai_credential"]="CHECK_FAILED"
+        info["openai_credential_check_error"]=str(e)
+        li("▲",f"credential probe unavailable: {e}",Y)
+elif openai_on:
+    sig["openai_credential"]="UNSET"; li("▲","unset (direct OpenAI enabled but no key)",Y)
+elif oai_key:
+    sig["openai_credential"]="STRAY"; li("▲","OPENAI_API_KEY set but direct OpenAI disabled — run: oc fix",Y)
+else:
+    sig["openai_credential"]="DISABLED"; li("✓","OpenRouter-only (no direct OpenAI)",G)
 
 # ── model routing (live) ──
 route={}
@@ -150,10 +214,40 @@ rc,out=run(repo+"/validate.sh"); vlast=(out.splitlines() or ["?"])[-1].strip()
 sig["validate_ok"]=rc==0; sig["validate_summary"]=vlast
 li("✓" if rc==0 else "✗", f"validate.sh: {vlast}", G if rc==0 else R)
 
+# ── orchestration log misuse (actionable, bounded tail) ──
+log_path=os.path.join(os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share"),"opencode","log","opencode.log")
+log_tail=""
+try:
+    with open(log_path,encoding="utf-8",errors="replace") as fh:
+        log_tail="".join(collections.deque(fh,maxlen=20000))
+except OSError:
+    pass
+ses_misuse=len(re.findall(r"Expected a string starting with .ses|task_id.*must.*ses_",log_tail,re.I))
+bg_misuse=len(re.findall(r"Expected a string starting with .bg|task_id.*must.*bg_",log_tail,re.I))
+blocking_poll=len(re.findall(r"background_output[^\n]*block=true|block=true[^\n]*background_output",log_tail,re.I))
+sig["log_id_misuse"]={"task_requires_ses":ses_misuse,"background_output_requires_bg":bg_misuse,"blocking_poll":blocking_poll}
+if ses_misuse or bg_misuse or blocking_poll:
+    sec("Orchestration log misuse")
+    if ses_misuse: li("▲",f"{ses_misuse} task resume misuse hit(s): retain the real ses_… id; never pass bg_… or a label",Y)
+    if bg_misuse: li("▲",f"{bg_misuse} background transcript misuse hit(s): retain the exact bg_… launch id",Y)
+    if blocking_poll: li("▲",f"{blocking_poll} blocking poll hit(s): use block=false for a peek or await completion notification",Y)
+
 # ── issue synthesis (authoritative only) ──
 issues=[]
 if not cache_ok: issues.append(f"plugin cache empty for {pin} → agents not loading (pin a version that exists on npm under oh-my-openagent)")
 if not da_def: issues.append(f"default_agent '{da}' not defined")
+if agent_probe_ok and missing_visible:
+    issues.append(f"agents declared/cache-ready but not runtime-visible: {', '.join(missing_visible)} → restart stale OpenCode processes")
+if sig.get("openai_credential") in ("HTTP 401","HTTP 403"):
+    issues.append(f"OpenAI {sig['openai_credential']} is an external credential issue → replace OPENAI_API_KEY; do not rewrite routing config")
+if sig.get("openai_credential") == "STRAY":
+    issues.append("OPENAI_API_KEY in .env but direct OpenAI disabled → run: oc fix (OpenRouter-only)")
+if ses_misuse:
+    issues.append(f"{ses_misuse} task(task_id=…) misuse hits → only resume with the real ses_… returned by task")
+if bg_misuse:
+    issues.append(f"{bg_misuse} background_output id misuse hits → only use the exact bg_… returned at launch")
+if blocking_poll:
+    issues.append(f"{blocking_poll} blocking background_output polls → use block=false only for an immediate peek, otherwise await notification")
 for mid,r in route.items():
     if r.startswith("ERR"): issues.append(f"model {mid} not routing ({r}) — likely max_price too low or all providers ignored")
 if not sig["validate_ok"]: issues.append("config validation failing (run ./validate.sh)")
@@ -171,10 +265,11 @@ if ai_on and key:
     sysmsg=("You are an expert diagnostician for OpenCode (opencode.ai), the oh-my-openagent/oh-my-opencode plugin, and "
       "OpenRouter provider routing. Trust the AUTHORITATIVE signals; ignore async-racy fields. Known failure modes: "
       "(1) experimental.primary_tools DENIES those tools to subagents; (2) oh-my-openagent agent 'color' must be hex or the "
-      "whole agents section is dropped; (3) the plugin pin must be oh-my-openagent@<ver> that exists on npm (currently 4.19.1); "
+      "whole agents section is dropped; (3) the plugin pin must be oh-my-openagent@<ver> that exists on npm (currently 4.19.4); "
       "empty cache means agents will not load; (4) a max_price cap that excludes every non-ignored provider "
       "causes 'All providers have been ignored'; (5) require_parameters:true + temperature blackholes Claude; (6) plugin agents "
-      "register asynchronously so CLI agent listing is racy — use agents_will_load. If ISSUES is empty, say the setup is HEALTHY. "
+      "declaration/cache readiness and bounded runtime agent visibility are separate signals. An OpenAI 401/403 is an external "
+      "credential issue, not a config-routing defect. If ISSUES is empty, say the setup is HEALTHY. "
       "Otherwise output PROBLEMS (root-caused), FIXES as exact ./fix.sh commands, and QUESTIONS only if info is missing. Be terse.")
     user=f"ISSUES={json.dumps(issues)}\nAUTHORITATIVE_SIGNALS={json.dumps(sig,indent=1)}\nCONFIG(redacted, truncated)={json.dumps(red)[:5000]}"
     payload={"model":model,"temperature":0.1,"max_tokens":700,
@@ -233,7 +328,7 @@ if [[ $AGENTFIX -eq 1 ]]; then
     prompt="You are working in the OpenCode config repo at ${REPO} (this IS ~/.config/opencode). These issues were detected by ./diagnose.sh:
 ${issues}
 
-Fix them by editing opencode.json / oh-my-openagent.json. Rules: keep it cheap+agentic; the plugin pin must be oh-my-openagent@4.19.1; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
+Fix them by editing opencode.json / oh-my-openagent.json. Rules: keep it cheap+agentic; the plugin pin must be oh-my-openagent@4.19.4; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
     ok "using healthy model for the fixer: $fixmodel"
     if ask "dispatch 'opencode run --agent $agent --model $fixmodel' to fix ${REPO}?"; then
       ( set +u; cd "$REPO"; oc_export_env_file "$ENV_FILE"; "$OC_BIN" run --agent "$agent" --model "$fixmodel" "$prompt" ) \

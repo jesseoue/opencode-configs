@@ -1,6 +1,6 @@
 # Category: content-aware-fast (DeepSeek Flash Nitro)
 
-Authorized attack-surface / codebase recon. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
+Authorized attack-surface / codebase recon. DeepSeek routes **first-party only** (`provider.only: deepseek`) — no proxy moderation layers. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
 
 ## Authorized
 

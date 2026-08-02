@@ -2,6 +2,82 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.46] — 2026-08-01
+
+### Unmoderated smart recon routing
+- **Explore / Librarian** primaries → DeepSeek Pro (unmoderated); Flash → GLM Exacto → MiniMax fallbacks
+- **Explore** gets explicit permissions: `webfetch`, `question`, `task` (edit denied); prompts + `explorers` team scouts use full Exa/webfetch stack
+- **deep**, **arch-review**, **metis**, **multimodal-looker** → unmoderated primaries (DeepSeek Pro / GLM Exacto / Gemini 3.1 Pro)
+- Fast categories (`quick`, `content-aware-fast`, …) escalate to Pro on fallback — no Claude/GPT on recon chains
+- `oc validate` / `oc fix` guard recon routes against moderated primaries and fallbacks
+
+## [1.5.45] — 2026-08-01
+
+### Fast model/provider testing
+- `oc models --probe` — parallel live probes (8 workers) for all whitelisted models: latency, HTTP status, `is_moderated`, routing pin, fastest endpoint host
+- `oc models --moderation` — instant policy catalog (no chat calls): `moderationRequired` providers, per-model routing pins, data retention/training flags
+- `oc admin health` model section delegates to `--probe` (was sequential — ~10× faster on 18 models)
+
+## [1.5.44] — 2026-08-01
+
+### DeepSeek uncensored routing + question tool
+- Pin all DeepSeek models to first-party OpenRouter host (`provider.only: ["deepseek"]`) — skips proxy providers that may add content moderation
+- Set DeepSeek `require_parameters: false` (GLM/MiniMax unchanged)
+- `question` tool explicitly allowed on content-aware-research agent/profile; Prometheus + core prompts encourage clarifying questions freely
+
+## [1.5.43] — 2026-08-01
+
+### New-user hygiene (no host-specific literals)
+- OpenRouter `HTTP-Referer` syncs from `signature.json` → `github_b64` via `oc fix` (no hardcoded owner URLs in config)
+- Distribution identity → `https://github.com/jesseoue/opencode-configs` (`github_b64` + install bootstrap)
+- `oc versions` scans `projects.json` / `OC_PROJECTS_DIR` only — removed host-specific directory scan
+- README / prompts: generic clone/install docs; drop `Cursor-pace` product naming; sync version pins to 1.5.43
+- Validate checks OpenRouter attribution headers match signature distribution URL
+- `review-panel` arch member → `arch-review` category (architecture lens; bugs stay on `bug-hunt`)
+
+## [1.5.42] — 2026-08-01
+
+### OpenRouter provider system cleanup
+- Probe all 18 whitelisted models across 40+ OpenRouter provider hosts (live endpoints + HTTP 200 chat probes)
+- Strip redundant `preferred_min_throughput` / `preferred_max_latency` from every model — native `:exacto`/`:nitro`/`:floor` suffixes and OpenRouter auto-ranking handle provider selection
+- Sync `modelConcurrency` exactly to the 18-model whitelist with tier caps (Flash/Luna 4 · Exacto/MiniMax 3 · Pro/Sol 2 · Opus/Fable/Kimi 1)
+- Pin `providerConcurrency` to openrouter=6, openai=4, anthropic=2 (OmO gateway limits for OpenRouter-routed backends)
+- Validate rejects any remaining `preferred_*` soft prefs on Exacto, Nitro, Floor, and auto-routed models
+
+## [1.5.41] — 2026-08-01
+
+### Routing availability + concurrency hardening
+- Live-probe all 18 whitelisted OpenRouter models (HTTP 200); OpenRouter-only, no direct providers
+- Remove Kimi K3 from routine fallback chains (whitelist-only — slow, single-provider, expensive)
+- Rebuild fast-agent fallbacks around DeepSeek Flash Nitro, GLM Exacto, and MiniMax M3
+- Cap premium model concurrency (Sol/Terra/Opus/Fable/Kimi at 1–2; Flash/Exacto/Luna at 3–4)
+- Add validate + fix guards against slow models in fast routes and kimi in fallbacks
+- Fix Prometheus `reasoning`/`variant` mismatch and multimodal-looker primary duplicate fallback
+
+## [1.5.40] — 2026-08-01
+
+### OpenCode 1.18.11 + OmO 4.19.4
+- Upgrade OpenCode CLI floor and `@opencode-ai/plugin` peer from 1.18.8 to **1.18.11** (MCP SSE reconnect fix, interleaved reasoning field support)
+- Bump `oh-my-openagent` pin from 4.19.2 to **4.19.4** (final pre–Native CLI release: unified reasoning vocabulary, runtime fallback status patterns, category chain tuning, codegraph daemon hardening)
+- Migrate all agent/category `reasoningEffort` → canonical `reasoning` field; `oc fix` and `validate.sh` enforce the new shape
+- Refresh OmO `$schema` URL to v4.19.4; sync schema URL from `versions.json` pin in `oc fix`
+
+## [1.5.39] — 2026-07-28
+
+### OpenCode 1.18.8 + OmO 4.19.2
+- Upgrade the OpenCode CLI and `@opencode-ai/plugin` peer from 1.18.5 to **1.18.8**
+- Bump the `oh-my-openagent` pin from 4.19.1 to **4.19.2** and refresh its schema URL
+- Keep `/goal` disabled while adopting notification-driven coordination, managed CodeGraph lifecycle fixes, and MCP compatibility fixes
+- Enable OmO's managed CodeGraph **1.4.1** daemon and pinned-runtime auto-provisioning while keeping automatic indexing off
+- Remove superseded Gemini 3.5 Flash and unused GPT-5.5 routing, align model output limits with the live catalog, and let native `:nitro` / `:exacto` routing adapt across the full eligible provider pool
+- Remove unsupported OpenCode compaction config and the nonexistent direct Sol Pro alias; mark GPT temperature unsupported and align Momus/deep with Terra
+- Harden OmO cache checks to verify the pinned main package, platform package, and executable; document `/start-work --make-pr|--ship`
+- Preserve broad OpenRouter availability (`data_collection=allow`, no ZDR filter), minimize OpenCode logs, isolate MCP secrets, and redact credentials from maintenance logs
+- Replace volatile provider-name pins with adaptive routing: Nitro for throughput, Exacto/Auto Exacto for tool quality, and Floor for cheap title/summary/compaction work
+- Route active GPT agents through healthy OpenRouter endpoints, keep direct OpenAI dormant, and trim/demote slow or expensive fallback chains (especially Kimi and duplicate Opus/GPT entries)
+- Bound premium outputs and runaway team/tool loops; retry only transient failures with three model attempts and a 120-second fallback window
+- Replace 15-minute stream stalls with 300-second request / 60-second chunk limits, align MCP timeouts at 30 seconds, and prefer selective context pruning over blanket 4 KB truncation
+
 ## [1.5.38] — 2026-07-26
 
 ### Prompt contract hardening
@@ -90,7 +166,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 ### Package pin audit
 - Add `oc versions` (`versions.sh`) — compare OpenCode / OmO / `@opencode-ai/plugin` pins to npm + GitHub
-- Scan other `opencode.json` under `~/Projects` and `~/Projects` (project overlays; OmO stays global)
+- Scan other `opencode.json` under `~/Projects` (project overlays; OmO stays global)
 - `oc versions --fix` aligns `~/.opencode` `@opencode-ai/plugin` peer to the installed CLI when npm has it
 - Pins verified current: OpenCode `1.18.4`, OmO `4.19.0`, plugin peer `1.18.4`
 - README: Package pins section + verify/install flows include `oc versions`
@@ -155,7 +231,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 ## [1.5.22] — 2026-07-21
 
 ### Hygiene — no personal host paths · deny-all gitignore
-- `zshrc.snippet`: remove `host-specific-path` denylist + `host-specific-path` redirect; resolve workspace via `OC_*` / `projects.json` / `~/Projects` only
+- `zshrc.snippet`: remove host-specific denylist/redirect paths; resolve workspace via `OC_*` / `projects.json` / `~/Projects` only
 - `.gitignore`: default-deny root (`/*`) + explicit allowlist — logs, secrets, runtime junk, and anything outside the config set stay untracked
 - Respect `OC_PROJECTS_DIR` / `OC_DEFAULT_WORKSPACE` (no longer stomp with a hard-coded `~/Projects` when that dir exists)
 

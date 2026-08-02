@@ -22,7 +22,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
-OC_BIN="$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")"
+OC_BIN="${OC_DOCTOR_BIN:-$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")}"
 LINK="${OC_CONFIG_LINK}"
 
 DO_QUICK=0 DO_FIX=0 DO_HARDEN=0 DO_AI=0 DO_JSON=0
@@ -139,18 +139,17 @@ sec "oh-my-openagent plugin"
 pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null)"
 pin_ver="${pin##*@}"
 # The pin must resolve to a real install (node_modules/oh-my-openagent), else agents silently vanish.
-cdir="${XDG_CACHE_HOME:-$HOME/.cache}/opencode/packages/$pin"
+cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
 _cache_ver=""
 _stale_caches=""
 if [[ -n "$pin" ]]; then
-  if [[ -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
+  if oc_omo_plugin_cache_ok "$pin"; then
     _cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
-    if [[ -n "$_cache_ver" && -n "$pin_ver" && "$_cache_ver" != "$pin_ver" ]]; then
-      bad "plugin cache $pin has package version $_cache_ver (want $pin_ver) — agents may load wrong OmO"
-      tip "fix: rm -rf \"$cdir\" && oc setup   # or: oc heal"
-    else
-      ok "plugin cache populated ($pin → v${_cache_ver:-?})"
-    fi
+    ok "plugin cache ready ($pin → main + native v${_cache_ver:-?}; $cdir)"
+  elif [[ -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
+    _cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
+    bad "plugin cache broken for $pin (main=${_cache_ver:-missing}; native launcher/version missing) — agents may vanish"
+    tip "repair: oc setup   # or: oc heal"
   elif [[ -d "$cdir" ]]; then
     bad "plugin cache EMPTY/broken for $pin — agents will NOT load (fix: oc setup · oc heal)"
     tip "OpenCode may leave an empty ~/.cache/opencode/packages/$pin after a failed install/postinstall wipe"
@@ -230,11 +229,10 @@ OC_DOCTOR_PLUGIN_PEER_OK=0
 [[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" == "$_plugin_pin" ]] && OC_DOCTOR_PLUGIN_PEER_OK=1
 unset _cli_ver _plugin_pin _cache_ver _stale_caches pin_ver
 
-# ─── default_agent will resolve (static: defined in config + cache populated) ──
-# Note: `opencode agent list` registers plugin agents lazily/async and is racy,
-# so we check deterministically — the agent must be DEFINED and the plugin that
-# provides it must be installed (cache non-empty, checked above).
-sec "Default agent"
+# ─── Static agent readiness ──────────────────────────────────────────
+# Declaration and verified cache readiness are deterministic. Runtime visibility
+# is a separate bounded probe below and must not be inferred from these checks.
+sec "Agent declaration & cache readiness"
 default_agent="$(python3 -c "import json;print(json.load(open('$REPO/opencode.json')).get('default_agent',''))" 2>/dev/null)"
 if [[ -z "$default_agent" ]]; then
   info "no default_agent set (opencode uses 'build')"
@@ -246,14 +244,83 @@ native={'build','plan','general','atlas','sisyphus','hephaestus','prometheus'}
 print('yes' if ('$default_agent' in (omo.get('agents') or {}) or '$default_agent' in native) else 'no')
 " 2>/dev/null)"
   cache_ok=0
-  cdir="$HOME/.cache/opencode/packages/$pin"
-  [[ -n "$pin" && -f "$cdir/node_modules/oh-my-openagent/package.json" ]] && cache_ok=1
+  oc_omo_plugin_cache_ok "$pin" && cache_ok=1
   if [[ "$defined" == "yes" && "$cache_ok" -eq 1 ]]; then
-    ok "default_agent '$default_agent' is defined and its plugin is installed → will resolve"
+    ok "declared: default_agent '$default_agent'"
+    ok "cache-ready: verified main + native packages for $pin"
   elif [[ "$defined" != "yes" ]]; then
     bad "default_agent '$default_agent' is not defined in oh-my-openagent.json — opencode will fall back to 'build'"
   else
     bad "default_agent '$default_agent' defined but plugin cache empty — it will NOT load until: oc setup"
+  fi
+fi
+
+# `agent list` loads configuration but never starts an agent or calls a model.
+# Bound it tightly because plugin startup has historically stalled.
+sec "Runtime agent visibility"
+if [[ $DO_QUICK -eq 1 ]]; then
+  info "skipped bounded 'opencode agent list' probe in --quick mode (static readiness checked above)"
+else
+  runtime_report="$(oc_agent_visibility_report "$OC_BIN" "$REPO" 8 2>/dev/null || true)"
+  while IFS='|' read -r kind msg; do
+    [[ -z "$kind" ]] && continue
+    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD) bad "$msg" ;; *) info "$msg" ;; esac
+  done <<< "$runtime_report"
+fi
+
+if [[ $DO_QUICK -eq 0 ]]; then
+  stale_runtime="$(python3 - "$REPO" "$cdir" <<'PY' 2>/dev/null || true
+import os, subprocess, sys, time
+repo, cache = sys.argv[1:3]
+paths = [
+    os.path.join(repo, "opencode.json"),
+    os.path.join(repo, "oh-my-openagent.json"),
+    os.path.join(cache, "node_modules", "oh-my-openagent", "package.json"),
+]
+mtimes = [os.path.getmtime(p) for p in paths if os.path.isfile(p)]
+if not mtimes:
+    raise SystemExit
+changed_age = max(0, time.time() - max(mtimes))
+
+def elapsed_seconds(raw):
+    days = 0
+    if "-" in raw:
+        day, raw = raw.split("-", 1)
+        days = int(day)
+    parts = [int(p) for p in raw.split(":")]
+    if len(parts) == 2:
+        hours, minutes, seconds = 0, parts[0], parts[1]
+    else:
+        hours, minutes, seconds = parts
+    return days * 86400 + hours * 3600 + minutes * 60 + seconds
+
+out = subprocess.run(["ps", "-axo", "pid=,etime=,command="], capture_output=True, text=True).stdout
+stale = []
+for line in out.splitlines():
+    fields = line.strip().split(None, 2)
+    if len(fields) != 3:
+        continue
+    pid, elapsed, command = fields
+    low = command.lower()
+    argv0 = command.split(None, 1)[0]
+    is_opencode = os.path.basename(argv0) == "opencode" or argv0.endswith("/opencode/bin/opencode")
+    if not is_opencode or "agent list" in low:
+        continue
+    try:
+        age = elapsed_seconds(elapsed)
+    except Exception:
+        continue
+    if age > changed_age + 2:
+        stale.append(pid)
+if stale:
+    print(",".join(stale[:8]))
+PY
+)"
+  if [[ -n "$stale_runtime" ]]; then
+    opt "running OpenCode process(es) predate config/cache update (pid ${stale_runtime//,/, })"
+    tip "finish active work, close those sessions, then relaunch so Sisyphus/team routes activate"
+  else
+    ok "no stale running OpenCode process predates the latest config/cache update"
   fi
 fi
 
@@ -293,8 +360,14 @@ unset _lsp_miss
 # ─── CodeGraph ───────────────────────────────────────────────────────
 sec "CodeGraph (OmO)"
 CG_BIN="$HOME/.omo/codegraph/bin/codegraph"
+CG_WANT="$(oc_version_get codegraph.pin 2>/dev/null || true)"
 if [[ -x "$CG_BIN" ]]; then
-  ok "binary: $CG_BIN ($($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r'))"
+  CG_HAVE="$($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r')"
+  if [[ -n "$CG_WANT" && "$CG_HAVE" != "$CG_WANT" ]]; then
+    opt "binary: $CG_BIN ($CG_HAVE; OmO pin $CG_WANT — start one OmO session to auto-provision)"
+  else
+    ok "binary: $CG_BIN ($CG_HAVE)"
+  fi
 else
   opt "binary missing — first OmO session should auto_provision to ~/.omo/codegraph"
   tip "or run: oc setup   # provisions codegraph + teams + LSP"
@@ -305,12 +378,16 @@ cg=json.load(open('$REPO/oh-my-openagent.json')).get('codegraph') or {}
 id=cg.get('install_dir')
 if cg.get('enabled') is False:
     print('BAD enabled=false')
+elif cg.get('auto_provision') is not True:
+    print('BAD auto_provision=false')
+elif cg.get('daemon') is not True:
+    print('BAD daemon=false')
 elif id and 'cache/opencode/codegraph' in str(id):
     print('BAD install_dir='+str(id))
 else:
-    print('enabled=%s auto_init=%s auto_provision=%s telemetry=%s' % (
+    print('enabled=%s auto_init=%s auto_provision=%s daemon=%s telemetry=%s' % (
         cg.get('enabled', True), cg.get('auto_init', True),
-        cg.get('auto_provision', True), cg.get('telemetry')))
+        cg.get('auto_provision', True), cg.get('daemon', True), cg.get('telemetry')))
 " 2>/dev/null)"
 if [[ "$cg_line" == BAD* ]]; then bad "codegraph config: $cg_line"
 else ok "config: $cg_line"; fi
@@ -344,14 +421,10 @@ if [[ -f "$ENV_FILE" ]]; then
       tip "then: edit $ENV_FILE  (or: bash \"$REPO/install.sh\")"
     fi
   done
-  for k in OPENAI_API_KEY CONTEXT7_API_KEY EXA_API_KEY; do
+  for k in CONTEXT7_API_KEY EXA_API_KEY; do
     if [[ -n "$(getkey $k)" ]]; then ok "$k set"
     else
       case "$k" in
-        OPENAI_API_KEY)
-          opt "$k unset (GPT lane falls back to OpenRouter)"
-          tip "https://platform.openai.com/api-keys → add OPENAI_API_KEY=… to $ENV_FILE"
-          ;;
         CONTEXT7_API_KEY)
           opt "$k unset (Context7 docs MCP unauthenticated)"
           tip "https://context7.com/dashboard → add CONTEXT7_API_KEY=… to $ENV_FILE"
@@ -363,6 +436,11 @@ if [[ -f "$ENV_FILE" ]]; then
       esac
     fi
   done
+  if [[ -n "$(getkey OPENAI_API_KEY)" ]]; then
+    soft "OPENAI_API_KEY in .env — OpenRouter-only stack (GPT via openrouter/openai/*); run: oc fix"
+  else
+    ok "OpenRouter-only (no OPENAI_API_KEY)"
+  fi
   # Foreign (non-allowlisted) keys — never print names/values; count only.
   # Company vault dumps in this tree are a leak risk for a public config repo.
   _foreign="$(oc_env_foreign_key_count "$ENV_FILE" 2>/dev/null || echo 0)"
@@ -394,28 +472,6 @@ if [[ -f "$ENV_FILE" ]]; then
     else
       soft "OpenRouter key check returned HTTP $code (${ms}ms) — retry or oc admin health"
       tip "verify key at https://openrouter.ai/keys"
-    fi
-  fi
-  # Direct OpenAI key ping (cheap)
-  oai="$(getkey OPENAI_API_KEY)"
-  if [[ -n "$oai" ]] && command -v curl >/dev/null; then
-    _oa_out="$(curl -sS -o /dev/null -w '%{http_code} %{time_total}' \
-      --connect-timeout 5 --max-time 15 \
-      -H "Authorization: Bearer $oai" https://api.openai.com/v1/models 2>/dev/null || echo "000 0")"
-    oacode="${_oa_out%% *}"
-    oasecs="${_oa_out##* }"
-    oams="$(python3 -c "print(int(round(float('$oasecs')*1000)))" 2>/dev/null || echo "?")"
-    if [[ "$oacode" == "200" ]]; then
-      ok "OpenAI key live (HTTP 200, ${oams}ms)"
-      if [[ "$oams" != "?" && "$oams" -gt 1500 ]]; then
-        soft "OpenAI latency ${oams}ms — network blip, GPT lane still usable"
-      fi
-    elif [[ "$oacode" == "401" || "$oacode" == "403" ]]; then
-      bad "OpenAI key rejected (HTTP $oacode) — GPT lane (Hephaestus/Oracle/Momus) will fail"
-      tip "https://platform.openai.com/api-keys → update OPENAI_API_KEY in $ENV_FILE"
-    else
-      soft "OpenAI key check returned HTTP $oacode (${oams}ms)"
-      tip "https://platform.openai.com/api-keys — GPT lane needs a valid direct key"
     fi
   fi
 else
@@ -792,12 +848,6 @@ if [[ -f "$LOG" ]]; then
         | sort | uniq -c | sort -rn | head -3 \
         | while read -r n rest; do printf "      %6dx %s\n" "$n" "$(printf '%s' "$rest" | cut -c1-88)"; done
     fi
-    # Known runaway: an agent passed a descriptive LABEL as task_id instead of a ses_ id.
-    loop="$(printf '%s\n' "$tailn" | grep -c 'Expected a string starting with .ses' 2>/dev/null || true)"
-    if [[ "${loop:-0}" -gt 0 ]]; then
-      info "invented-task_id loop seen ($loop hits) — an agent used a label as task_id, not a ses_ id."
-      tip "Sisyphus RECOVERY forbids inventing task_id; if it recurs, harden the offending worker prompt"
-    fi
     fmt_hits="$(printf '%s\n' "$tailn" | grep -cE 'failed to format file|failed command=.*prettier' 2>/dev/null || true)"
     bun_be="$(printf '%s\n' "$tailn" | grep -c 'BUN_BE_BUN' 2>/dev/null || true)"
     if [[ "${fmt_hits:-0}" -gt 5 ]]; then
@@ -807,6 +857,11 @@ if [[ -f "$LOG" ]]; then
       soft "prettier formatter failed with BUN_BE_BUN in log — use system prettier on PATH"
     fi
   fi
+  misuse_report="$(oc_log_misuse_report "$LOG" 2>/dev/null || true)"
+  while IFS='|' read -r kind msg; do
+    [[ -z "$kind" ]] && continue
+    case "$kind" in OPT) opt "$msg" ;; TIP) tip "$msg" ;; *) info "$msg" ;; esac
+  done <<< "$misuse_report"
   # WARN signatures that matter for OpenConfig footguns
   plugin_miss="$(printf '%s\n' "$tailn" | grep -c 'No matching version found for @opencode-ai/plugin@' 2>/dev/null || true)"
   if [[ "${plugin_miss:-0}" -gt 0 ]]; then
@@ -884,6 +939,22 @@ if os.path.isdir(ldir):
     live = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json")) or os.path.islink(os.path.join(ldir, d))]
 if tracked: print("OK|%d team spec(s) tracked in repo/teams: %s" % (len(tracked), ", ".join(sorted(tracked))))
 else: print("OPT|no team specs in repo/teams — nothing for team_create to spawn")
+for name in sorted(tracked):
+    try:
+        spec = json.load(open(os.path.join(tdir, name, "config.json"), encoding="utf-8"))
+        lead = spec.get("lead") or {}
+        lead_route = "%s:%s" % (
+            "agent" if lead.get("kind") == "subagent_type" else "category",
+            lead.get("subagent_type") or lead.get("category") or "?",
+        )
+        members = []
+        for member in spec.get("members") or []:
+            route = member.get("subagent_type") or member.get("category") or "?"
+            kind = "agent" if member.get("kind") == "subagent_type" else "category"
+            members.append("%s=%s:%s" % (member.get("name") or "?", kind, route))
+        print("OK|route %s: lead=%s; %s" % (name, lead_route, ", ".join(members)))
+    except Exception as exc:
+        print("BAD|route %s unreadable: %s" % (name, exc))
 missing = [t for t in tracked if t not in live]
 if missing:
     print("OPT|tracked but not provisioned to %s/teams: %s — run: oc setup" % (base, ", ".join(sorted(missing))))
@@ -1084,14 +1155,12 @@ else:
     else:
         ok("goal footgun documented (prompts/goal.md in instructions)")
 
-# MCP env allowlist (Exa / Context7 / provider keys into OmO MCP)
-allow = set(omo.get("mcp_env_allowlist") or [])
-need_env = {"CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"}
-miss_env = sorted(need_env - allow)
-if miss_env:
-    opt("mcp_env_allowlist missing: %s — run: oc fix" % ", ".join(miss_env))
+# Imported Claude MCP configs must never receive sensitive environment variables.
+allow = list(omo.get("mcp_env_allowlist") or [])
+if allow:
+    bad("mcp_env_allowlist exposes secrets to imported MCPs: %s — run: oc fix" % ", ".join(allow))
 else:
-    ok("mcp_env_allowlist covers Context7/Exa/OpenAI/OpenRouter")
+    ok("mcp_env_allowlist empty (no API keys exposed to imported MCPs)")
 
 sw = omo.get("start_work") if isinstance(omo.get("start_work"), dict) else {}
 if "start_work" not in omo:
@@ -1107,17 +1176,30 @@ elif isinstance(mt, int):
 
 # MCP / stream timeouts (opencode.json)
 mcp_t = (oc.get("experimental") or {}).get("mcp_timeout")
-if isinstance(mcp_t, (int, float)) and mcp_t >= 12000:
+if mcp_t == 30000:
     ok("experimental.mcp_timeout=%sms" % int(mcp_t))
 else:
-    opt("experimental.mcp_timeout unset/low (want ≥12000)")
-for pname in ("openrouter", "openai"):
+    bad("experimental.mcp_timeout=%r (want 30000 to match Context7)" % mcp_t)
+for pname in ("openrouter",):
     opts = ((oc.get("provider") or {}).get(pname) or {}).get("options") or {}
     to = opts.get("timeout")
-    if isinstance(to, (int, float)) and to >= 600000:
-        ok("provider.%s timeout=%ss" % (pname, int(to / 1000)))
-    elif to is not None:
-        opt("provider.%s timeout=%s (want ≥600s for long streams)" % (pname, to))
+    chunk = opts.get("chunkTimeout")
+    if to == 300000 and chunk == 60000:
+        ok("provider.%s timeout=300s chunkTimeout=60s" % pname)
+    else:
+        bad("provider.%s timeouts drifted (want request=300000, chunk=60000)" % pname)
+openai_block = (oc.get("provider") or {}).get("openai")
+enabled = oc.get("enabled_providers")
+if openai_block and isinstance(enabled, list) and "openai" in enabled:
+    opts = (openai_block or {}).get("options") or {}
+    to = opts.get("timeout")
+    chunk = opts.get("chunkTimeout")
+    if to == 300000 and chunk == 60000:
+        ok("provider.openai timeout=300s chunkTimeout=60s")
+    else:
+        bad("provider.openai timeouts drifted (want request=300000, chunk=60000)")
+elif not openai_block:
+    ok("provider.openai absent (OpenRouter-only)")
 PY
 )"
 if [[ -z "$conc_report" ]]; then
@@ -1398,6 +1480,7 @@ omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
 checks = []
 checks.append(("OK" if oc.get("share") == "disabled" else "BAD", "share=%s" % oc.get("share")))
 checks.append(("OK" if oc.get("autoupdate") is False else "BAD", "autoupdate=%s" % oc.get("autoupdate")))
+checks.append(("OK" if oc.get("logLevel") == "ERROR" else "BAD", "logLevel=%s" % oc.get("logLevel")))
 checks.append(("OK" if (oc.get("experimental") or {}).get("openTelemetry") is False else "BAD",
                "openTelemetry=%s" % (oc.get("experimental") or {}).get("openTelemetry")))
 checks.append(("OK" if (oc.get("server") or {}).get("mdns") is False else "BAD",
@@ -1409,6 +1492,14 @@ checks.append(("OK" if (omo.get("git_master") or {}).get("include_co_authored_by
                "co_authored_by=%s" % (omo.get("git_master") or {}).get("include_co_authored_by")))
 checks.append(("OK" if (omo.get("experimental") or {}).get("disable_omo_env") is True else "BAD",
                "disable_omo_env=%s" % (omo.get("experimental") or {}).get("disable_omo_env")))
+checks.append(("OK" if not omo.get("mcp_env_allowlist") else "BAD", "mcp_env_allowlist empty"))
+or_models = (((oc.get("provider") or {}).get("openrouter") or {}).get("models") or {})
+available_routes = all(
+    (((m.get("options") or {}).get("provider") or {}).get("data_collection") == "allow"
+     and "zdr" not in ((m.get("options") or {}).get("provider") or {}))
+    for m in or_models.values() if isinstance(m, dict)
+)
+checks.append(("OK" if available_routes and or_models else "BAD", "OpenRouter routes unrestricted (data_collection=allow, no ZDR filter)"))
 dmcps = set(omo.get("disabled_mcps") or [])
 checks.append(("OK" if "posthog:posthog" in dmcps and "sentry:sentry" in dmcps else "BAD",
                "posthog/sentry MCPs disabled"))
@@ -1448,22 +1539,18 @@ unset _kv _k _want _got _tel_env_ok
 [[ $DO_JSON -eq 0 ]] && echo ""
 # ─── Compaction optimizations ─────────────────────────────────────
 sec "Compaction optimizations"
-# Compaction is JSON-config (opencode.json compaction.* + experimental.compaction.autocontinue).
-# Fake OPENCODE_EXPERIMENTAL_COMPACTION_* env vars do not exist in OpenCode 1.17.x.
+# Compaction is configured through supported opencode.json compaction.* keys.
 comp_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
 import json, os, sys
 repo=sys.argv[1]
 oc=json.load(open(os.path.join(repo,"opencode.json")))
 comp=oc.get("compaction") or {}
-exp=(oc.get("experimental") or {}).get("compaction") or {}
 omo=json.load(open(os.path.join(repo,"oh-my-openagent.json")))
 oexp=omo.get("experimental") or {}
 if comp.get("auto"): print("OK|compaction.auto")
 else: print("OPT|compaction.auto not enabled")
 if comp.get("preserve_recent_tokens"):
     print("OK|preserve_recent_tokens=%s" % comp.get("preserve_recent_tokens"))
-if exp.get("autocontinue") is True: print("OK|experimental.compaction.autocontinue")
-else: print("OPT|set experimental.compaction.autocontinue=true so sessions keep going after compact")
 if oexp.get("preemptive_compaction"): print("OK|omo preemptive_compaction")
 if (oexp.get("dynamic_context_pruning") or {}).get("enabled"): print("OK|omo dynamic_context_pruning")
 PY

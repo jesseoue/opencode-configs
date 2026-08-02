@@ -149,32 +149,10 @@ else:
     print(f'  ✓ \${remaining:.2f} credits remaining')
 "
     echo ""
-    echo -e "${c_b}── Model Routing Probes ──${c_0}"
-    python3 -c "
-import json
-oc = json.load(open('$REPO/opencode.json'))
-models = oc.get('provider', {}).get('openrouter', {}).get('models', {})
-for mid in sorted(models.keys()):
-    m = models[mid]
-    real_id = m.get('id', mid)
-    print(f'{mid}|{real_id}')
-" | while IFS='|' read -r mid real_id; do
-      echo -n "  "
-      http_code=$(curl -s -o /dev/null -w "%{http_code}" \
-        -H "Authorization: Bearer $API_KEY" \
-        -H "Content-Type: application/json" \
-        -d "{\"model\":\"$real_id\",\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}],\"max_tokens\":16}" \
-        "https://openrouter.ai/api/v1/chat/completions" 2>/dev/null)
-      if [ "$http_code" = "200" ]; then
-        printf "${c_g}✓${c_0} %-35s routes (HTTP 200)\n" "$mid"
-      elif [ "$http_code" = "429" ]; then
-        printf "${c_y}⚠${c_0} %-35s RATE LIMITED (HTTP 429)\n" "$mid"
-      elif [ "$http_code" = "402" ]; then
-        printf "${c_r}✗${c_0} %-35s INSUFFICIENT CREDITS (HTTP 402)\n" "$mid"
-      else
-        printf "${c_r}✗${c_0} %-35s FAILED (HTTP %s)\n" "$mid" "$http_code"
-      fi
-    done
+    echo -e "${c_b}── Model Routing Probes (parallel) ──${c_0}"
+    if ! "$REPO/models.sh" --probe; then
+      bad "one or more model probes failed — run: oc models --probe --json"
+    fi
     echo ""
     echo -e "${c_b}── Rate Limit Headers ──${c_0}"
     curl -sI -H "Authorization: Bearer $API_KEY" \
@@ -186,36 +164,10 @@ for mid in sorted(models.keys()):
           echo "  $line" | tr -d '\r'
         done || true
 
-    # Direct OpenAI GPT lane (when key is present)
+    # OpenRouter-only — GPT models probed via OpenRouter above.
     echo ""
     echo -e "${c_b}── Direct OpenAI Probes ──${c_0}"
-    OPENAI_KEY="${OPENAI_API_KEY:-}"
-    if [[ -z "$OPENAI_KEY" ]]; then
-      opt "OPENAI_API_KEY not set — GPT lane falls back to OpenRouter"
-    else
-      python3 -c "
-import json
-oc = json.load(open('$REPO/opencode.json'))
-models = (oc.get('provider') or {}).get('openai', {}).get('models') or {}
-for mid in sorted(models.keys()):
-    print(mid)
-" | while read -r mid; do
-        [[ -z "$mid" ]] && continue
-        echo -n "  "
-        http_code=$(curl -s -o /tmp/oc-openai-health.json -w "%{http_code}" \
-          -H "Authorization: Bearer $OPENAI_KEY" \
-          -H "Content-Type: application/json" \
-          -d "{\"model\":\"$mid\",\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}],\"max_completion_tokens\":16}" \
-          "https://api.openai.com/v1/chat/completions" 2>/dev/null || echo "000")
-        if [ "$http_code" = "200" ]; then
-          printf "${c_g}✓${c_0} %-35s routes (HTTP 200)\n" "openai/$mid"
-        elif [ "$http_code" = "429" ]; then
-          printf "${c_y}⚠${c_0} %-35s RATE LIMITED (HTTP 429)\n" "openai/$mid"
-        else
-          printf "${c_r}✗${c_0} %-35s FAILED (HTTP %s)\n" "openai/$mid" "$http_code"
-        fi
-      done
-    fi
+    ok "skipped — OpenRouter-only (GPT via openrouter/openai/*)"
     ;;
 
   ratelimit)

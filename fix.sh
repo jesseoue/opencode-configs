@@ -58,6 +58,21 @@ changes = []
 stamp = os.environ.get("OC_FIX_STAMP") or ""
 backup_root = os.environ.get("OC_BACKUP_ROOT") or os.path.expanduser("~/.opencode-backups")
 
+def github_repo_url():
+    import base64
+    sig_path = os.path.join(repo, "signature.json")
+    try:
+        sig = json.load(open(sig_path, encoding="utf-8"))
+    except OSError:
+        return "https://github.com/jesseoue/opencode-configs"
+    b64 = (sig.get("github_b64") or "").strip()
+    if not b64:
+        return "https://github.com/jesseoue/opencode-configs"
+    try:
+        return base64.b64decode(b64).decode("ascii").rstrip("/")
+    except Exception:
+        return "https://github.com/jesseoue/opencode-configs"
+
 def load(p): return json.load(open(os.path.join(repo, p)))
 def dump(p, d):
     with open(os.path.join(repo, p), "w") as f:
@@ -225,11 +240,21 @@ if oc.get("share") != "disabled":
     oc["share"] = "disabled"; changes.append("share -> disabled (no session sharing)")
 if oc.get("autoupdate") is not False:
     oc["autoupdate"] = False; changes.append("autoupdate -> false")
+if oc.get("logLevel") != "ERROR":
+    oc["logLevel"] = "ERROR"; changes.append("logLevel -> ERROR (minimize sensitive runtime logs)")
 exp = oc.setdefault("experimental", {})
 if not isinstance(exp, dict):
     oc["experimental"] = {}; exp = oc["experimental"]
 if exp.get("openTelemetry") is not False:
     exp["openTelemetry"] = False; changes.append("experimental.openTelemetry -> false")
+if exp.get("mcp_timeout") != 30000:
+    exp["mcp_timeout"] = 30000; changes.append("experimental.mcp_timeout -> 30000")
+tool_output = oc.setdefault("tool_output", {})
+if isinstance(tool_output, dict):
+    if tool_output.get("max_lines") != 300:
+        tool_output["max_lines"] = 300; changes.append("tool_output.max_lines -> 300")
+    if tool_output.get("max_bytes") != 12000:
+        tool_output["max_bytes"] = 12000; changes.append("tool_output.max_bytes -> 12000")
 srv = oc.get("server")
 if isinstance(srv, dict):
     if srv.get("mdns") is not False:
@@ -242,10 +267,14 @@ if isinstance(srv, dict):
 # ─── OpenRouter app attribution (OpenConfig — not generic CLI / OpenCode) ─────
 or_opts = oc.setdefault("provider", {}).setdefault("openrouter", {}).setdefault("options", {})
 if isinstance(or_opts, dict):
+    for timeout_key, timeout_value in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+        if or_opts.get(timeout_key) != timeout_value:
+            or_opts[timeout_key] = timeout_value
+            changes.append(f"openrouter.options.{timeout_key} -> {timeout_value}")
     hdrs = or_opts.setdefault("headers", {})
     if isinstance(hdrs, dict):
         want_hdrs = {
-            "HTTP-Referer": "https://github.com/jesseoue/opencode-configs",
+            "HTTP-Referer": github_repo_url(),
             "X-Title": "OpenConfig",
             "X-OpenRouter-Title": "OpenConfig",
             "X-OpenRouter-Categories": "cli,agent",
@@ -254,9 +283,178 @@ if isinstance(or_opts, dict):
             if hdrs.get(hk) != hv:
                 hdrs[hk] = hv
                 changes.append(f"openrouter.headers.{hk} -> {hv} (OpenConfig attribution)")
+or_models = oc.setdefault("provider", {}).setdefault("openrouter", {}).setdefault("models", {})
+if isinstance(or_models, dict):
+    for model_id, model_cfg in or_models.items():
+        if not isinstance(model_cfg, dict):
+            continue
+        provider_cfg = model_cfg.setdefault("options", {}).setdefault("provider", {})
+        if not isinstance(provider_cfg, dict):
+            continue
+        if provider_cfg.get("data_collection") != "allow":
+            provider_cfg["data_collection"] = "allow"
+            changes.append(f"{model_id}.provider.data_collection -> allow")
+        if "zdr" in provider_cfg:
+            del provider_cfg["zdr"]
+            changes.append(f"{model_id}.provider.zdr removed (preserve provider availability)")
+        require_parameters = model_cfg.get("family") in ("glm", "minimax")
+        if model_cfg.get("family") == "deepseek":
+            want_only = ["deepseek"]
+            if provider_cfg.get("only") != want_only:
+                provider_cfg["only"] = want_only
+                changes.append(f"{model_id}.provider.only -> ['deepseek'] (first-party; skip moderated proxies)")
+            if provider_cfg.get("require_parameters") is not False:
+                provider_cfg["require_parameters"] = False
+                changes.append(f"{model_id}.provider.require_parameters -> false (DeepSeek first-party)")
+        elif provider_cfg.get("require_parameters") is not require_parameters:
+            provider_cfg["require_parameters"] = require_parameters
+            changes.append(f"{model_id}.provider.require_parameters -> {str(require_parameters).lower()}")
+        route_id = str(model_cfg.get("id") or model_id)
+        if "order" in provider_cfg:
+            del provider_cfg["order"]
+            changes.append(f"{model_id}.provider.order removed (restore adaptive provider routing)")
+        if route_id.endswith((":exacto", ":nitro", ":floor")):
+            if "ignore" in provider_cfg:
+                del provider_cfg["ignore"]
+                changes.append(f"{model_id}.provider.ignore removed (preserve native {route_id.rsplit(':', 1)[1]} coverage)")
+            if "sort" in provider_cfg:
+                del provider_cfg["sort"]
+                changes.append(f"{model_id}.provider.sort removed (routing suffix already selects ranking)")
+            for routing_key in ("preferred_min_throughput", "preferred_max_latency", "quantizations"):
+                if routing_key in provider_cfg:
+                    del provider_cfg[routing_key]
+                    changes.append(f"{model_id}.provider.{routing_key} removed (native {route_id.rsplit(':', 1)[1]} ranking)")
+        elif "preferred_min_throughput" in provider_cfg or "preferred_max_latency" in provider_cfg:
+            for routing_key in ("preferred_min_throughput", "preferred_max_latency"):
+                if routing_key in provider_cfg:
+                    del provider_cfg[routing_key]
+                    changes.append(f"{model_id}.provider.{routing_key} removed (OpenRouter auto-rank)")
+
+# OpenRouter-only: lock enabled_providers and drop direct OpenAI provider block.
+if oc.get("enabled_providers") != ["openrouter"]:
+    oc["enabled_providers"] = ["openrouter"]
+    changes.append("enabled_providers -> ['openrouter'] (OpenRouter-only)")
+prov_root = oc.setdefault("provider", {})
+if isinstance(prov_root, dict) and "openai" in prov_root:
+    del prov_root["openai"]
+    changes.append("removed provider.openai (OpenRouter-only)")
 
 # ─── oh-my-openagent.json ─────────────────────────────────────────────────────
 omo = load("oh-my-openagent.json"); ombefore = copy.deepcopy(omo)
+
+# Canonical reasoning field (OmO 4.19.4+) — migrate legacy reasoningEffort
+REASONING_EFFORT_MAP = {
+    "none": "off", "minimal": "minimal", "low": "low", "medium": "medium",
+    "high": "high", "xhigh": "xhigh", "max": "max",
+}
+for section in ("agents", "categories"):
+    for n, a in (omo.get(section) or {}).items():
+        if not isinstance(a, dict):
+            continue
+        reff = a.get("reasoningEffort")
+        if reff is None:
+            continue
+        canon = REASONING_EFFORT_MAP.get(str(reff), str(reff))
+        if a.get("reasoning") != canon:
+            a["reasoning"] = canon
+            changes.append(f"{section} {n}: reasoningEffort -> reasoning ({canon})")
+        del a["reasoningEffort"]
+        changes.append(f"{section} {n}: removed deprecated reasoningEffort")
+
+# Keep $schema URL aligned with pinned OmO version
+ver_path = os.path.join(repo, "versions.json")
+try:
+    omo_pin = json.load(open(ver_path)).get("oh_my_openagent", {}).get("pin")
+except Exception:
+    omo_pin = None
+if omo_pin:
+    want_schema = f"https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/v{omo_pin}/assets/oh-my-opencode.schema.json"
+    if omo.get("$schema") != want_schema:
+        omo["$schema"] = want_schema
+        changes.append(f"omo $schema -> v{omo_pin}")
+
+# OpenRouter-only model refs + strip slow kimi from routine fallbacks
+def _norm_or_model(m):
+    if not isinstance(m, str):
+        return m
+    if m.startswith("openai/") and not m.startswith("openrouter/"):
+        return "openrouter/" + m
+    return m
+SLOW_FB = ("kimi-k3",)
+for section in ("agents", "categories"):
+    for n, a in (omo.get(section) or {}).items():
+        if not isinstance(a, dict):
+            continue
+        if a.get("model"):
+            nm = _norm_or_model(a["model"])
+            if nm != a["model"]:
+                a["model"] = nm
+                changes.append(f"{section} {n}: model -> {nm}")
+        fbs = a.get("fallback_models")
+        if not isinstance(fbs, list):
+            continue
+        cleaned = []
+        for fb in fbs:
+            fb = _norm_or_model(fb)
+            if any(s in str(fb).lower() for s in SLOW_FB):
+                changes.append(f"{section} {n}: dropped slow fallback {fb}")
+                continue
+            cleaned.append(fb)
+        if cleaned != fbs:
+            a["fallback_models"] = cleaned[:3]
+
+# Recon routes: unmoderated primaries + fallbacks only (no Claude/GPT on explore/librarian/recon chains)
+MODERATED_FB = ("anthropic/claude", "openai/gpt", "meta-llama/", "cohere/")
+RECON_PRIMARY = {
+    "explore": "openrouter/deepseek/deepseek-v4-pro",
+    "librarian": "openrouter/deepseek/deepseek-v4-pro",
+    "metis": "openrouter/z-ai/glm-5.2-exacto",
+    "multimodal-looker": "openrouter/google/gemini-3.1-pro-preview",
+    "deep": "openrouter/deepseek/deepseek-v4-pro",
+    "arch-review": "openrouter/z-ai/glm-5.2-exacto",
+}
+RECON_FALLBACKS = [
+    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/z-ai/glm-5.2-exacto",
+    "openrouter/minimax/minimax-m3",
+]
+FAST_PRIMARY = "openrouter/deepseek/deepseek-v4-flash"
+RECON_ROUTES = {
+    "explore", "librarian", "sisyphus-junior", "quick", "unspecified-low",
+    "content-aware-fast", "content-aware-deep", "content-aware-research",
+    "deep", "arch-review", "metis", "multimodal-looker",
+}
+for section in ("agents", "categories"):
+    for n, a in (omo.get(section) or {}).items():
+        if n not in RECON_ROUTES or not isinstance(a, dict):
+            continue
+        want_primary = RECON_PRIMARY.get(n, FAST_PRIMARY)
+        if a.get("model") and any(m in str(a["model"]).lower() for m in MODERATED_FB):
+            a["model"] = want_primary
+            changes.append(f"{section} {n}: model -> {want_primary} (unmoderated recon)")
+        fbs = a.get("fallback_models")
+        if not isinstance(fbs, list):
+            continue
+        cleaned = []
+        for fb in fbs:
+            fb = _norm_or_model(fb)
+            if any(m in str(fb).lower() for m in MODERATED_FB):
+                changes.append(f"{section} {n}: dropped moderated fallback {fb}")
+                continue
+            cleaned.append(fb)
+        if not cleaned:
+            cleaned = [x for x in RECON_FALLBACKS if x != a.get("model")][:3]
+            changes.append(f"{section} {n}: rebuilt unmoderated fallbacks")
+        if cleaned != fbs:
+            a["fallback_models"] = cleaned[:3]
+        if n == "explore":
+            perm = a.setdefault("permission", {})
+            if isinstance(perm, dict):
+                for k, v in (("edit", "deny"), ("webfetch", "allow"), ("question", "allow"), ("task", "allow")):
+                    if perm.get(k) != v:
+                        perm[k] = v
+                        changes.append(f"explore permission.{k} -> {v}")
 
 # OmO / codegraph telemetry + co-author phone-home off
 if omo.get("telemetry") is not False:
@@ -282,10 +480,14 @@ if isinstance(tm, dict):
         tm["max_members"] = 5; changes.append("team_mode.max_members -> 5 (hyperplan floor)")
     elif tm.get("max_members") > 6:
         tm["max_members"] = 6; changes.append("team_mode.max_members capped -> 6")
+    for key, desired in (
+        ("max_messages_per_run", 2000),
+        ("max_wall_clock_minutes", 45),
+        ("max_member_turns", 150),
+    ):
+        if tm.get(key) != desired:
+            tm[key] = desired; changes.append(f"team_mode.{key} -> {desired}")
     for key, default in (
-        ("max_messages_per_run", 10000),
-        ("max_wall_clock_minutes", 60),
-        ("max_member_turns", 500),
         ("message_payload_max_bytes", 32768),
         ("recipient_unread_max_bytes", 262144),
         ("mailbox_poll_interval_ms", 1000),
@@ -319,19 +521,55 @@ if isinstance(bt, dict):
         bt["defaultConcurrency"] = 4; changes.append("background_task.defaultConcurrency capped -> 4")
     pc = bt.setdefault("providerConcurrency", {})
     if isinstance(pc, dict):
-        if not isinstance(pc.get("openrouter"), int) or pc.get("openrouter") > 6:
-            pc["openrouter"] = 6; changes.append("providerConcurrency.openrouter capped -> 6")
-        if not isinstance(pc.get("openai"), int) or pc.get("openai") > 4:
-            pc["openai"] = 4; changes.append("providerConcurrency.openai capped -> 4")
-    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 400:
-        bt["maxToolCalls"] = 400; changes.append("background_task.maxToolCalls capped -> 400")
+        want_pc = {"openrouter": 6, "openai": 4, "anthropic": 2}
+        for prov, cap in want_pc.items():
+            if pc.get(prov) != cap:
+                pc[prov] = cap
+                changes.append(f"providerConcurrency.{prov} -> {cap}")
+    mc = bt.setdefault("modelConcurrency", {})
+    if isinstance(mc, dict):
+        for mk in list(mc.keys()):
+            if isinstance(mk, str) and mk.startswith("openai/") and not mk.startswith("openrouter/"):
+                del mc[mk]
+                changes.append(f"modelConcurrency removed direct alias {mk}")
+        def _mc_cap(model_key):
+            low = str(model_key).lower()
+            if any(x in low for x in ("flash", "floor", "luna", "gemini-3.6-flash", "gemini-3-flash")):
+                return 4
+            if any(x in low for x in ("exacto", "minimax", "glm")):
+                return 3
+            if any(x in low for x in ("sonnet", "deepseek-v4-pro", "sol", "terra", "gemini-3.1-pro")):
+                return 2
+            return 1
+        wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
+        want_mc = {f"openrouter/{w}": _mc_cap(w) for w in wl if isinstance(w, str)}
+        if want_mc != mc:
+            bt["modelConcurrency"] = want_mc
+            changes.append(f"modelConcurrency synced to {len(want_mc)} whitelist models")
+    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 200:
+        bt["maxToolCalls"] = 200; changes.append("background_task.maxToolCalls capped -> 200")
     if not isinstance(bt.get("syncPollTimeoutMs"), int) or bt.get("syncPollTimeoutMs") < 60000:
         bt["syncPollTimeoutMs"] = 60000; changes.append("background_task.syncPollTimeoutMs -> 60000 (OmO floor)")
     cb = bt.setdefault("circuitBreaker", {})
     if isinstance(cb, dict):
         cb["enabled"] = True
-        if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 400:
-            cb["maxToolCalls"] = 400; changes.append("circuitBreaker.maxToolCalls capped -> 400")
+        if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 160:
+            cb["maxToolCalls"] = 160; changes.append("circuitBreaker.maxToolCalls capped -> 160")
+rf = omo.setdefault("runtime_fallback", {})
+if isinstance(rf, dict):
+    desired_retry_codes = [408, 429, 500, 502, 503, 504]
+    if rf.get("retry_on_errors") != desired_retry_codes:
+        rf["retry_on_errors"] = desired_retry_codes; changes.append("runtime_fallback.retry_on_errors -> transient errors only")
+    if rf.get("max_fallback_attempts") != 3:
+        rf["max_fallback_attempts"] = 3; changes.append("runtime_fallback.max_fallback_attempts -> 3")
+    if rf.get("timeout_seconds") != 120:
+        rf["timeout_seconds"] = 120; changes.append("runtime_fallback.timeout_seconds -> 120")
+omoexp = omo.setdefault("experimental", {})
+if isinstance(omoexp, dict):
+    if omoexp.get("aggressive_truncation") is not False:
+        omoexp["aggressive_truncation"] = False; changes.append("experimental.aggressive_truncation -> false")
+    if omoexp.get("truncate_all_tool_outputs") is not False:
+        omoexp["truncate_all_tool_outputs"] = False; changes.append("experimental.truncate_all_tool_outputs -> false")
 # OmO 4.19: Goals replace Ralph — drop legacy ralph_loop (ignored when goal is explicit)
 if "ralph_loop" in omo:
     del omo["ralph_loop"]; changes.append("removed deprecated ralph_loop (OmO 4.19 Goals replace Ralph)")
@@ -349,25 +587,24 @@ dm = omo.setdefault("default_mode", {})
 if isinstance(dm, dict) and dm.get("goal") is not False:
     dm["goal"] = False; changes.append("default_mode.goal -> false")
 
-# MCP env allowlist — Exa / Context7 / provider keys
-allow = omo.setdefault("mcp_env_allowlist", [])
-if not isinstance(allow, list):
-    allow = []; omo["mcp_env_allowlist"] = allow
-for must in ("CONTEXT7_API_KEY", "EXA_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY"):
-    if must not in allow:
-        allow.append(must); changes.append(f"mcp_env_allowlist += {must}")
+# Imported Claude MCP configs get no sensitive environment variables.
+if omo.get("mcp_env_allowlist") != []:
+    omo["mcp_env_allowlist"] = []
+    changes.append("mcp_env_allowlist -> [] (no API keys exposed to imported MCPs)")
 
 sw = omo.setdefault("start_work", {})
 if isinstance(sw, dict) and sw.get("auto_commit") is not False:
     sw["auto_commit"] = False; changes.append("start_work.auto_commit -> false")
 
-# codegraph: never auto-build giant indexes
+# CodeGraph: keep indexing opt-in, but let OmO manage its pinned daemon runtime.
 cg2 = omo.setdefault("codegraph", {})
 if isinstance(cg2, dict):
     if cg2.get("auto_init") is not False:
         cg2["auto_init"] = False; changes.append("codegraph.auto_init -> false")
-    if cg2.get("auto_provision") is not False:
-        cg2["auto_provision"] = False; changes.append("codegraph.auto_provision -> false")
+    if cg2.get("auto_provision") is not True:
+        cg2["auto_provision"] = True; changes.append("codegraph.auto_provision -> true")
+    if cg2.get("daemon") is not True:
+        cg2["daemon"] = True; changes.append("codegraph.daemon -> true")
 
 # Hephaestus needs teammate:allow to be a team member (OmO conditional)
 agents = omo.setdefault("agents", {})
@@ -553,6 +790,11 @@ PY
 
 echo ""
 if [[ $DRY -eq 0 ]]; then
+  _oai_scrub="$(oc_scrub_openai_env_key "$REPO/opencode.json" "$REPO/.env" 2>/dev/null || true)"
+  if [[ "$_oai_scrub" == CLEARED* ]]; then
+    printf "  ${c_g}✓${c_0} %s\n" "${_oai_scrub#CLEARED|}"
+  fi
+  unset _oai_scrub
   printf "${c_b}==>${c_0} Re-validating\n"
   validate_out="$($REPO/validate.sh 2>&1)"
   validate_rc=$?

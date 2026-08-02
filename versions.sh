@@ -3,7 +3,7 @@
 #
 # Compares local OpenCode CLI, OmO plugin pin, @opencode-ai/plugin peer,
 # and versions.json floors to live npm + GitHub releases. Also scans
-# ~/Projects and ~/Projects for other opencode.json overlays.
+# projects home (projects.json / OC_PROJECTS_DIR) for other opencode.json overlays.
 #
 # Usage:
 #   ./versions.sh              local pins + upstream check (default)
@@ -122,7 +122,24 @@ elif not cli_ver:
 # Other repos that carry opencode.json (shallow scan)
 repo_real = os.path.realpath(repo)
 others = []
-for root in (os.path.expanduser("~/Projects"), "~/Projects"):
+scan_roots = []
+oc_projects = (os.environ.get("OC_PROJECTS_DIR") or "").strip()
+if oc_projects:
+    scan_roots.append(os.path.expanduser(oc_projects))
+pj_path = os.path.join(repo, "projects.json")
+if os.path.isfile(pj_path):
+    try:
+        pd = (json.load(open(pj_path, encoding="utf-8")).get("projects_dir") or "~/Projects").strip()
+        scan_roots.append(os.path.expanduser(pd))
+    except Exception:
+        scan_roots.append(os.path.expanduser("~/Projects"))
+else:
+    scan_roots.append(os.path.expanduser("~/Projects"))
+seen_roots = set()
+for root in scan_roots:
+    if root in seen_roots:
+        continue
+    seen_roots.add(root)
     if not os.path.isdir(root):
         continue
     try:
