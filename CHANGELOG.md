@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.49] — 2026-08-01
+
+### OpenRouter-only — no GPT models
+- Remove all `openai/gpt-*` from whitelist, model defs, and active agent/category routes
+- Hephaestus / Oracle → DeepSeek Pro; Momus / ultrabrain / unspecified-high → Claude Fable 5
+- `providerConcurrency` → OpenRouter gateway only (`openrouter: 8`); no openai/anthropic sub-keys
+- `oc fix` / `oc validate` enforce no GPT in routes or whitelist
+
 ## [1.5.48] — 2026-08-01
 
 ### Fast provider concurrency

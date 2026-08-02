@@ -167,7 +167,7 @@ else:
     # OpenRouter-only — GPT models probed via OpenRouter above.
     echo ""
     echo -e "${c_b}── Direct OpenAI Probes ──${c_0}"
-    ok "skipped — OpenRouter-only (GPT via openrouter/openai/*)"
+    ok "skipped — OpenRouter-only (no GPT models in stack)"
     ;;
 
   ratelimit)

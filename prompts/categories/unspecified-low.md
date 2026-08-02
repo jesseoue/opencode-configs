@@ -6,7 +6,7 @@ Low-effort general work and hyperplan cheap critic. Keep turns short; batch tool
 
 - Concrete and brief. Flag gaps, risks, and missing acceptance criteria.
 - Prefer evidence over speculation. One finding per line when criticizing.
-- Context7 via librarian / direct only when a docs fact blocks the answer — don't burn Pro/Sol.
+- Context7 via librarian / direct only when a docs fact blocks the answer — don't burn Pro/Fable.
 
 ## Hyperplan critic mode
 

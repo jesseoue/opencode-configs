@@ -36,13 +36,13 @@
       "reasoning": "low"
     },
     "hephaestus": {
-      "model": "openrouter/openai/gpt-5.6-sol",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "mode": "primary",
       "variant": "high",
       "fallback_models": [
-        "openrouter/openai/gpt-5.6-terra",
-        "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/z-ai/glm-5.2-exacto"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3"
       ],
       "temperature": 0.2,
       "maxTokens": 32768,
@@ -84,13 +84,13 @@
       "reasoning": "low"
     },
     "oracle": {
-      "model": "openrouter/openai/gpt-5.6-sol",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "mode": "subagent",
       "variant": "high",
       "fallback_models": [
-        "openrouter/openai/gpt-5.6-terra",
-        "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/z-ai/glm-5.2-exacto"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3"
       ],
       "temperature": 0.2,
       "maxTokens": 32768,
@@ -139,7 +139,8 @@
       "mode": "subagent",
       "fallback_models": [
         "openrouter/google/gemini-3.6-flash",
-        "openrouter/deepseek/deepseek-v4-pro"
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/z-ai/glm-5.2-exacto"
       ],
       "maxTokens": 24576,
       "prompt_append": "file://~/.config/opencode/prompts/agents/multimodal-looker.md",
@@ -150,7 +151,8 @@
       "mode": "subagent",
       "fallback_models": [
         "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/deepseek/deepseek-v4-flash"
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/minimax/minimax-m3"
       ],
       "maxTokens": 16384,
       "prompt_append": "file://~/.config/opencode/prompts/agents/metis.md",
@@ -159,13 +161,13 @@
       "reasoning": "medium"
     },
     "momus": {
-      "model": "openrouter/openai/gpt-5.6-terra",
+      "model": "openrouter/anthropic/claude-fable-5",
       "mode": "subagent",
       "variant": "max",
       "fallback_models": [
-        "openrouter/openai/gpt-5.6-sol",
         "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/z-ai/glm-5.2-exacto"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "temperature": 0.2,
       "maxTokens": 32768,
@@ -217,7 +219,8 @@
       "variant": "high",
       "fallback_models": [
         "openrouter/google/gemini-3.6-flash",
-        "openrouter/z-ai/glm-5.2-exacto"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "is_unstable_agent": true,
       "prompt_append": "file://~/.config/opencode/prompts/categories/visual-engineering.md",
@@ -225,12 +228,12 @@
       "maxTokens": 16384
     },
     "ultrabrain": {
-      "model": "openrouter/openai/gpt-5.6-sol",
+      "model": "openrouter/anthropic/claude-fable-5",
       "variant": "max",
       "fallback_models": [
-        "openrouter/openai/gpt-5.6-terra",
-        "openrouter/anthropic/claude-fable-5",
-        "openrouter/deepseek/deepseek-v4-pro"
+        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "prompt_append": "file://~/.config/opencode/prompts/categories/ultrabrain.md",
       "color": "#B967FF",
@@ -258,7 +261,8 @@
       "color": "#FF5C00",
       "fallback_models": [
         "openrouter/google/gemini-3.6-flash",
-        "openrouter/z-ai/glm-5.2-exacto"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "maxTokens": 16384,
       "reasoning": "high"
@@ -290,12 +294,12 @@
       "reasoning": "low"
     },
     "unspecified-high": {
-      "model": "openrouter/openai/gpt-5.6-sol",
+      "model": "openrouter/anthropic/claude-fable-5",
       "variant": "max",
       "fallback_models": [
-        "openrouter/openai/gpt-5.6-terra",
         "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/anthropic/claude-fable-5"
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "prompt_append": "file://~/.config/opencode/prompts/categories/unspecified-high.md",
       "color": "#9DFFFF",
@@ -305,7 +309,9 @@
     "writing": {
       "model": "openrouter/google/gemini-3.6-flash",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-flash"
+        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/z-ai/glm-5.2-exacto",
+        "openrouter/minimax/minimax-m3"
       ],
       "prompt_append": "file://~/.config/opencode/prompts/categories/writing.md",
       "variant": "medium",
@@ -332,7 +338,8 @@
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "fallback_models": [
         "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/deepseek/deepseek-v4-flash"
       ],
       "prompt_append": "file://~/.config/opencode/prompts/categories/refactor-safe.md",
       "variant": "low",
@@ -385,9 +392,7 @@
   "background_task": {
     "defaultConcurrency": 6,
     "providerConcurrency": {
-      "openrouter": 8,
-      "openai": 6,
-      "anthropic": 4
+      "openrouter": 8
     },
     "modelConcurrency": {
       "openrouter/z-ai/glm-5.2-exacto": 5,
@@ -395,10 +400,6 @@
       "openrouter/deepseek/deepseek-v4-flash-floor": 6,
       "openrouter/deepseek/deepseek-v4-pro": 3,
       "openrouter/minimax/minimax-m3": 5,
-      "openrouter/openai/gpt-5.6-sol": 3,
-      "openrouter/openai/gpt-5.6-sol-pro": 3,
-      "openrouter/openai/gpt-5.6-terra": 3,
-      "openrouter/openai/gpt-5.6-luna": 6,
       "openrouter/google/gemini-3.1-pro-preview": 3,
       "openrouter/google/gemini-3.6-flash": 6,
       "openrouter/google/gemini-3-flash-preview": 6,

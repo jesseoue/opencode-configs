@@ -437,7 +437,7 @@ if [[ -f "$ENV_FILE" ]]; then
     fi
   done
   if [[ -n "$(getkey OPENAI_API_KEY)" ]]; then
-    soft "OPENAI_API_KEY in .env — OpenRouter-only stack (GPT via openrouter/openai/*); run: oc fix"
+    soft "OPENAI_API_KEY in .env — OpenRouter-only stack; remove it (run: oc fix)"
   else
     ok "OpenRouter-only (no OPENAI_API_KEY)"
   fi
@@ -1059,7 +1059,7 @@ elif dc != 6:
 else:
     ok("defaultConcurrency=%s" % dc)
 
-for prov, cap in (("openrouter", 8), ("openai", 6), ("anthropic", 4)):
+for prov, cap in (("openrouter", 8),):
     v = pc.get(prov)
     if not isinstance(v, int):
         bad("providerConcurrency.%s missing" % prov)
@@ -1069,6 +1069,9 @@ for prov, cap in (("openrouter", 8), ("openai", 6), ("anthropic", 4)):
         bad("providerConcurrency.%s=%s (want %s) — run: oc fix" % (prov, v, cap))
     else:
         ok("providerConcurrency.%s=%s" % (prov, v))
+extra_pc = sorted(k for k in pc if k != "openrouter")
+if extra_pc:
+    bad("providerConcurrency must be OpenRouter-only — remove: %s" % ", ".join(extra_pc))
 
 # Referenced models = agents/categories (+fallbacks) + OpenCode whitelist.
 # Aliases: openai/X ↔ openrouter/openai/X (both keys are intentional for dual lane).

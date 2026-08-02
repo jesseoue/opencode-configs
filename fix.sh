@@ -456,6 +456,67 @@ for section in ("agents", "categories"):
                         perm[k] = v
                         changes.append(f"explore permission.{k} -> {v}")
 
+# OpenRouter-only gateway: strip GPT from all routes + whitelist (no openai/gpt-*)
+GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
+DEEP_PRIMARY = "openrouter/deepseek/deepseek-v4-pro"
+DEEP_FALLBACKS = [
+    "openrouter/z-ai/glm-5.2-exacto",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/minimax/minimax-m3",
+]
+MAX_PRIMARY = "openrouter/anthropic/claude-fable-5"
+MAX_FALLBACKS = [
+    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/z-ai/glm-5.2-exacto",
+    "openrouter/deepseek/deepseek-v4-flash",
+]
+MAX_ROUTES = {"momus", "ultrabrain", "unspecified-high"}
+
+def _is_gpt(ref):
+    s = str(ref or "").lower()
+    return any(m in s for m in GPT_MARKERS)
+
+for section in ("agents", "categories"):
+    for n, a in (omo.get(section) or {}).items():
+        if not isinstance(a, dict):
+            continue
+        want_p = MAX_PRIMARY if n in MAX_ROUTES else None
+        want_f = MAX_FALLBACKS if n in MAX_ROUTES else None
+        if _is_gpt(a.get("model")):
+            repl = want_p or DEEP_PRIMARY
+            a["model"] = repl
+            changes.append(f"{section} {n}: model -> {repl} (OpenRouter-only, no GPT)")
+        fbs = a.get("fallback_models")
+        if not isinstance(fbs, list):
+            continue
+        cleaned = []
+        for fb in fbs:
+            fb = _norm_or_model(fb)
+            if _is_gpt(fb):
+                changes.append(f"{section} {n}: dropped GPT fallback {fb}")
+                continue
+            cleaned.append(fb)
+        fill = want_f or DEEP_FALLBACKS
+        for x in fill:
+            if x != a.get("model") and x not in cleaned:
+                cleaned.append(x)
+            if len(cleaned) >= 3:
+                break
+        if cleaned != fbs:
+            a["fallback_models"] = cleaned[:3]
+
+or_prov = oc.setdefault("provider", {}).setdefault("openrouter", {})
+wl = or_prov.get("whitelist") or []
+new_wl = [w for w in wl if isinstance(w, str) and not _is_gpt(w)]
+if new_wl != wl:
+    or_prov["whitelist"] = new_wl
+    changes.append(f"removed GPT from openrouter whitelist ({len(wl) - len(new_wl)} models)")
+or_models = or_prov.get("models") or {}
+for mk in list(or_models.keys()):
+    if _is_gpt(mk):
+        del or_models[mk]
+        changes.append(f"removed openrouter.models[{mk}] (OpenRouter-only, no GPT)")
+
 # OmO / codegraph telemetry + co-author phone-home off
 if omo.get("telemetry") is not False:
     omo["telemetry"] = False; changes.append("omo telemetry -> false")
@@ -521,7 +582,11 @@ if isinstance(bt, dict):
         bt["defaultConcurrency"] = 6; changes.append("background_task.defaultConcurrency -> 6 (fast parallel default)")
     pc = bt.setdefault("providerConcurrency", {})
     if isinstance(pc, dict):
-        want_pc = {"openrouter": 8, "openai": 6, "anthropic": 4}
+        want_pc = {"openrouter": 8}
+        for k in list(pc.keys()):
+            if k not in want_pc:
+                del pc[k]
+                changes.append(f"providerConcurrency removed {k} (OpenRouter-only gateway)")
         for prov, cap in want_pc.items():
             if pc.get(prov) != cap:
                 pc[prov] = cap

@@ -29,7 +29,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Agent pace: sh
 - Independent recon → parallel `task` / `call_omo_agent` using exact names: explore, librarian, oracle, sisyphus-junior, or a category.
 - Delegation briefs include context, one goal, downstream use, requested output, evidence expectations, and exclusions.
 - Docs-heavy asks → librarian (Context7-first). Broad codebase map → explore or team `explorers`.
-- Auth / danger / vuln / dual-use recon → `content-aware-fast` / `content-aware-deep` / team `content-aware-audit` / skills `content-aware-recon`·`content-aware-audit` — **not** GPT Sol categories (`deep` / `ultrabrain` / `arch-review`) as the first hop.
+- Auth / danger / vuln / dual-use recon → `content-aware-fast` / `content-aware-deep` / team `content-aware-audit` / skills `content-aware-recon`·`content-aware-audit` — **not** `deep` / `ultrabrain` / `arch-review` as the first hop.
 - Direct implementation bursts → Hephaestus. Use `deep` / `ultrabrain` only when stronger reasoning is required.
 - Visual direction → `artistry`; ship UI → `visual-engineering` (shadcn/`DESIGN.md` aware).
 - Vague / multi-step design → Prometheus, then Atlas via `/start-work`.
@@ -46,7 +46,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Agent pace: sh
 
 ## Keywords
 
-- `ultrawork` / `ulw` — Claude Fable 5 max (Opus / GPT Sol fallbacks).
+- `ultrawork` / `ulw` — Claude Fable 5 max (Opus / DeepSeek Pro fallbacks).
 - `hyperplan` / `hpp` / `/hyperplan` — only from you (not prometheus).
 - `/goal` — disabled for pinned OmO 4.19.4. Use `/start-work` → Atlas. See `prompts/goal.md`.
 - Filters biting → skills `content-aware-recon` / `content-aware-audit`, or categories `content-aware-fast` / `content-aware-deep` / agent `content-aware-research`.
