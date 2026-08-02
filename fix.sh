@@ -21,8 +21,8 @@
 #   • lock skills.sources to ./skills; disable the Claude Code bridge (no external imports)
 #   • goal.enabled/auto_start + default_mode.goal -> false (OmO 4.19 /start-work footgun)
 #   • drop deprecated ralph_loop (Goals replaced Ralph on OmO 4.19)
-#   • mcp_env_allowlist + start_work.auto_commit=false
-#
+#   • quarantine broken ~/.omo/omo.jsonc when it contains invalid migrated agents.models
+#     (OpenConfig canonical source is oh-my-openagent.json — stale omo.jsonc breaks Sisyphus)
 # Usage:
 #   ./fix.sh                       repair + format + validate
 #   ./fix.sh --dry-run             show what would change, write nothing
@@ -749,6 +749,23 @@ if "hyperplan" in (kd.get("enabled_expansions") or []):
     if isinstance(plan_agent, dict) and plan_agent.get("disable") is True:
         del oc["agent"]["plan"]
         changes.append("removed agent.plan.disable (OmO demotes plan for hyperplan)")
+
+# ─── quarantine broken ~/.omo/omo.jsonc (invalid OmO migrate → breaks Sisyphus) ─
+# OpenConfig canonical OmO config lives in oh-my-openagent.json (repo). A partial
+# `oh-my-openagent config migrate` can write agents.*.models arrays that OmO 4.19.4
+# rejects — plugin doctor flags them and Sisyphus may fail to load routes.
+omo_jsonc_path = os.path.expanduser("~/.omo/omo.jsonc")
+repo_omo_path = os.path.join(repo, "oh-my-openagent.json")
+if os.path.isfile(omo_jsonc_path) and os.path.isfile(repo_omo_path):
+    with open(omo_jsonc_path, encoding="utf-8") as f:
+        omo_jsonc_raw = f.read()
+    if '"[opencode]"' in omo_jsonc_raw and re.search(r'"models"\s*:\s*\[', omo_jsonc_raw):
+        if not dry:
+            bdir = os.path.join(backup_root, f"fix-{stamp or 'manual'}")
+            os.makedirs(bdir, exist_ok=True)
+            shutil.copy2(omo_jsonc_path, os.path.join(bdir, "omo.jsonc"))
+            os.remove(omo_jsonc_path)
+        changes.append("quarantined ~/.omo/omo.jsonc (invalid migrated agents.models — use oh-my-openagent.json)")
 
 # ─── config-only: scrub install/runtime strays OpenCode may drop here ─────────
 STRAYS = (
