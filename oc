@@ -9,28 +9,17 @@
 # Usage:
 #   oc <command> [args...]
 #
-# Commands:
-#   setup [--check|--force|--sync-env]    Idempotent installer
-#   doctor [--quick|--fix|--harden|--ai-fix]
-#   validate [--quiet]                    Config validator + footgun detector
-#   signature [--refresh|--json]          Project identity verify / refresh
-#   locate [--json|--search]              Discover paths (read-only)
-#   test [smoke|idempotency|runtime]     Self-test suite
-#   fix [--dry-run|--set k=v]             Auto-repair configs
-#   cleanup [--dry-run|--yes]             Reconcile to known-good state
-#   maintain [--check|--clean|--plans]    Clean sessions, caches, logs
-#   models [--probe|--moderation|--providers|--catalog|--json|--upgrade]  OpenRouter probes
-#   versions [--check|--local|--fix|--json]  Package pins vs npm/GitHub
-#   plugin [doctor|cache]                 OmO plugin doctor / cache status
-#   run "<msg>" [-a agent] [-d dir]       Headless runner (run to completion)
-#   admin [status|health|ratelimit|...]   OpenRouter account admin
-#   launch [dir]                          Launch OpenCode (terminal-safe)
-#   new <name> [--profile] [--dir|--here] Scaffold under projects dir
-#   projects [--list|--ensure]            Show / ensure projects directory
-#   install                               1-step installer (curl | bash)
-#   diagnose [--no-ai|--fix|--agent-fix]  AI-assisted diagnostics
-#   help                                  Show this help
-#   version                               Print version
+# Commands (see `oc help` for full list + aliases):
+#   install [--quick|--yes|--full]        Full-stack install / refresh
+#   check [--fix] | heal [--ai|--no-ai]   Readiness + probe-first self-repair
+#   doctor [--quick|--json|--fix]         Full readiness (keys, skills, teams, MCP)
+#   validate [--quiet] | fix | cleanup     Config repair + reconcile
+#   test [smoke|idempotency|runtime]      Self-test suite
+#   models [--probe|--moderation|…]       OpenRouter catalog + live probes
+#   admin [status|health|…]               OpenRouter account admin (gateway only)
+#   launch | run | new | projects         Run / scaffold
+#   locate | signature | versions | plugin | env | maintain | diagnose
+#   help | version
 
 set -uo pipefail
 
@@ -85,7 +74,7 @@ ${c_bold}Install & self-heal (start here):${c_0}
   ${c_g}heal${c_0}      [--ai|--no-ai]                 Unattended self-repair (AI when needed)
   ${c_g}locate${c_0}    [--json|--search]             Where is everything? (read-only)
   ${c_g}signature${c_0} [--refresh|--json]           Prove this is the OpenConfig repo
-  ${c_g}test${c_0}      [smoke|idempotency]           Self-test suite (safe)
+  ${c_g}test${c_0}      [smoke|idempotency|runtime]   Self-test suite (safe)
 
 ${c_bold}Setup & Health:${c_0}
   ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams, LSP, projects)
@@ -105,7 +94,7 @@ ${c_bold}Models & Admin:${c_0}
   ${c_g}versions${c_0}  [--check|--local|--fix|--json]
                                          Package pins vs npm + GitHub (+ other repos)
   ${c_g}plugin${c_0}    [doctor|cache|--fix]         OmO plugin doctor / pin cache
-  ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter + direct OpenAI admin
+  ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter account admin
 
 ${c_bold}Run & Launch:${c_0}
   ${c_g}run${c_0}       "<msg>" [-a agent] [-d dir]    Headless runner (run to completion)
@@ -117,6 +106,12 @@ ${c_bold}Scaffold:${c_0}
   ${c_g}new${c_0}       <name> [--profile|--dir|--here|--launch]
                                          Scaffold under projects home (~/Projects)
   ${c_g}projects${c_0}  [--list|--ensure]               Show / ensure projects directory
+
+${c_bold}Aliases (same as above):${c_0}
+  ${c_dim}health, ready${c_0}  → check          ${c_dim}repair${c_0} → heal
+  ${c_dim}verify${c_0}          → validate       ${c_dim}where, discover${c_0} → locate
+  ${c_dim}sig${c_0}             → signature      ${c_dim}pins${c_0} → versions
+  ${c_dim}omo${c_0}             → plugin         ${c_dim}opencode${c_0} → launch
 
 ${c_bold}Admin subcommands:${c_0}
   status       Account overview (credits, keys, spend)
@@ -149,7 +144,7 @@ ${c_bold}Examples:${c_0}
   oc fix                         Restore agent colors + footguns
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
-  oc admin health                Live OpenRouter + OpenAI probes
+  oc admin health                Live OpenRouter model probes + rate limits
   oc launch                      Launch OpenCode (cwd, or ~/Projects if config repo)
   oc new myapp                   Scaffold → ~/Projects/myapp
   oc projects --list             List projects home
@@ -695,7 +690,7 @@ Options:
 
 Examples:
   oc install --quick
-  OPENROUTER_API_KEY=sk-… OPENAI_API_KEY=sk-… oc install --yes
+  OPENROUTER_API_KEY=sk-… oc install --yes
   oc install --full
 
 After install:
@@ -1116,7 +1111,7 @@ case "$cmd" in
 
   setup)      dispatch setup.sh "$@" ;;
   doctor)     dispatch doctor.sh "$@" ;;
-  validate)   dispatch validate.sh "$@" ;;
+  validate|verify) dispatch validate.sh "$@" ;;
   fix)        dispatch fix.sh "$@" ;;
   cleanup)    dispatch cleanup.sh "$@" ;;
   maintain)   dispatch maintain.sh "$@" ;;
@@ -1127,8 +1122,8 @@ case "$cmd" in
   diagnose)   dispatch diagnose.sh "$@" ;;
   opencode)   dispatch opencode.sh "$@" ;;
   install)    do_install "$@" ;;
-  check)      do_check "$@" ;;
-  heal)       do_heal "$@" ;;
+  check|health|ready) do_check "$@" ;;
+  heal|repair) do_heal "$@" ;;
   test)       do_test "$@" ;;
   locate|where|discover) dispatch locate.sh "$@" ;;
   signature|sig) dispatch signature.sh "$@" ;;
@@ -1164,7 +1159,11 @@ case "$cmd" in
     case "$cmd" in
       plug|plugins) tip "did you mean: ${c_g}oc plugin doctor${c_0}" ;;
       ver|versioning) tip "did you mean: ${c_g}oc versions${c_0}" ;;
-      health|ready) tip "did you mean: ${c_g}oc doctor${c_0}  or  ${c_g}oc check${c_0}" ;;
+      health|ready) tip "alias: ${c_g}oc check${c_0}  ·  full: ${c_g}oc doctor${c_0}" ;;
+      repair) tip "alias: ${c_g}oc heal${c_0}" ;;
+      verify) tip "alias: ${c_g}oc validate${c_0}" ;;
+      clean) tip "did you mean: ${c_g}oc cleanup${c_0}  or  ${c_g}oc maintain --clean${c_0}" ;;
+      probe) tip "did you mean: ${c_g}oc models --probe${c_0}" ;;
     esac
     printf '\n'
     show_help
