@@ -363,6 +363,36 @@ if omo:
         err("oh-my-openagent.json: sisyphus must not appear in disabled_agents")
     else:
         ok("Sisyphus declared primary and enabled")
+    if isinstance(sis, dict):
+        sm = sis.get("model") or ""
+        if sm and not str(sm).startswith("openrouter/"):
+            err(f"oh-my-openagent.json: agents.sisyphus.model must be openrouter/* (got {sm!r})")
+        for fb in sis.get("fallback_models") or []:
+            fbm = fb if isinstance(fb, str) else (fb.get("model") if isinstance(fb, dict) else "")
+            if fbm and not str(fbm).startswith("openrouter/"):
+                err(f"oh-my-openagent.json: agents.sisyphus fallback must be openrouter/* (got {fbm!r})")
+        uw = sis.get("ultrawork") or {}
+        uwm = uw.get("model") if isinstance(uw, dict) else None
+        if uwm and not str(uwm).startswith("openrouter/"):
+            err(f"oh-my-openagent.json: agents.sisyphus.ultrawork.model must be openrouter/* (got {uwm!r})")
+        elif sm:
+            ok("Sisyphus routes OpenRouter-only (primary + fallbacks + ultrawork)")
+    sa = omo.get("sisyphus_agent") or {}
+    if sa.get("disabled") is True:
+        err("oh-my-openagent.json: sisyphus_agent.disabled must be false")
+    else:
+        ok("sisyphus_agent enabled")
+    omo_jsonc = os.path.expanduser("~/.omo/omo.jsonc")
+    if os.path.isfile(omo_jsonc):
+        with open(omo_jsonc, encoding="utf-8") as f:
+            ojc = f.read()
+        if '"[opencode]"' in ojc and re.search(r'"models"\s*:\s*\[', ojc):
+            err(
+                "~/.omo/omo.jsonc has invalid migrated agents.models — breaks Sisyphus. "
+                "Run: oc fix (OpenConfig canonical source is oh-my-openagent.json)"
+            )
+    else:
+        ok("~/.omo/omo.jsonc absent (oh-my-openagent.json is canonical)")
 
     # OmO injects security-* via a loopback skills.urls server; OpenCode can
     # deadlock fetching that index during `opencode run` bootstrap. Keep them disabled.

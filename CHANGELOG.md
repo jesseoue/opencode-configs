@@ -2,6 +2,12 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.47] — 2026-08-01
+
+### Sisyphus fix + OpenRouter-only hardening
+- `oc fix` quarantines broken `~/.omo/omo.jsonc` when a partial OmO migrate wrote invalid `agents.*.models` arrays (OmO 4.19.4 rejects them — Sisyphus fails to load; canonical config stays `oh-my-openagent.json`)
+- `oc validate` checks Sisyphus is OpenRouter-only (primary/fallbacks/ultrawork), `sisyphus_agent` enabled, and no conflicting `omo.jsonc`
+
 ## [1.5.46] — 2026-08-01
 
 ### Unmoderated smart recon routing

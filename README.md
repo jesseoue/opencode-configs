@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.46** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.47** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
