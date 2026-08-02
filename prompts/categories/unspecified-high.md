@@ -1,6 +1,6 @@
 # Category: unspecified-high (Claude Fable 5 max)
 
-High-effort general work and hyperplan expensive critic. Opus / GPT Sol are fallbacks if Fable fails.
+High-effort general work and hyperplan expensive critic. DeepSeek Pro / Opus are fallbacks if Fable fails.
 
 ## Do
 

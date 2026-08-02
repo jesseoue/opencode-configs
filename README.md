@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.48** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.49** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
@@ -35,7 +35,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 ## Install
 
 ```bash
-export OPENROUTER_API_KEY=…     # required — all models (incl. GPT) via OpenRouter
+export OPENROUTER_API_KEY=…     # required — all models via OpenRouter only
 export EXA_API_KEY=…            # OmO websearch
 export CONTEXT7_API_KEY=…       # library docs
 
@@ -141,7 +141,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | Agent | Model | Role |
 | --- | --- | --- |
 | **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead |
-| **hephaestus** | GPT-5.6 Sol (OpenRouter) | Implementation |
+| **hephaestus** | DeepSeek Pro | Implementation |
 | **prometheus** | GLM 5.2 Exacto | Planner |
 | **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
 | **content-aware-research** | DeepSeek V4 Pro | Full-depth research (edit denied) |
@@ -150,12 +150,12 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| oracle | GPT-5.6 Sol | Critique / adjudication |
+| oracle | DeepSeek Pro | Critique / adjudication |
 | librarian | DeepSeek Pro Exacto | Docs / OSS (Context7-first, unmoderated) |
 | explore | DeepSeek Pro Exacto | Codebase + web recon (edit denied, unmoderated) |
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
 | metis | GLM Exacto | Pre-planning critic (unmoderated) |
-| momus | GPT-5.6 Terra max | Plan / review gate |
+| momus | Claude Fable 5 max | Plan / review gate |
 | sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
@@ -176,7 +176,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `artistry` | Gemini 3.1 Pro | Design direction |
 | `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
 | `deep` | DeepSeek Pro Exacto | Autonomous problem-solving (unmoderated) |
-| `ultrabrain` | GPT-5.6 Sol | Heavy / max reasoning |
+| `ultrabrain` | Claude Fable 5 | Heavy / max reasoning |
 | `unspecified-low` / `unspecified-high` | Flash / Claude Fable | Hyperplan critics |
 
 ---
@@ -219,7 +219,7 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Lane | Models | Used for |
 | --- | --- | --- |
 | Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
-| GPT (moderated) | OpenRouter Sol / Terra | Hephaestus / Oracle / Momus / ultrabrain |
+| Deep implement | DeepSeek Pro · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
 | **Recon (unmoderated)** | DeepSeek Pro → Flash → GLM → MiniMax → Gemini | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
 | Fast parallel | `deepseek/deepseek-v4-flash:nitro` | sisyphus-junior / quick / content-aware-fast |
 | Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
@@ -237,7 +237,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | Knob | Value |
 | --- | --- |
 | `background_task.defaultConcurrency` | **6** |
-| OpenRouter / dormant OpenAI / Anthropic | **8 / 6 / 4** |
+| OpenRouter / dormant OpenAI / Anthropic | **8 only** (OpenRouter gateway) |
 | Flash / Exacto / Pro / Fable | **6 / 5 / 3 / 1** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
@@ -248,7 +248,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 | Key | Required | Enables |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | **yes** | All models (GLM, GPT, Claude, Gemini, …) via OpenRouter |
+| `OPENROUTER_API_KEY` | **yes** | All models via OpenRouter (GLM, DeepSeek, Claude, Gemini, …) |
 | `EXA_API_KEY` | for websearch | OmO Exa |
 | `CONTEXT7_API_KEY` | recommended | Context7 |
 | `OPENROUTER_MGMT_KEY` | optional | `oc admin` |
@@ -287,7 +287,7 @@ oc projects --list
 | --- | --- | --- |
 | `high` | sisyphus | Default Exacto · balanced tool_output |
 | `low` | sisyphus | Cost-first · smaller tool_output |
-| `fast` | hephaestus | Direct GPT Sol · skip ceremony |
+| `fast` | hephaestus | Direct DeepSeek Pro · skip ceremony |
 | `research` | sisyphus | Large tool_output · deep / ultrabrain / content-aware |
 | `debug` | sisyphus | Large tool_output · bug-hunt / debug-team |
 | `writing` | sisyphus | Gemini Flash small_model · writing category |

@@ -554,7 +554,7 @@ if omo:
         err(f"background_task.defaultConcurrency must be 6 (got {dc!r}) — run: oc fix")
     else:
         ok(f"background_task.defaultConcurrency={dc}")
-    for prov, cap in (("openrouter", 8), ("openai", 6), ("anthropic", 4)):
+    for prov, cap in (("openrouter", 8),):
         v = pc.get(prov)
         if not isinstance(v, int) or v < 1 or v > cap:
             err(f"providerConcurrency.{prov} must be 1–{cap} (got {v!r})")
@@ -562,6 +562,28 @@ if omo:
             err(f"providerConcurrency.{prov} must be {cap} (got {v!r}) — run: oc fix")
         else:
             ok(f"providerConcurrency.{prov}={v}")
+    extra_pc = sorted(k for k in pc if k != "openrouter")
+    if extra_pc:
+        err(f"providerConcurrency must be OpenRouter-only — remove: {extra_pc} (run: oc fix)")
+    wl = ((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist") or []
+    gpt_wl = [w for w in wl if isinstance(w, str) and "gpt" in w.lower()]
+    if gpt_wl:
+        err(f"openrouter whitelist must not include GPT models: {gpt_wl} — run: oc fix")
+    else:
+        ok("openrouter whitelist has no GPT models")
+    gpt_routes = []
+    for section in ("agents", "categories"):
+        for n, cfg in (omo.get(section) or {}).items():
+            if not isinstance(cfg, dict):
+                continue
+            for ref in [cfg.get("model")] + list(cfg.get("fallback_models") or []):
+                r = ref if isinstance(ref, str) else (ref.get("model") if isinstance(ref, dict) else "")
+                if r and "gpt" in str(r).lower():
+                    gpt_routes.append(f"{section}.{n}:{r}")
+    if gpt_routes:
+        err(f"GPT models in active routes (OpenRouter-only stack): {gpt_routes[:5]} — run: oc fix")
+    else:
+        ok("no GPT models in agent/category routes")
     if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 200:
         err(f"background_task.maxToolCalls must be ≤200 (got {bt.get('maxToolCalls')!r})")
     circuit = bt.get("circuitBreaker") or {}
