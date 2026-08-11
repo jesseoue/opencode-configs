@@ -2,6 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.52] — 2026-08-11
+
+### Version refresh — OpenCode CLI 1.18.11 → 1.18.16
+- Upgrade OpenCode CLI to **1.18.16** (5 patch releases: 1.18.12–1.18.16, Aug 4–10)
+- `@opencode-ai/plugin` peer **1.18.11 → 1.18.15** (1.18.16 not yet published for plugin)
+- OmO stays **4.19.4** (npm `latest` stable). 5.0.0-beta.x is a **breaking beta** (renames `omo` → `omo-agent-toolkit`, changes config format) — skipped
+- `versions.json` floor: `opencode.min` 1.18.11 → 1.18.16
+
 ## [1.5.51] — 2026-08-11
 
 ### Live OpenRouter audit — capacity + new models

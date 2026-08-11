@@ -2,7 +2,7 @@
 
 Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
 
-**v1.5.51** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.52** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
@@ -17,7 +17,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.51` · OpenCode `1.18.11+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.11` |
+| **Pins** | OpenConfig `1.5.52` · OpenCode `1.18.16+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -96,7 +96,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.51` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.52` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.11+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
