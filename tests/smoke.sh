@@ -143,11 +143,11 @@ import json, sys
 omo=json.load(open(sys.argv[1]))
 bt=omo.get("background_task") or {}
 pc=bt.get("providerConcurrency") or {}
-ok=(bt.get("defaultConcurrency")==6
-    and pc.get("openrouter")==8 and "openai" not in pc and "anthropic" not in pc)
+ok=(bt.get("defaultConcurrency")==10
+    and pc.get("openrouter")==12 and "openai" not in pc and "anthropic" not in pc)
 sys.exit(0 if ok else 1)
 ' "$REPO/oh-my-openagent.json"; then
-  ok "fast concurrency pins (default=6 openrouter=8 only)"
+  ok "fast concurrency pins (default=10 openrouter=12 only)"
 else
   bad "concurrency drift — run: oc fix"
 fi

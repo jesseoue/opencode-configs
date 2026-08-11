@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.51] — 2026-08-11
+
+### Live OpenRouter audit — capacity + new models
+- Raise `background_task.defaultConcurrency` **6 → 10**, `providerConcurrency.openrouter` **8 → 12** for big parallel loads
+- Model caps up: flash/floor/qwen3.7-flash/gemini flash-lite **10**, exacto/minimax **8**, pro/sonnet **5**, claude opus/fable/kimi **2**
+- Add `qwen/qwen3.7-flash` ($0.03/$0.13, 1M ctx, 76t/s) as ultra-cheap fast lane
+- Add `google/gemini-3.5-flash-lite` ($0.30/$2.50, 1M ctx, 220t/s) as cheap high-throughput fallback
+- All 16 whitelisted models verified against live OpenRouter API (`/api/v1/models`): **16/16 HTTP 200**
+- OpenCode CLI 1.18.11 (GitHub latest 1.18.16 — optional upgrade); OmO 4.19.4 = npm latest; `@opencode-ai/plugin` 1.18.11 pinned to CLI
+
 ## [1.5.50] — 2026-08-01
 
 ### CLI clarity — aliases + OpenRouter-only help
