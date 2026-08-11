@@ -390,25 +390,27 @@
     }
   },
   "background_task": {
-    "defaultConcurrency": 6,
+    "defaultConcurrency": 10,
     "providerConcurrency": {
-      "openrouter": 8
+      "openrouter": 12
     },
     "modelConcurrency": {
-      "openrouter/z-ai/glm-5.2-exacto": 5,
-      "openrouter/deepseek/deepseek-v4-flash": 6,
-      "openrouter/deepseek/deepseek-v4-flash-floor": 6,
-      "openrouter/deepseek/deepseek-v4-pro": 3,
-      "openrouter/minimax/minimax-m3": 5,
-      "openrouter/google/gemini-3.1-pro-preview": 3,
-      "openrouter/google/gemini-3.6-flash": 6,
-      "openrouter/google/gemini-3-flash-preview": 6,
-      "openrouter/anthropic/claude-sonnet-5": 3,
-      "openrouter/anthropic/claude-opus-4.8": 1,
-      "openrouter/anthropic/claude-opus-4.8-fast": 1,
-      "openrouter/anthropic/claude-opus-4.7": 1,
-      "openrouter/anthropic/claude-fable-5": 1,
-      "openrouter/moonshotai/kimi-k3": 1
+      "openrouter/z-ai/glm-5.2-exacto": 8,
+      "openrouter/deepseek/deepseek-v4-flash": 10,
+      "openrouter/deepseek/deepseek-v4-flash-floor": 10,
+      "openrouter/deepseek/deepseek-v4-pro": 5,
+      "openrouter/minimax/minimax-m3": 8,
+      "openrouter/google/gemini-3.1-pro-preview": 5,
+      "openrouter/google/gemini-3.6-flash": 10,
+      "openrouter/google/gemini-3-flash-preview": 10,
+      "openrouter/google/gemini-3.5-flash-lite": 10,
+      "openrouter/qwen/qwen3.7-flash": 10,
+      "openrouter/anthropic/claude-sonnet-5": 5,
+      "openrouter/anthropic/claude-opus-4.8": 2,
+      "openrouter/anthropic/claude-opus-4.8-fast": 2,
+      "openrouter/anthropic/claude-opus-4.7": 2,
+      "openrouter/anthropic/claude-fable-5": 2,
+      "openrouter/moonshotai/kimi-k3": 2
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,

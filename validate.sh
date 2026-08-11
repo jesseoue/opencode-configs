@@ -548,13 +548,13 @@ if omo:
     bt = omo.get("background_task") or {}
     pc = bt.get("providerConcurrency") or {}
     dc = bt.get("defaultConcurrency")
-    if not isinstance(dc, int) or dc < 1 or dc > 6:
-        err(f"background_task.defaultConcurrency must be 1–6 (got {dc!r})")
-    elif dc != 6:
-        err(f"background_task.defaultConcurrency must be 6 (got {dc!r}) — run: oc fix")
+    if not isinstance(dc, int) or dc < 1 or dc > 10:
+        err(f"background_task.defaultConcurrency must be 1–10 (got {dc!r})")
+    elif dc != 10:
+        err(f"background_task.defaultConcurrency must be 10 (got {dc!r}) — run: oc fix")
     else:
         ok(f"background_task.defaultConcurrency={dc}")
-    for prov, cap in (("openrouter", 8),):
+    for prov, cap in (("openrouter", 12),):
         v = pc.get(prov)
         if not isinstance(v, int) or v < 1 or v > cap:
             err(f"providerConcurrency.{prov} must be 1–{cap} (got {v!r})")

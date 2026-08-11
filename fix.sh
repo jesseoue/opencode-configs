@@ -578,11 +578,11 @@ if isinstance(tx, dict):
 # Background-task runaway guard — keep concurrency / tool budgets bounded
 bt = omo.setdefault("background_task", {})
 if isinstance(bt, dict):
-    if not isinstance(bt.get("defaultConcurrency"), int) or bt.get("defaultConcurrency") != 6:
-        bt["defaultConcurrency"] = 6; changes.append("background_task.defaultConcurrency -> 6 (fast parallel default)")
+    if not isinstance(bt.get("defaultConcurrency"), int) or bt.get("defaultConcurrency") != 10:
+        bt["defaultConcurrency"] = 10; changes.append("background_task.defaultConcurrency -> 10 (high-throughput default)")
     pc = bt.setdefault("providerConcurrency", {})
     if isinstance(pc, dict):
-        want_pc = {"openrouter": 8}
+        want_pc = {"openrouter": 12}
         for k in list(pc.keys()):
             if k not in want_pc:
                 del pc[k]
@@ -599,13 +599,13 @@ if isinstance(bt, dict):
                 changes.append(f"modelConcurrency removed direct alias {mk}")
         def _mc_cap(model_key):
             low = str(model_key).lower()
-            if any(x in low for x in ("flash", "floor", "luna", "gemini-3.6-flash", "gemini-3-flash")):
-                return 6
+            if any(x in low for x in ("flash", "floor", "luna", "qwen3.7", "gemini-3.6-flash", "gemini-3-flash", "gemini-3.5-flash-lite")):
+                return 10
             if any(x in low for x in ("exacto", "minimax", "glm")):
-                return 5
+                return 8
             if any(x in low for x in ("sonnet", "deepseek-v4-pro", "sol", "terra", "gemini-3.1-pro")):
-                return 3
-            return 1
+                return 5
+            return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
         want_mc = {f"openrouter/{w}": _mc_cap(w) for w in wl if isinstance(w, str)}
         if want_mc != mc:
