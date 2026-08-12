@@ -2,6 +2,18 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.54] — 2026-08-12
+
+### Uncensored route → pre-GA DeepSeek models
+- **content-aware-research** agent → `deepseek/deepseek-v4-pro` (pre-GA, unaligned) — the older non-GA release, less alignment baked in
+- **content-aware-deep** category → `deepseek/deepseek-v4-pro` (pre-GA)
+- **content-aware-fast** category → `deepseek/deepseek-v4-flash-0731` (pre-GA flash, $0.08/$0.18)
+- `profiles/content-aware.json` model → `deepseek-v4-pro`, small_model → `deepseek-v4-flash-0731`
+- Whitelist + model defs added: `deepseek/deepseek-v4-pro` (`:exacto`) and `deepseek/deepseek-v4-flash-0731` (`:nitro`)
+- `fix.sh` RECON_PRIMARY maps content-aware-* to pre-GA models; `flash-0731` added to RECON_FALLBACKS
+- All other routes (explore/librarian/deep/ultrabrain/etc.) stay on GA `deepseek-v4-pro-0813`
+- Whitelist: 17 models (was 15 — added 2 pre-GA variants)
+
 ## [1.5.53] — 2026-08-12
 
 ### Model refresh — upgrade to latest from OpenRouter API
