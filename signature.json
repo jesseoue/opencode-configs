@@ -3,7 +3,7 @@
   "product": "OpenConfig",
   "cli": "oc",
   "id": "jesseoue/opencode-configs",
-  "version": "1.5.52",
+  "version": "1.5.53",
   "tagline": "Pinned stack for OpenCode \u00b7 OpenRouter \u00b7 oh-my-openagent",
   "description": "Stable project identity. fingerprint = sha256 over sorted path=sha256(content) for files[]. Markers prove branding without hashing every prompt.",
   "markers": [
@@ -90,6 +90,6 @@
     "doctor.sh",
     "versions.sh"
   ],
-  "fingerprint": "20f56e5c0fbcaa138176759c0b72a1a6ea00cbcb1d6860da8050bec98784a5eb",
+  "fingerprint": "74baaffaaa5cc6cadb23d3a7edba13dec0e8a081e77278f218226ac51fe9b4ad",
   "github_b64": "aHR0cHM6Ly9naXRodWIuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3M="
 }

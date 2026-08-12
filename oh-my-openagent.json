@@ -20,7 +20,7 @@
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "mode": "primary",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/deepseek/deepseek-v4-flash",
         "openrouter/minimax/minimax-m3"
       ],
@@ -36,7 +36,7 @@
       "reasoning": "low"
     },
     "hephaestus": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "mode": "primary",
       "variant": "high",
       "fallback_models": [
@@ -58,7 +58,7 @@
       "mode": "primary",
       "variant": "low",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/deepseek/deepseek-v4-flash",
         "openrouter/minimax/minimax-m3"
       ],
@@ -72,7 +72,7 @@
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "mode": "primary",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/deepseek/deepseek-v4-flash",
         "openrouter/minimax/minimax-m3"
       ],
@@ -84,7 +84,7 @@
       "reasoning": "low"
     },
     "oracle": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "mode": "subagent",
       "variant": "high",
       "fallback_models": [
@@ -99,7 +99,7 @@
       "reasoning": "high"
     },
     "librarian": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "mode": "subagent",
       "fallback_models": [
         "openrouter/deepseek/deepseek-v4-flash",
@@ -114,7 +114,7 @@
       "reasoning": "low"
     },
     "explore": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "mode": "subagent",
       "fallback_models": [
         "openrouter/deepseek/deepseek-v4-flash",
@@ -139,7 +139,7 @@
       "mode": "subagent",
       "fallback_models": [
         "openrouter/google/gemini-3.6-flash",
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
       "maxTokens": 24576,
@@ -150,7 +150,7 @@
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "mode": "subagent",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/deepseek/deepseek-v4-flash",
         "openrouter/minimax/minimax-m3"
       ],
@@ -165,7 +165,7 @@
       "mode": "subagent",
       "variant": "max",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2-exacto",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -179,7 +179,7 @@
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "mode": "subagent",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2-exacto",
         "openrouter/minimax/minimax-m3"
       ],
@@ -191,7 +191,7 @@
       "reasoning": "low"
     },
     "content-aware-research": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "mode": "primary",
       "variant": "high",
       "fallback_models": [
@@ -231,7 +231,7 @@
       "model": "openrouter/anthropic/claude-fable-5",
       "variant": "max",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2-exacto",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -241,7 +241,7 @@
       "maxTokens": 32768
     },
     "deep": {
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "variant": "high",
       "fallback_models": [
         "openrouter/z-ai/glm-5.2-exacto",
@@ -270,7 +270,7 @@
     "quick": {
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/minimax/minimax-m3",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
@@ -283,7 +283,7 @@
     "unspecified-low": {
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/minimax/minimax-m3",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
@@ -297,7 +297,7 @@
       "model": "openrouter/anthropic/claude-fable-5",
       "variant": "max",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/z-ai/glm-5.2-exacto",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -323,7 +323,7 @@
       "description": "Reproduce \u2192 root cause \u2192 minimal fix \u2192 verify. Cite file:line.",
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/deepseek/deepseek-v4-flash",
         "openrouter/minimax/minimax-m3"
       ],
@@ -337,7 +337,7 @@
       "description": "Tests-first, behavior-preserving refactors. Small steps only.",
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/minimax/minimax-m3",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -352,7 +352,7 @@
       "model": "openrouter/z-ai/glm-5.2-exacto",
       "variant": "high",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/minimax/minimax-m3",
         "openrouter/deepseek/deepseek-v4-flash"
       ],
@@ -365,7 +365,7 @@
       "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
+        "openrouter/deepseek/deepseek-v4-pro-0813",
         "openrouter/minimax/minimax-m3",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
@@ -377,7 +377,7 @@
     },
     "content-aware-deep": {
       "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "fallback_models": [
         "openrouter/z-ai/glm-5.2-exacto",
         "openrouter/deepseek/deepseek-v4-flash",
@@ -398,7 +398,7 @@
       "openrouter/z-ai/glm-5.2-exacto": 8,
       "openrouter/deepseek/deepseek-v4-flash": 10,
       "openrouter/deepseek/deepseek-v4-flash-floor": 10,
-      "openrouter/deepseek/deepseek-v4-pro": 5,
+      "openrouter/deepseek/deepseek-v4-pro-0813": 5,
       "openrouter/minimax/minimax-m3": 8,
       "openrouter/google/gemini-3.1-pro-preview": 5,
       "openrouter/google/gemini-3.6-flash": 10,
@@ -406,9 +406,8 @@
       "openrouter/google/gemini-3.5-flash-lite": 10,
       "openrouter/qwen/qwen3.7-flash": 10,
       "openrouter/anthropic/claude-sonnet-5": 5,
-      "openrouter/anthropic/claude-opus-4.8": 2,
-      "openrouter/anthropic/claude-opus-4.8-fast": 2,
-      "openrouter/anthropic/claude-opus-4.7": 2,
+      "openrouter/anthropic/claude-opus-5": 2,
+      "openrouter/anthropic/claude-opus-5-fast": 2,
       "openrouter/anthropic/claude-fable-5": 2,
       "openrouter/moonshotai/kimi-k3": 2
     },

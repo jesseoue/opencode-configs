@@ -406,15 +406,15 @@ for section in ("agents", "categories"):
 # Recon routes: unmoderated primaries + fallbacks only (no Claude/GPT on explore/librarian/recon chains)
 MODERATED_FB = ("anthropic/claude", "openai/gpt", "meta-llama/", "cohere/")
 RECON_PRIMARY = {
-    "explore": "openrouter/deepseek/deepseek-v4-pro",
-    "librarian": "openrouter/deepseek/deepseek-v4-pro",
+    "explore": "openrouter/deepseek/deepseek-v4-pro-0813",
+    "librarian": "openrouter/deepseek/deepseek-v4-pro-0813",
     "metis": "openrouter/z-ai/glm-5.2-exacto",
     "multimodal-looker": "openrouter/google/gemini-3.1-pro-preview",
-    "deep": "openrouter/deepseek/deepseek-v4-pro",
+    "deep": "openrouter/deepseek/deepseek-v4-pro-0813",
     "arch-review": "openrouter/z-ai/glm-5.2-exacto",
 }
 RECON_FALLBACKS = [
-    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/deepseek/deepseek-v4-flash",
     "openrouter/z-ai/glm-5.2-exacto",
     "openrouter/minimax/minimax-m3",
@@ -458,7 +458,7 @@ for section in ("agents", "categories"):
 
 # OpenRouter-only gateway: strip GPT from all routes + whitelist (no openai/gpt-*)
 GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
-DEEP_PRIMARY = "openrouter/deepseek/deepseek-v4-pro"
+DEEP_PRIMARY = "openrouter/deepseek/deepseek-v4-pro-0813"
 DEEP_FALLBACKS = [
     "openrouter/z-ai/glm-5.2-exacto",
     "openrouter/deepseek/deepseek-v4-flash",
@@ -466,7 +466,7 @@ DEEP_FALLBACKS = [
 ]
 MAX_PRIMARY = "openrouter/anthropic/claude-fable-5"
 MAX_FALLBACKS = [
-    "openrouter/deepseek/deepseek-v4-pro",
+    "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/z-ai/glm-5.2-exacto",
     "openrouter/deepseek/deepseek-v4-flash",
 ]
