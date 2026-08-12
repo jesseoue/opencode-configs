@@ -60,7 +60,7 @@
         "z-ai/glm-5.2-exacto",
         "deepseek/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash-floor",
-        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-v4-pro-0813",
         "minimax/minimax-m3",
         "google/gemini-3.1-pro-preview",
         "google/gemini-3.6-flash",
@@ -68,9 +68,8 @@
         "google/gemini-3.5-flash-lite",
         "qwen/qwen3.7-flash",
         "anthropic/claude-sonnet-5",
-        "anthropic/claude-opus-4.8",
-        "anthropic/claude-opus-4.8-fast",
-        "anthropic/claude-opus-4.7",
+        "anthropic/claude-opus-5",
+        "anthropic/claude-opus-5-fast",
         "anthropic/claude-fable-5",
         "moonshotai/kimi-k3"
       ],
@@ -204,9 +203,9 @@
             }
           }
         },
-        "deepseek/deepseek-v4-pro": {
-          "id": "deepseek/deepseek-v4-pro:exacto",
-          "name": "DeepSeek V4 Pro Exacto",
+        "deepseek/deepseek-v4-pro-0813": {
+          "id": "deepseek/deepseek-v4-pro-0813:exacto",
+          "name": "DeepSeek V4 Pro 0813 Exacto",
           "family": "deepseek",
           "reasoning": true,
           "tool_call": true,
@@ -299,9 +298,9 @@
             }
           }
         },
-        "anthropic/claude-opus-4.8": {
-          "id": "anthropic/claude-opus-4.8",
-          "name": "Claude Opus 4.8",
+        "anthropic/claude-opus-5": {
+          "id": "anthropic/claude-opus-5",
+          "name": "Claude Opus 5",
           "family": "claude",
           "reasoning": true,
           "tool_call": true,
@@ -345,55 +344,9 @@
             }
           }
         },
-        "anthropic/claude-opus-4.8-fast": {
-          "id": "anthropic/claude-opus-4.8-fast",
-          "name": "Claude Opus 4.8 Fast",
-          "family": "claude",
-          "reasoning": true,
-          "tool_call": true,
-          "temperature": false,
-          "attachment": true,
-          "status": "active",
-          "limit": {
-            "context": 1000000,
-            "output": 128000
-          },
-          "options": {
-            "reasoning": {
-              "effort": "high"
-            },
-            "provider": {
-              "require_parameters": false,
-              "data_collection": "allow",
-              "allow_fallbacks": true
-            }
-          },
-          "variants": {
-            "low": {
-              "reasoning": {
-                "effort": "low"
-              }
-            },
-            "medium": {
-              "reasoning": {
-                "effort": "medium"
-              }
-            },
-            "high": {
-              "reasoning": {
-                "effort": "high"
-              }
-            },
-            "max": {
-              "reasoning": {
-                "effort": "xhigh"
-              }
-            }
-          }
-        },
-        "anthropic/claude-opus-4.7": {
-          "id": "anthropic/claude-opus-4.7",
-          "name": "Claude Opus 4.7",
+        "anthropic/claude-opus-5-fast": {
+          "id": "anthropic/claude-opus-5-fast",
+          "name": "Claude Opus 5 Fast",
           "family": "claude",
           "reasoning": true,
           "tool_call": true,

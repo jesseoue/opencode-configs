@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.53] — 2026-08-12
+
+### Model refresh — upgrade to latest from OpenRouter API
+- **Claude Opus 5** (`anthropic/claude-opus-5`) replaces Opus 4.8 — new Anthropic flagship, same price ($5/$25)
+- **Claude Opus 5 Fast** (`anthropic/claude-opus-5-fast`) replaces Opus 4.8 Fast — same price ($10/$50)
+- **DeepSeek V4 Pro 0813** (`deepseek/deepseek-v4-pro-0813`) replaces `deepseek-v4-pro` — GA release, **63% cheaper** ($0.43/$0.87 vs $1.17/$2.34), supports `:exacto` routing
+- Remove `anthropic/claude-opus-4.7` (obsolete — Opus 5 supersedes at same price)
+- All 15 whitelisted models verified against live OpenRouter API: **15/15 HTTP 200**
+- Whitelist: 15 models (was 16 — removed 3 old, added 2 new)
+
 ## [1.5.52] — 2026-08-11
 
 ### Version refresh — OpenCode CLI 1.18.11 → 1.18.16

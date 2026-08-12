@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "openrouter/deepseek/deepseek-v4-pro",
+  "model": "openrouter/deepseek/deepseek-v4-pro-0813",
   "small_model": "openrouter/deepseek/deepseek-v4-flash-floor",
   "default_agent": "hephaestus",
   "instructions": [
