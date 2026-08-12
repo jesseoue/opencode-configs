@@ -146,7 +146,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | **hephaestus** | DeepSeek Pro | Implementation |
 | **prometheus** | GLM 5.2 Exacto | Planner |
 | **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
-| **content-aware-research** | DeepSeek V4 Pro | Full-depth research (edit denied) |
+| **content-aware-research** | DeepSeek V4 Pro (pre-GA) | Full-depth research (edit denied) |
 
 ### Subagents (`task` / `call_omo_agent` — not team members)
 
@@ -171,8 +171,8 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `bug-hunt` | GLM Exacto | Reproduce → root cause → fix |
 | `refactor-safe` | GLM Exacto | Behavior-preserving refactors |
 | `arch-review` | GLM Exacto | Coupling / blast radius (unmoderated) |
-| `content-aware-fast` | DeepSeek Flash Nitro | Attack-surface recon |
-| `content-aware-deep` | DeepSeek Pro Exacto | Deep vuln research |
+| `content-aware-fast` | DeepSeek Flash 0731 Nitro | Attack-surface recon |
+| `content-aware-deep` | DeepSeek Pro (pre-GA) | Deep vuln research |
 | `writing` | Gemini 3.6 Flash Nitro | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
@@ -222,8 +222,8 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | --- | --- | --- |
 | Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
 | Deep implement | DeepSeek Pro · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
-| **Recon (unmoderated)** | DeepSeek Pro → Flash → GLM → MiniMax → Gemini | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
-| Fast parallel | `deepseek/deepseek-v4-flash:nitro` | sisyphus-junior / quick / content-aware-fast |
+| **Recon (unmoderated)** | DeepSeek Pro (pre-GA) → Flash 0731 → GLM → MiniMax → Gemini | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
+| Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick / content-aware-fast |
 | Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
 | Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |

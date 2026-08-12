@@ -412,10 +412,14 @@ RECON_PRIMARY = {
     "multimodal-looker": "openrouter/google/gemini-3.1-pro-preview",
     "deep": "openrouter/deepseek/deepseek-v4-pro-0813",
     "arch-review": "openrouter/z-ai/glm-5.2-exacto",
+    "content-aware-research": "openrouter/deepseek/deepseek-v4-pro",
+    "content-aware-deep": "openrouter/deepseek/deepseek-v4-pro",
+    "content-aware-fast": "openrouter/deepseek/deepseek-v4-flash-0731",
 }
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/deepseek/deepseek-v4-flash-0731",
     "openrouter/z-ai/glm-5.2-exacto",
     "openrouter/minimax/minimax-m3",
 ]

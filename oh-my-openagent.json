@@ -191,12 +191,12 @@
       "reasoning": "low"
     },
     "content-aware-research": {
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "mode": "primary",
       "variant": "high",
       "fallback_models": [
         "openrouter/z-ai/glm-5.2-exacto",
-        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/deepseek/deepseek-v4-flash-0731",
         "openrouter/minimax/minimax-m3"
       ],
       "temperature": 0.2,
@@ -363,9 +363,9 @@
     },
     "content-aware-fast": {
       "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash-0731",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro-0813",
+        "openrouter/deepseek/deepseek-v4-pro",
         "openrouter/minimax/minimax-m3",
         "openrouter/z-ai/glm-5.2-exacto"
       ],
@@ -377,10 +377,10 @@
     },
     "content-aware-deep": {
       "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "model": "openrouter/deepseek/deepseek-v4-pro",
       "fallback_models": [
         "openrouter/z-ai/glm-5.2-exacto",
-        "openrouter/deepseek/deepseek-v4-flash",
+        "openrouter/deepseek/deepseek-v4-flash-0731",
         "openrouter/minimax/minimax-m3"
       ],
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-deep.md",
@@ -398,6 +398,8 @@
       "openrouter/z-ai/glm-5.2-exacto": 8,
       "openrouter/deepseek/deepseek-v4-flash": 10,
       "openrouter/deepseek/deepseek-v4-flash-floor": 10,
+      "openrouter/deepseek/deepseek-v4-flash-0731": 10,
+      "openrouter/deepseek/deepseek-v4-pro": 5,
       "openrouter/deepseek/deepseek-v4-pro-0813": 5,
       "openrouter/minimax/minimax-m3": 8,
       "openrouter/google/gemini-3.1-pro-preview": 5,

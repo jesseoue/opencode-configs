@@ -60,7 +60,9 @@
         "z-ai/glm-5.2-exacto",
         "deepseek/deepseek-v4-flash",
         "deepseek/deepseek-v4-flash-floor",
+        "deepseek/deepseek-v4-pro",
         "deepseek/deepseek-v4-pro-0813",
+        "deepseek/deepseek-v4-flash-0731",
         "minimax/minimax-m3",
         "google/gemini-3.1-pro-preview",
         "google/gemini-3.6-flash",
@@ -200,6 +202,101 @@
               "only": [
                 "deepseek"
               ]
+            }
+          }
+        },
+        "deepseek/deepseek-v4-flash-0731": {
+          "id": "deepseek/deepseek-v4-flash-0731:nitro",
+          "name": "DeepSeek V4 Flash 0731 Nitro (pre-GA)",
+          "family": "deepseek",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": false,
+          "status": "active",
+          "limit": {
+            "context": 1048576,
+            "output": 393216
+          },
+          "options": {
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "only": [
+                "deepseek"
+              ]
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "deepseek/deepseek-v4-pro": {
+          "id": "deepseek/deepseek-v4-pro:exacto",
+          "name": "DeepSeek V4 Pro Exacto (pre-GA)",
+          "family": "deepseek",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": false,
+          "status": "active",
+          "limit": {
+            "context": 1048576,
+            "output": 384000
+          },
+          "options": {
+            "reasoning": {
+              "effort": "low"
+            },
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "only": [
+                "deepseek"
+              ]
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
             }
           }
         },
