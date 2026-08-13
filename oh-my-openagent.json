@@ -424,7 +424,11 @@
     "circuitBreaker": {
       "enabled": true,
       "maxToolCalls": 160,
-      "consecutiveThreshold": 8
+      "consecutiveThreshold": 8,
+      "cooldownMs": 30000,
+      "halfOpenRetries": 3,
+      "fallbackOnTrip": true,
+      "notifyOnTrip": true
     },
     "messageStalenessTimeoutMs": 180000,
     "taskTtlMs": 1800000
@@ -456,7 +460,12 @@
     "cooldown_seconds": 10,
     "timeout_seconds": 120,
     "notify_on_fallback": true,
-    "restore_primary_after_cooldown": true
+    "restore_primary_after_cooldown": true,
+    "cost_aware_routing": true,
+    "max_cost_per_request": 0.50,
+    "degrade_on_budget_pressure": true,
+    "budget_warning_threshold": 0.8,
+    "budget_critical_threshold": 0.95
   },
   "sisyphus_agent": {
     "disabled": false,

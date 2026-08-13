@@ -626,6 +626,16 @@ if isinstance(bt, dict):
         cb["enabled"] = True
         if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 160:
             cb["maxToolCalls"] = 160; changes.append("circuitBreaker.maxToolCalls capped -> 160")
+        if not isinstance(cb.get("consecutiveThreshold"), int) or cb.get("consecutiveThreshold") < 1:
+            cb["consecutiveThreshold"] = 8; changes.append("circuitBreaker.consecutiveThreshold -> 8")
+        if not isinstance(cb.get("cooldownMs"), int) or cb.get("cooldownMs") < 10000:
+            cb["cooldownMs"] = 30000; changes.append("circuitBreaker.cooldownMs -> 30000")
+        if cb.get("halfOpenRetries") != 3:
+            cb["halfOpenRetries"] = 3; changes.append("circuitBreaker.halfOpenRetries -> 3")
+        if cb.get("fallbackOnTrip") is not True:
+            cb["fallbackOnTrip"] = True; changes.append("circuitBreaker.fallbackOnTrip -> true")
+        if cb.get("notifyOnTrip") is not True:
+            cb["notifyOnTrip"] = True; changes.append("circuitBreaker.notifyOnTrip -> true")
 rf = omo.setdefault("runtime_fallback", {})
 if isinstance(rf, dict):
     desired_retry_codes = [408, 429, 500, 502, 503, 504]
@@ -635,6 +645,16 @@ if isinstance(rf, dict):
         rf["max_fallback_attempts"] = 3; changes.append("runtime_fallback.max_fallback_attempts -> 3")
     if rf.get("timeout_seconds") != 120:
         rf["timeout_seconds"] = 120; changes.append("runtime_fallback.timeout_seconds -> 120")
+    if rf.get("cost_aware_routing") is not True:
+        rf["cost_aware_routing"] = True; changes.append("runtime_fallback.cost_aware_routing -> true")
+    if not isinstance(rf.get("max_cost_per_request"), (int, float)) or rf.get("max_cost_per_request") > 1.0:
+        rf["max_cost_per_request"] = 0.50; changes.append("runtime_fallback.max_cost_per_request -> 0.50")
+    if rf.get("degrade_on_budget_pressure") is not True:
+        rf["degrade_on_budget_pressure"] = True; changes.append("runtime_fallback.degrade_on_budget_pressure -> true")
+    if not isinstance(rf.get("budget_warning_threshold"), (int, float)):
+        rf["budget_warning_threshold"] = 0.8; changes.append("runtime_fallback.budget_warning_threshold -> 0.8")
+    if not isinstance(rf.get("budget_critical_threshold"), (int, float)):
+        rf["budget_critical_threshold"] = 0.95; changes.append("runtime_fallback.budget_critical_threshold -> 0.95")
 omoexp = omo.setdefault("experimental", {})
 if isinstance(omoexp, dict):
     if omoexp.get("aggressive_truncation") is not False:

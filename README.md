@@ -1,8 +1,10 @@
 # OpenConfig
 
-Pinned global config for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).
+> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 19 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
 
-**v1.5.53** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.56** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+
+**Keywords:** OpenCode config · OpenRouter gateway · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Claude · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
 ```bash
 # Clone (after forking, refresh signature.json → github_b64 to your repo URL)
@@ -17,7 +19,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.53` · OpenCode `1.18.16+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Pins** | OpenConfig `1.5.56` · OpenCode `1.18.16+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -29,6 +31,23 @@ source ~/.zshrc && oc doctor && oc launch
 Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompts/core.md) · Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
 **Forking:** update `signature.json` → `github_b64` to your repo URL, then `oc fix && oc signature --refresh`.
+
+---
+
+## Features
+
+| Capability | What you get |
+| --- | --- |
+| **OpenRouter-only gateway** | Every model routes through OpenRouter — no direct OpenAI/Anthropic/Google keys, no provider lock-in |
+| **19 curated models** | DeepSeek V4 Pro/Flash · Claude Opus/Sonnet/Fable 5 · Gemini 3.x · GLM 5.2 · Qwen 3.7/3.8 · Kimi K3/K2.7 · MiniMax M3 — all probed live |
+| **Content-aware uncensored routes** | `content-aware-research` / `-deep` / `-fast` pinned to pre-GA DeepSeek models (less alignment) with edit-deny guardrails |
+| **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
+| **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
+| **Deployment guards** | `oc deploy check` gates on credits, model health, rate limits, git cleanliness, and signature before you ship |
+| **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
+| **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (87 checks), `oc fix` self-repair, 29 smoke tests |
+| **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
 
@@ -96,8 +115,8 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.53` |
-| OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.11+` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.56` |
+| OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.16+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
 
@@ -239,9 +258,9 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 | Knob | Value |
 | --- | --- |
-| `background_task.defaultConcurrency` | **6** |
-| OpenRouter / dormant OpenAI / Anthropic | **8 only** (OpenRouter gateway) |
-| Flash / Exacto / Pro / Fable | **6 / 5 / 3 / 1** |
+| `background_task.defaultConcurrency` | **10** |
+| OpenRouter provider concurrency | **12** (OpenRouter gateway) |
+| Flash / Exacto / Pro / Fable | **10 / 8 / 5 / 2** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
 
@@ -259,6 +278,33 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 Copy `.env.example` → `.env` (`chmod 600`). Never commit `.env`.  
 `oc setup --sync-env` imports **allowlisted keys only** from Infisical/Doppler — never a full vault dump.
+
+---
+
+## Deployment protection
+
+Guard your production runs against credit exhaustion, provider outages, and rate limits.
+
+```bash
+oc deploy check                # Pre-deployment gate (credits, models, rate limits, git, signature)
+oc deploy lock                 # Prevent concurrent deploys (TTL 5m, PID-based)
+oc deploy unlock --force       # Force-release a stale lock
+oc deploy status               # Lock state + credit balance + alert log
+oc deploy quarantine           # Enter cost-saving mode (swap to cheaper models)
+oc deploy quarantine exit      # Restore from git
+oc deploy health 60            # Continuous credit heartbeat (every 60s)
+```
+
+| Guard | Threshold | Behavior |
+| --- | --- | --- |
+| Credit critical | `$10` | Blocks deploy, logs alert, suggests quarantine |
+| Credit warning | `$50` | Warns during gate check |
+| Credit caution | `$100` | Informational |
+| Rate limit | <10% remaining | Warns during gate check |
+| Circuit breaker | 8 consecutive failures | Trips → cooldown 30s → half-open retries (3) → notify |
+| Budget pressure | 80% / 95% | Degrades to cheaper fallbacks via `runtime_fallback.cost_aware_routing` |
+
+Override thresholds via env: `OC_CREDIT_CRITICAL`, `OC_CREDIT_WARN`, `OC_CREDIT_CAUTION`, `OC_MODEL_PROBE_TIMEOUT`, `OC_DEPLOY_LOCK_TTL`.
 
 ---
 

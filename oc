@@ -102,6 +102,10 @@ ${c_bold}Run & Launch:${c_0}
   ${c_g}opencode${c_0}  [dir]                          Same as oc launch (opencode.sh)
   ${c_g}env${c_0}       [--check|--scrub]               .env allowlist hygiene (never prints values)
 
+${c_bold}Deployment Protection:${c_0}
+  ${c_g}deploy${c_0}    [check|lock|unlock|status|quarantine|health]
+                                         Pre-deploy gate · credit/rate-limit guards · quarantine mode
+
 ${c_bold}Scaffold:${c_0}
   ${c_g}new${c_0}       <name> [--profile|--dir|--here|--launch]
                                          Scaffold under projects home (~/Projects)
@@ -145,6 +149,8 @@ ${c_bold}Examples:${c_0}
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
   oc admin health                Live OpenRouter model probes + rate limits
+  oc deploy check                Pre-deployment gate (credits, models, rate limits, git, signature)
+  oc deploy quarantine           Enter cost-saving quarantine (swap to cheaper models)
   oc launch                      Launch OpenCode (cwd, or ~/Projects if config repo)
   oc new myapp                   Scaffold → ~/Projects/myapp
   oc projects --list             List projects home
@@ -1135,6 +1141,7 @@ case "$cmd" in
 
   new)        do_new "$@" ;;
   projects)   do_projects "$@" ;;
+  deploy)     dispatch deploy-guard.sh "$@" ;;
   launch)
     do_launch "$@"
     ;;
