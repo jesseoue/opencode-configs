@@ -39,7 +39,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter-only gateway** | Every model routes through OpenRouter — no direct OpenAI/Anthropic/Google keys, no provider lock-in |
-| **19 curated models** | DeepSeek V4 Pro/Flash · Claude Opus/Sonnet/Fable 5 · Gemini 3.x · GLM 5.2 · Qwen 3.7/3.8 · Kimi K3/K2.7 · MiniMax M3 — all probed live |
+| **19 curated models** | DeepSeek V4 Pro/Flash (GA + pre-GA) · Claude Opus/Sonnet/Fable 5 · Gemini 3.x (4 variants) · GLM 5.2 · Qwen 3.7/3.8 · Kimi K3/K2.7 · MiniMax M3 — all probed live |
 | **Content-aware uncensored routes** | `content-aware-research` / `-deep` / `-fast` pinned to pre-GA DeepSeek models (less alignment) with edit-deny guardrails |
 | **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
@@ -149,7 +149,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 | Formatters | Prettier + Ruff |
 | Skills | `content-aware-recon` · `content-aware-audit` under `skills/` (fenced) |
 | OmO `security-*` skills | Disabled (hang headless `oc run`) — use local content-aware skills |
-| Extra MCPs | Disabled (PostHog, Sentry, Playwright MCP, …) |
+| Extra MCPs | Disabled (PostHog, Sentry, Playwright, Slack, Stripe, Supabase, Clerk, Vercel, Axiom, AgentMemory) |
 | Telemetry | Off (OpenCode share/OTel · OmO PostHog · codegraph · `DO_NOT_TRACK`) |
 
 Disabled on purpose (noisy / footguns): `interactive_bash`, monitor tools, `session_list` / `session_search`.
@@ -242,12 +242,12 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 | Lane | Models | Used for |
 | --- | --- | --- |
-| Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
-| Deep implement | DeepSeek Pro 0813 · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
-| Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / bug-hunt / refactor-safe |
-| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM Exacto · MiniMax M3 | explore / librarian / deep / arch-review / metis / multimodal-looker |
+| Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor-safe / arch-review / metis |
+| Deep implement | DeepSeek Pro 0813 · Claude Fable 5 | Hephaestus / Oracle (Pro 0813) · Momus / ultrabrain (Fable 5) |
+| Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
+| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM Exacto · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
 | **Content-aware (pre-GA)** | DeepSeek Pro (pre-GA) · Flash 0731 | content-aware-research / -deep / -fast |
-| Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick / content-aware-fast |
+| Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick (Flash Nitro) · content-aware-fast (Flash 0731 Nitro) |
 | Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
 | Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |
