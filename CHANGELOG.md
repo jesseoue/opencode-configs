@@ -2,6 +2,17 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.55] — 2026-08-12
+
+### New models + routing refresh for non-content-aware routes
+- Add **Qwen 3.8 Max** (`qwen/qwen3.8-max`) — new Qwen flagship, 1M ctx, unmoderated, $2/$6. Added to hephaestus/oracle/deep fallback chains (replaces minimax)
+- Add **Kimi K2.7 Code** (`moonshotai/kimi-k2.7-code`) — coding-focused, 262K ctx, $0.67/$3.40, 5x cheaper than kimi-k3. Added to bug-hunt/refactor-safe/sisyphus fallbacks
+- Whitelist: **19 models** (was 17 — added 2 new, content-aware still on pre-GA deepseek-v4-pro)
+- `fix.sh` `_mc_cap` updated for qwen3.8-max + kimi-k2.7 (cap 5 each)
+- `fix.sh` `DEEP_FALLBACKS`/`MAX_FALLBACKS`/`RECON_FALLBACKS` updated to include new models
+- `deepseek-v4-pro` price drop confirmed: $0.43/$0.87 (now matches 0813 GA — better value for content-aware)
+- All 19 models probed live: **19/19 HTTP 200**
+
 ## [1.5.54] — 2026-08-12
 
 ### Uncensored route → pre-GA DeepSeek models

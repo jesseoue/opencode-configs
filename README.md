@@ -221,8 +221,9 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Lane | Models | Used for |
 | --- | --- | --- |
 | Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
-| Deep implement | DeepSeek Pro · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
-| **Recon (unmoderated)** | DeepSeek Pro (pre-GA) → Flash 0731 → GLM → MiniMax → Gemini | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
+| Deep implement | DeepSeek Pro 0813 · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
+| Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / bug-hunt / refactor-safe |
+| **Recon (unmoderated)** | DeepSeek Pro (pre-GA) → Flash 0731 → GLM → Qwen 3.8 Max → Kimi K2.7 | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
 | Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick / content-aware-fast |
 | Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |

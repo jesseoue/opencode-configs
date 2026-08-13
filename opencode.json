@@ -69,11 +69,13 @@
         "google/gemini-3-flash-preview",
         "google/gemini-3.5-flash-lite",
         "qwen/qwen3.7-flash",
+        "qwen/qwen3.8-max",
         "anthropic/claude-sonnet-5",
         "anthropic/claude-opus-5",
         "anthropic/claude-opus-5-fast",
         "anthropic/claude-fable-5",
-        "moonshotai/kimi-k3"
+        "moonshotai/kimi-k3",
+        "moonshotai/kimi-k2.7-code"
       ],
       "options": {
         "apiKey": "{env:OPENROUTER_API_KEY}",
@@ -717,6 +719,52 @@
             }
           }
         },
+        "moonshotai/kimi-k2.7-code": {
+          "id": "moonshotai/kimi-k2.7-code",
+          "name": "Kimi K2.7 Code",
+          "family": "kimi",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          },
+          "options": {
+            "reasoning": {
+              "effort": "low"
+            },
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
         "google/gemini-3.6-flash": {
           "id": "google/gemini-3.6-flash:nitro",
           "name": "Gemini 3.6 Flash Nitro",
@@ -830,6 +878,52 @@
             },
             "reasoning": {
               "effort": "low"
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "qwen/qwen3.8-max": {
+          "id": "qwen/qwen3.8-max",
+          "name": "Qwen 3.8 Max",
+          "family": "qwen",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1000000,
+            "output": 262144
+          },
+          "options": {
+            "reasoning": {
+              "effort": "low"
+            },
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true
             }
           },
           "variants": {
