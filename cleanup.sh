@@ -112,12 +112,16 @@ PIN="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json
 PIN_VER="${PIN##*@}"
 if [[ -z "$PIN" ]]; then
   bad "no oh-my-openagent plugin pinned in opencode.json"; drift=$((drift+1))
-elif command -v bunx >/dev/null 2>&1; then
-  loaded="$(bunx "oh-my-openagent@${PIN_VER:-latest}" doctor 2>/dev/null | grep -oE 'oh-my-openagent [0-9.]+' | grep -oE '[0-9.]+' | head -1)"
-  if [[ "$loaded" == "$PIN_VER" ]]; then ok "pinned $PIN loads v$loaded"
-  else warn "pinned $PIN but doctor loaded v${loaded:-unknown} (cache prune below will fix)"; fi
 else
-  warn "bun missing — cannot verify plugin load"
+  # NOTE: we check the plugin cache version statically, NOT via `bunx doctor`.
+  # Running the OmO CLI triggers its config-migration, which treats the repo's
+  # canonical oh-my-openagent.json as a legacy source and moves it into a backup,
+  # regenerating a broken ~/.omo/omo.jsonc. Static cache check avoids that.
+  cdir="$(oc_omo_plugin_cache_dir "$PIN" 2>/dev/null || true)"
+  cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
+  if [[ -n "$cache_ver" && "$cache_ver" == "$PIN_VER" ]]; then ok "pinned $PIN cache v$cache_ver"
+  elif [[ -n "$cache_ver" ]]; then warn "pinned $PIN but cache v$cache_ver (cache prune below will fix)"
+  else warn "plugin cache not built yet for $PIN (oc setup will install)"; fi
 fi
 
 # ─── 4. Prune stale plugin caches ────────────────────────────────────

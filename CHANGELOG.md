@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.58] — 2026-08-12
+
+### Fix: `oc doctor` self-sabotage (OmO config-migration ate canonical config)
+- **Root cause**: `oc doctor` ran `bunx oh-my-openagent doctor` and `opencode agent list`. Both load the OmO plugin, whose config-migration treats the repo's canonical `oh-my-openagent.json` as a legacy source and **moves it into a backup**, regenerating a broken `~/.omo/omo.jsonc`. Every full doctor run silently deleted the repo's canonical config.
+- **Fix**: `doctor.sh` no longer invokes the OmO CLI or `opencode agent list`. Plugin health is verified statically (pin match + cache version). Runtime agent-visibility probe skipped with an explanatory note.
+- **Fix**: `cleanup.sh` plugin-pin check now reads the cache version statically instead of `bunx … doctor`.
+- Result: `oc doctor` verdict went from `core_ready` (6 optional warnings) to **`ready`** (0 critical, 0 optional), and the repo file stays intact across all runs.
+- Verified: validate 87 ok · smoke 29 passed · deploy check green (except expected uncommitted state).
+
 ## [1.5.57] — 2026-08-12
 
 ### OpenCode CLI 1.18.17 (patch upgrade)
