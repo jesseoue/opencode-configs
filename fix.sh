@@ -421,6 +421,8 @@ RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-flash",
     "openrouter/deepseek/deepseek-v4-flash-0731",
     "openrouter/z-ai/glm-5.2-exacto",
+    "openrouter/qwen/qwen3.8-max",
+    "openrouter/moonshotai/kimi-k2.7-code",
     "openrouter/minimax/minimax-m3",
 ]
 FAST_PRIMARY = "openrouter/deepseek/deepseek-v4-flash"
@@ -465,14 +467,14 @@ GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
 DEEP_PRIMARY = "openrouter/deepseek/deepseek-v4-pro-0813"
 DEEP_FALLBACKS = [
     "openrouter/z-ai/glm-5.2-exacto",
+    "openrouter/qwen/qwen3.8-max",
     "openrouter/deepseek/deepseek-v4-flash",
-    "openrouter/minimax/minimax-m3",
 ]
 MAX_PRIMARY = "openrouter/anthropic/claude-fable-5"
 MAX_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/z-ai/glm-5.2-exacto",
-    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/qwen/qwen3.8-max",
 ]
 MAX_ROUTES = {"momus", "ultrabrain", "unspecified-high"}
 
@@ -607,7 +609,7 @@ if isinstance(bt, dict):
                 return 10
             if any(x in low for x in ("exacto", "minimax", "glm")):
                 return 8
-            if any(x in low for x in ("sonnet", "deepseek-v4-pro", "sol", "terra", "gemini-3.1-pro")):
+            if any(x in low for x in ("sonnet", "deepseek-v4-pro", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7")):
                 return 5
             return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
