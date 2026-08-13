@@ -136,7 +136,9 @@ check_git_clean() {
 
 # ── Check signature ──
 check_signature() {
-  if "$REPO/oc" signature --refresh 2>&1 | grep -q "signature.*ok"; then
+  local sig_out
+  sig_out=$("$REPO/oc" signature 2>&1)
+  if echo "$sig_out" | grep -q "signature.*ok"; then
     ok "Signature valid"
     return 0
   else
