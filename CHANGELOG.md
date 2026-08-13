@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.57] — 2026-08-12
+
+### OpenCode CLI 1.18.17 (patch upgrade)
+- Upgrade OpenCode CLI **1.18.16 → 1.18.17** (released today, patch-only bugfixes)
+- Key fixes: compaction keeps complete recent turns + clearer summaries for smaller models; capped automatic session retries + jitter (reduces retry storms); **correct sampling defaults for DeepSeek V4 Flash** (directly relevant to our Flash routes); MERGE Gateway reasoning variants; Copilot PDF support; Muse system prompt routing
+- No breaking changes — safe patch upgrade
+- `@opencode-ai/plugin` stays at `1.18.15` (no 1.18.16/17 published yet for plugin)
+- OmO stays at `4.19.4` (npm latest, no new release)
+- `versions.json` floor: `opencode.min` 1.18.16 → 1.18.17
+
 ## [1.5.56] — 2026-08-12
 
 ### Deployment protection + repo cleanup + SEO
