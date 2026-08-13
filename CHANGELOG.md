@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.56] — 2026-08-12
+
+### Deployment protection + repo cleanup + SEO
+- **New `oc deploy` command** (`deploy-guard.sh`): pre-deployment gate (credits, model probes, rate limits, git cleanliness, signature), deployment lock with TTL, quarantine mode (auto-swap to cheaper models on credit pressure), continuous credit heartbeat
+- **Hardened circuit breaker**: added cooldown (30s), half-open retries (3), fallback-on-trip, notify-on-trip
+- **Cost-aware runtime fallback**: `cost_aware_routing`, `max_cost_per_request` ($0.50), budget warning/critical thresholds (80%/95%), degrade-on-budget-pressure
+- **README cleanup**: fixed stale version refs (1.5.53 → 1.5.55) and stale concurrency values (6/8/3/1 → 10/12/5/2), added Features table, Deployment protection docs, SEO keywords
+- **GitHub SEO**: repo description rewritten, topics refreshed (model-gateway, config-as-code, circuit-breaker, cost-aware)
+- Whitelist unchanged at 19 models — all probed healthy
+
 ## [1.5.55] — 2026-08-12
 
 ### New models + routing refresh for non-content-aware routes
