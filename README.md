@@ -94,6 +94,9 @@ oc signature           # identity fingerprint
 oc test                # smoke + idempotency + runtime diagnostics
 oc doctor              # full readiness
 oc doctor --quick --json   # machine summary (heal/check tooling)
+oc deploy check        # pre-deployment gate (credits, models, rate limits, git, signature)
+oc deploy quarantine   # cost-saving mode (swap to cheaper models)
+oc deploy status       # lock state + credit balance + alert log
 ```
 
 Prefer `oc <cmd>` over raw `./foo.sh`. Full help: `oc help`.
@@ -162,7 +165,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | Agent | Model | Role |
 | --- | --- | --- |
 | **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead |
-| **hephaestus** | DeepSeek Pro | Implementation |
+| **hephaestus** | DeepSeek Pro 0813 | Implementation |
 | **prometheus** | GLM 5.2 Exacto | Planner |
 | **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
 | **content-aware-research** | DeepSeek V4 Pro (pre-GA) | Full-depth research (edit denied) |
@@ -171,9 +174,9 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| oracle | DeepSeek Pro | Critique / adjudication |
-| librarian | DeepSeek Pro Exacto | Docs / OSS (Context7-first, unmoderated) |
-| explore | DeepSeek Pro Exacto | Codebase + web recon (edit denied, unmoderated) |
+| oracle | DeepSeek Pro 0813 | Critique / adjudication |
+| librarian | DeepSeek Pro 0813 Exacto | Docs / OSS (Context7-first, unmoderated) |
+| explore | DeepSeek Pro 0813 Exacto | Codebase + web recon (edit denied, unmoderated) |
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
 | metis | GLM Exacto | Pre-planning critic (unmoderated) |
 | momus | Claude Fable 5 max | Plan / review gate |
@@ -196,7 +199,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
 | `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
-| `deep` | DeepSeek Pro Exacto | Autonomous problem-solving (unmoderated) |
+| `deep` | DeepSeek Pro 0813 Exacto | Autonomous problem-solving (unmoderated) |
 | `ultrabrain` | Claude Fable 5 | Heavy / max reasoning |
 | `unspecified-low` / `unspecified-high` | Flash / Claude Fable | Hyperplan critics |
 
@@ -242,7 +245,8 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor |
 | Deep implement | DeepSeek Pro 0813 · Claude Fable 5 | Hephaestus / Oracle / Momus / ultrabrain |
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / bug-hunt / refactor-safe |
-| **Recon (unmoderated)** | DeepSeek Pro (pre-GA) → Flash 0731 → GLM → Qwen 3.8 Max → Kimi K2.7 | explore / librarian / metis / multimodal-looker / arch-review / deep / content-aware-* |
+| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM Exacto · MiniMax M3 | explore / librarian / deep / arch-review / metis / multimodal-looker |
+| **Content-aware (pre-GA)** | DeepSeek Pro (pre-GA) · Flash 0731 | content-aware-research / -deep / -fast |
 | Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick / content-aware-fast |
 | Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
@@ -250,7 +254,7 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
 
-OpenRouter serves every active lane. Native `:nitro`, `:exacto`, and `:floor` routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Direct OpenAI stays defined but disabled by default. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
+OpenRouter serves every active lane. Native `:nitro`, `:exacto`, and `:floor` routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
@@ -336,7 +340,7 @@ oc projects --list
 | --- | --- | --- |
 | `high` | sisyphus | Default Exacto · balanced tool_output |
 | `low` | sisyphus | Cost-first · smaller tool_output |
-| `fast` | hephaestus | Direct DeepSeek Pro · skip ceremony |
+| `fast` | hephaestus | Direct DeepSeek Pro 0813 · skip ceremony |
 | `research` | sisyphus | Large tool_output · deep / ultrabrain / content-aware |
 | `debug` | sisyphus | Large tool_output · bug-hunt / debug-team |
 | `writing` | sisyphus | Gemini Flash small_model · writing category |
@@ -350,7 +354,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 
 - Allow-everything locally for normal tools (trusted box).
 - Hard-deny bash: `rm -rf /|~`, `mkfs`, `sudo`, `git push --force*`, `gh repo delete*`.
-- Providers allowed: OpenRouter + OpenAI only.
+- Providers allowed: OpenRouter only (no direct OpenAI/Anthropic/Google).
 - Server: `127.0.0.1:4097` · share disabled · mdns off.
 
 ---
@@ -370,6 +374,8 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 opencode-configs/
 ├── oc · install.sh · setup.sh · doctor.sh · validate.sh · fix.sh
 ├── models.sh · versions.sh · cleanup.sh · signature.sh · locate.sh
+├── deploy-guard.sh · diagnose.sh · maintain.sh · run.sh · opencode.sh
+├── openrouter-admin.sh
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · AGENTS.md
 ├── agents/content-aware-research.md
@@ -389,6 +395,7 @@ opencode-configs/
 
 ```bash
 oc signature && oc test && oc validate && oc versions && oc doctor
+oc deploy check                    # pre-deployment gate (credits, models, git, signature)
 bunx oh-my-openagent@4.19.4 doctor   # upstream: System OK
 ```
 

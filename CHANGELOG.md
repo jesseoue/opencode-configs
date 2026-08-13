@@ -12,6 +12,11 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - **GitHub SEO**: repo description rewritten, topics refreshed (model-gateway, config-as-code, circuit-breaker, cost-aware)
 - Whitelist unchanged at 19 models — all probed healthy
 
+### Docs alignment (AGENTS.md + README.md)
+- **AGENTS.md**: commands list now includes `oc deploy`; routing logic split into GA recon vs pre-GA content-aware lanes; Deep implement line notes Qwen 3.8 Max / Kimi K2.7 Code fallbacks; content-aware line marked pre-GA + edit denied
+- **README.md**: model routing table split recon (GA DeepSeek Pro 0813) from content-aware (pre-GA); subagent/primary/category/profile tables disambiguated "DeepSeek Pro 0813" vs "DeepSeek Pro (pre-GA)"; removed stale "Direct OpenAI stays defined" note (OpenRouter-only); Safety line corrected to OpenRouter-only; layout tree lists all 16 scripts incl. `deploy-guard.sh`; CLI + Verify sections now surface `oc deploy check` / `quarantine` / `status`
+- `oc signature --refresh` re-run after edits; `validate.sh` 87 ok, `tests/smoke.sh` 29 passed, `oc fix` clean, `oc deploy check` green (except expected uncommitted state)
+
 ## [1.5.55] — 2026-08-12
 
 ### New models + routing refresh for non-content-aware routes

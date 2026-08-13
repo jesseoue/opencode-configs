@@ -33,13 +33,13 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 ### Routing logic (short)
 
 - **Orchestration / tool loops** → GLM `5.2:exacto` (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Exacto = tool-call quality on OpenRouter.
-- **Fast parallel recon** → DeepSeek Flash `:nitro` (sisyphus-junior, quick, content-aware-fast) — Nitro = throughput. **Smart recon** → DeepSeek Pro (explore, librarian, content-aware-deep) — unmoderated, first-party only.
+- **Fast parallel recon** → DeepSeek Flash `:nitro` (sisyphus-junior, quick) — Nitro = throughput. **Smart recon (GA)** → DeepSeek Pro 0813 (explore, librarian, deep) — unmoderated, first-party only. **Content-aware (pre-GA)** → DeepSeek Pro (pre-GA) + Flash 0731 (content-aware-research, -deep, -fast) — less alignment, edit denied.
 - **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep, content-aware-* — DeepSeek / GLM Exacto / MiniMax / Gemini; never Claude/GPT primaries on recon chains.
-- **Deep implement / critique** → DeepSeek Pro (Hephaestus, Oracle) and Claude Fable 5 (Momus, ultrabrain, unspecified-high) — all via OpenRouter; no GPT models.
+- **Deep implement / critique** → DeepSeek Pro 0813 (Hephaestus, Oracle) and Claude Fable 5 (Momus, ultrabrain, unspecified-high) — all via OpenRouter; no GPT models. Fallback: Qwen 3.8 Max · Kimi K2.7 Code for coding tasks.
 - **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.6 Flash Nitro).
 - **Hard ceiling** → Claude Fable 5 max for `ultrawork` / unspecified-high (Opus fallbacks).
 - **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k3` (1M ctx, ~$3/$15) as a quality fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider, expensive). Prefer K2.7 Code / DeepSeek for routine coding.
-- **Content-aware research** → DeepSeek Pro + `content-aware-*` agent/categories when providers refuse or soften.
+- **Content-aware research** → DeepSeek Pro (pre-GA) + `content-aware-*` agent/categories when providers refuse or soften. Edit denied, unmoderated.
 
 ### Team eligibility (why)
 
@@ -90,7 +90,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 
 ## Commands
 
-`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc signature` · `oc admin health`. Details: `README.md`.
+`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
 
 ## Projects & scaffolding
 
