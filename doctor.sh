@@ -177,36 +177,15 @@ PY
     tip "prune: oc cleanup --yes   # keeps only $pin"
   fi
 fi
-# bunx doctor: trust System OK; interpret "outdated" against pin cache + registry (not npm CLI cache)
-if command -v bunx >/dev/null 2>&1 && [[ -n "$pin" ]]; then
-  dout="$(bunx "$pin" doctor 2>/dev/null)"
-  if printf '%s' "$dout" | grep -q "System OK"; then
-    ok "plugin doctor: $(printf '%s' "$dout" | grep -iE 'System OK' | head -1 | sed 's/^[^A-Za-z]*//')"
-  elif printf '%s' "$dout" | grep -qi "outdated\|Loaded plugin is outdated"; then
-    _loaded="$(printf '%s' "$dout" | sed -nE 's/.*Loaded ([0-9][0-9.]*).*/\1/p' | head -1)"
-    _latest="$(printf '%s' "$dout" | sed -nE 's/.*[Ll]atest ([0-9][0-9.]*).*/\1/p' | head -1)"
-    if [[ -n "$_cache_ver" && -n "$pin_ver" && "$_cache_ver" == "$pin_ver" ]]; then
-      if [[ -n "$_latest" && "$_latest" != "$pin_ver" ]]; then
-        soft "plugin pin $pin_ver behind npm latest ${_latest} — bump versions.json + opencode.json together"
-        tip "after bump: oc setup && oc cleanup --yes && oc versions"
-      elif [[ -n "$_stale_caches" ]]; then
-        info "plugin doctor 'outdated' is stale-cache noise (pin cache is v$pin_ver; bunx saw ${_loaded:-old})"
-      else
-        info "plugin doctor reported outdated but pin cache is v$pin_ver — ignore or re-run after oc cleanup"
-      fi
-    elif [[ -n "$_loaded" && -n "$pin_ver" && "$_loaded" != "$pin_ver" ]]; then
-      opt "plugin doctor loaded v$_loaded but pin is $pin_ver — refresh cache: oc setup · oc cleanup --yes"
-    else
-      soft "plugin doctor: outdated report (pin=$pin_ver cache=${_cache_ver:-?} loaded=${_loaded:-?})"
-    fi
-    unset _loaded _latest
-  else
-    opt "plugin doctor: $(printf '%s' "$dout" | grep -iE 'issue' | head -1 | cut -c1-100)"
-  fi
-elif [[ -z "$pin" ]]; then
+# NOTE: We deliberately do NOT run `bunx oh-my-openagent doctor` here.
+# Running the OmO CLI triggers its config-migration, which treats the repo's
+# canonical oh-my-openagent.json as a legacy source and MOVES it into a backup,
+# regenerating a broken ~/.omo/omo.jsonc. That self-sabotages the config on every
+# `oc doctor`. Static checks above (pin match + cache version) are sufficient.
+if [[ -z "$pin" ]]; then
   bad "no oh-my-openagent@… pin in opencode.json"
-else
-  opt "bun missing — cannot verify plugin version"
+elif [[ -z "${OMOCLI_DOCTOR_ALLOWED:-}" ]]; then
+  ok "plugin verified statically (pin=$pin cache=v${_cache_ver:-?}) — OmO CLI migration avoided by design"
 fi
 # OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
 # When npm lags the CLI by a patch → WARN spam, not fatal. Align with: oc versions --fix
@@ -257,16 +236,14 @@ fi
 
 # `agent list` loads configuration but never starts an agent or calls a model.
 # Bound it tightly because plugin startup has historically stalled.
+#
+# NOTE: We do NOT run `opencode agent list` here at all. Loading the OmO plugin
+# triggers its config-migration, which treats the repo's canonical
+# oh-my-openagent.json as a legacy source and MOVES it into a backup,
+# regenerating a broken ~/.omo/omo.jsonc. That self-sabotages the config on every
+# full `oc doctor`. Static agent/category checks above are sufficient.
 sec "Runtime agent visibility"
-if [[ $DO_QUICK -eq 1 ]]; then
-  info "skipped bounded 'opencode agent list' probe in --quick mode (static readiness checked above)"
-else
-  runtime_report="$(oc_agent_visibility_report "$OC_BIN" "$REPO" 8 2>/dev/null || true)"
-  while IFS='|' read -r kind msg; do
-    [[ -z "$kind" ]] && continue
-    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD) bad "$msg" ;; *) info "$msg" ;; esac
-  done <<< "$runtime_report"
-fi
+info "runtime 'opencode agent list' probe skipped — loading OmO triggers its config-migration (self-sabotage); static checks cover agent visibility"
 
 if [[ $DO_QUICK -eq 0 ]]; then
   stale_runtime="$(python3 - "$REPO" "$cdir" <<'PY' 2>/dev/null || true
