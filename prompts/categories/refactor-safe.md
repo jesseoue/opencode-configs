@@ -1,4 +1,4 @@
-# Category: refactor-safe (GLM Exacto)
+# Category: refactor-safe (GLM 5.3)
 
 Tests-first, behavior-preserving. Small steps only.
 

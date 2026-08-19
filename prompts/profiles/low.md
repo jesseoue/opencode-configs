@@ -1,6 +1,6 @@
-# Profile: low (GLM Exacto orchestrator / cheap subagents)
+# Profile: low (GLM 5.3 orchestrator / cheap subagents)
 
-Cost-first scaffold. Sisyphus stays on GLM Exacto for tool quality; prefer Flash for parallel work.
+Cost-first scaffold. Sisyphus stays on GLM 5.3 for tool quality; prefer Flash for parallel work.
 
 ## Prefer
 

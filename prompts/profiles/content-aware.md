@@ -1,6 +1,6 @@
-# Profile: content-aware (DeepSeek V4 Pro / content-aware-research)
+# Profile: content-aware (DeepSeek V4 Pro 0813 / Hermes 4 405B research)
 
-Full-depth technical research without soft refusals. Default agent: `content-aware-research` (**edit denied**).
+Full-depth technical research without soft refusals. Default agent: `content-aware-research` (Hermes 4 405B, no tool calls — **edit denied**).
 
 ## Replaces
 

@@ -1,4 +1,4 @@
-# Category: bug-hunt (GLM Exacto)
+# Category: bug-hunt (GLM 5.3)
 
 Reproduce → root cause → minimal fix → verify. Used by debug-team and ship-feature.
 

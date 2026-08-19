@@ -2,6 +2,24 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.60] — 2026-08-19
+
+### Live-endpoint alignment: provider pins rebuilt, Flash 0731 revert, Hermes research lane
+
+Every pin re-verified against the live `openrouter.ai/api/v1/models` catalog + per-model endpoint rosters (2026-08-19). All 11 whitelisted models live; context/tool/vision flags confirmed exact.
+
+- **GLM 5.3 routing blackhole fixed**: the `provider.only` roster stamped by `oc fix` was glm-5.2-era (novita/gmicloud/streamlake/…) and matched **zero** live glm-5.3 endpoints — every default-model request would 404 ("All providers have been ignored"). glm-5.3 is z-ai-exclusive today, so it now routes **unpinned**; `fix.sh` removes stale pins and `validate.sh` errors on them.
+- **DeepSeek pins rebuilt from live endpoints**: `["gmicloud","novita","siliconflow","parasail","deepinfra","baidu","fireworks","digitalocean"]` — fp8/full-precision unmoderated hosts only. Drops `baseten/fp4` (fp4 degrades tool-calling), degraded `together`, and first-party `deepseek` (endpoint down, uptime 0). Prompts/README no longer claim "first-party only".
+- **MiniMax M3 pin widened**: `["together"]` (single host, half-context) → `["gmicloud","novita","deepinfra","together"]` — all healthy, fp8/unknown, still skips first-party.
+- **DeepSeek Flash reverted to `-0731`**: the 07-31 snapshot is the *newest* Flash revision (1.31M ctx); the plain `deepseek-v4-flash` slug is the older 04-24 build. GA `deepseek-v4-pro` def removed; whitelist now 11 models. `fix.sh`/`diagnose.sh`/`models.sh` invariants track `-0731`.
+- **content-aware-research → Hermes 4 405B** (nebius/fp8, uncensored): tool-less by design — it reasons over pasted context; edit stays denied; fallbacks glm-5.3 → laguna → qwen3.8-max remain tool-capable. Removed Hermes from `fix.sh` RECON_FALLBACKS (a no-tools model must never back a tool-using recon agent); dropped dead `hermes-4-70b` ref.
+- **New `validate.sh` guards**: (1) vision chains (multimodal-looker / visual-engineering / artistry) must be `attachment:true` end-to-end; (2) every agent/category chain must be `tool_call:true` except content-aware-research; (3) stale `provider.only` pins on unpinned families now error.
+- **Category colors removed**: OmO 4.19.4 schema allows `color` on agents only — `fix.sh` no longer re-adds category colors it had just stripped (idempotency restored; agent colors unchanged).
+- **Fallback chains deepened**: third fallback (qwen3.8-max / longcat-2.0 / minimax-m3) added across agents + categories; `modelConcurrency` gains pro-0813 (5, six healthy hosts) and hermes-4-405b (2).
+- Newer catalog arrivals evaluated, deliberately skipped: `kimi-k3` ($3/$15 — 4× k2.7-code for the same fallback role), `qwen3.8-2.4t-a95b` (qwen3.8-max price, no vision), `grok-4.6` (off-stack, pricier than GLM/DeepSeek lanes).
+- `launch-desktop.sh` removed (v1.5.59 helper superseded; no remaining references).
+- RECON_PRIMARY aligned to actual primaries (metis / arch-review → glm-5.3).
+
 ## [1.5.59] — 2026-08-19
 
 ### Model refresh: GLM 5.3 default + Flash GA + Gemini 3.7 Flash

@@ -1,6 +1,6 @@
-# Category: content-aware-fast (DeepSeek Flash Nitro)
+# Category: content-aware-fast (DeepSeek V4 Flash)
 
-Authorized attack-surface / codebase recon. DeepSeek routes **first-party only** (`provider.only: deepseek`) — no proxy moderation layers. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
+Authorized attack-surface / codebase recon. DeepSeek pins **unmoderated fp8/full-precision hosts** (`provider.only` — no fp4 quant, no moderating proxies). Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
 
 ## Authorized
 

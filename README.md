@@ -1,8 +1,8 @@
 # OpenConfig
 
-> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 19 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
+> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 11 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
 
-**v1.5.59** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.60** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Claude · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -19,8 +19,8 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.59` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
-| **Default lead** | `sisyphus` (GLM Exacto) |
+| **Pins** | OpenConfig `1.5.60` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
 | **Health** | `oc doctor` · `oc versions` · `oc test` · `oc models --probe` |
@@ -39,14 +39,14 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter-only gateway** | Every model routes through OpenRouter — no direct OpenAI/Anthropic/Google keys, no provider lock-in |
-| **19 curated models** | DeepSeek V4 Pro/Flash (GA + pre-GA) · GLM 5.3 · Gemini 3.x (4 variants) · Qwen 3.8 · Kimi K2.7 · MiniMax M3 · Hermes 4 405B · Laguna S 2.1 — all probed live |
-| **Content-aware uncensored routes** | `content-aware-research` / `-deep` / `-fast` pinned to pre-GA DeepSeek models (less alignment) with edit-deny guardrails |
+| **11 curated models** | DeepSeek V4 Pro 0813 / Flash 0731 · GLM 5.3 · Gemini 3.1 Pro / 3.7 Flash · Qwen 3.8 Max · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B · Laguna S 2.1 · LongCat 2.0 — all probed live |
+| **Content-aware uncensored routes** | `content-aware-research` (Hermes 4 405B) / `-deep` / `-fast` (DeepSeek V4, unmoderated hosts) with edit-deny guardrails |
 | **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
 | **Deployment guards** | `oc deploy check` gates on credits, model health, rate limits, git cleanliness, and signature before you ship |
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (87 checks), `oc fix` self-repair, 29 smoke tests |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (91 checks), `oc fix` self-repair, 29 smoke tests |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
@@ -164,23 +164,23 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| **sisyphus** | GLM 5.2 Exacto | Default orchestrator / lead |
-| **hephaestus** | DeepSeek Pro 0813 | Implementation |
-| **prometheus** | GLM 5.2 Exacto | Planner |
-| **atlas** | GLM 5.2 Exacto | Plan executor after `/start-work` |
-| **content-aware-research** | DeepSeek V4 Pro (pre-GA) | Full-depth research (edit denied) |
+| **sisyphus** | GLM 5.3 | Default orchestrator / lead |
+| **hephaestus** | DeepSeek V4 Pro 0813 | Implementation |
+| **prometheus** | GLM 5.3 | Planner |
+| **atlas** | GLM 5.3 | Plan executor after `/start-work` |
+| **content-aware-research** | Hermes 4 405B | Full-depth research (edit denied) |
 
 ### Subagents (`task` / `call_omo_agent` — not team members)
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| oracle | DeepSeek Pro 0813 | Critique / adjudication |
-| librarian | DeepSeek Pro 0813 Exacto | Docs / OSS (Context7-first, unmoderated) |
-| explore | DeepSeek Pro 0813 Exacto | Codebase + web recon (edit denied, unmoderated) |
+| oracle | DeepSeek V4 Pro 0813 | Critique / adjudication |
+| librarian | DeepSeek V4 Pro 0813 | Docs / OSS (Context7-first, unmoderated) |
+| explore | DeepSeek V4 Pro 0813 | Codebase + web recon (edit denied, unmoderated) |
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
-| metis | GLM Exacto | Pre-planning critic (unmoderated) |
+| metis | GLM 5.3 | Pre-planning critic (unmoderated) |
 | momus | GLM 5.3 max | Plan / review gate |
-| sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
+| sisyphus-junior | DeepSeek V4 Flash | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
 
@@ -190,16 +190,16 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 | Category | Model | Use |
 | --- | --- | --- |
-| `bug-hunt` | GLM Exacto | Reproduce → root cause → fix |
-| `refactor-safe` | GLM Exacto | Behavior-preserving refactors |
-| `arch-review` | GLM Exacto | Coupling / blast radius (unmoderated) |
-| `content-aware-fast` | DeepSeek Flash 0731 Nitro | Attack-surface recon |
-| `content-aware-deep` | DeepSeek Pro (pre-GA) | Deep vuln research |
+| `bug-hunt` | GLM 5.3 | Reproduce → root cause → fix |
+| `refactor-safe` | GLM 5.3 | Behavior-preserving refactors |
+| `arch-review` | GLM 5.3 | Coupling / blast radius (unmoderated) |
+| `content-aware-fast` | DeepSeek V4 Flash | Attack-surface recon |
+| `content-aware-deep` | DeepSeek V4 Pro | Deep vuln research |
 | `writing` | Gemini 3.7 Flash | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
-| `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
-| `deep` | DeepSeek Pro 0813 Exacto | Autonomous problem-solving (unmoderated) |
+| `quick` | DeepSeek V4 Flash | Cheap fast tasks |
+| `deep` | DeepSeek V4 Pro 0813 | Autonomous problem-solving (unmoderated) |
 | `ultrabrain` | GLM 5.3 | Heavy / max reasoning |
 | `unspecified-low` / `unspecified-high` | Laguna S 2.1 / GLM 5.3 | Hyperplan critics |
 
@@ -243,18 +243,18 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Lane | Models | Used for |
 | --- | --- | --- |
 | Orchestration | `z-ai/glm-5.3` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor-safe / arch-review / metis |
-| Deep implement | GLM 5.3 · DeepSeek Pro 0813 | Hephaestus / Oracle / Momus / ultrabrain (GLM 5.3) · deep (Pro 0813) |
+| Deep implement | GLM 5.3 · DeepSeek V4 Pro 0813 | Hephaestus / Oracle / Momus / ultrabrain (GLM 5.3) · deep (Pro 0813) |
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
-| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
-| **Content-aware (GA)** | DeepSeek Pro · Flash | content-aware-research / -deep / -fast |
-| Fast parallel | `deepseek/deepseek-v4-flash` | sisyphus-junior / quick / content-aware-fast |
-| Housekeeping | `deepseek/deepseek-v4-flash` | title / summary / compaction / profile small model |
+| **Recon (unmoderated)** | DeepSeek V4 Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
+| **Content-aware** | Hermes 4 405B · DeepSeek V4 Pro 0813 · Flash 0731 | content-aware-research (Hermes) · -deep (Pro 0813) · -fast (Flash 0731) |
+| Fast parallel | `deepseek/deepseek-v4-flash-0731` | sisyphus-junior / quick / content-aware-fast |
+| Housekeeping | `deepseek/deepseek-v4-flash-0731` | title / summary / compaction / profile small model |
 | Visual / writing | Gemini 3.1 Pro · 3.7 Flash | artistry / visual / writing |
 | Ceiling | `z-ai/glm-5.3` | ultrawork · unspecified-high |
 
 Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
 
-OpenRouter serves every active lane. Native routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
+OpenRouter serves every active lane. DeepSeek and MiniMax pin live-verified unmoderated fp8/full-precision hosts (`provider.only` — no fp4, no moderating proxies); GLM 5.3 rides its sole z-ai endpoint unpinned. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
@@ -338,9 +338,9 @@ oc projects --list
 
 | Profile | Agent | Tuning |
 | --- | --- | --- |
-| `high` | sisyphus | Default Exacto · balanced tool_output |
+| `high` | sisyphus | Default GLM 5.3 · balanced tool_output |
 | `low` | sisyphus | Cost-first · smaller tool_output |
-| `fast` | hephaestus | Direct DeepSeek Pro 0813 · skip ceremony |
+| `fast` | hephaestus | Direct DeepSeek V4 Pro 0813 · skip ceremony |
 | `research` | sisyphus | Large tool_output · deep / ultrabrain / content-aware |
 | `debug` | sisyphus | Large tool_output · bug-hunt / debug-team |
 | `writing` | sisyphus | Gemini Flash small_model · writing category |
@@ -409,7 +409,7 @@ Idempotency: re-running install / setup / heal / fix on a healthy box must not c
 | --- | --- | --- |
 | OpenCode | [opencode.ai/docs](https://opencode.ai/docs) | [anomalyco/opencode](https://github.com/anomalyco/opencode) |
 | OmO | [omo.vibetip.help/docs](https://omo.vibetip.help/docs) | [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) |
-| OpenRouter | [openrouter.ai/docs](https://openrouter.ai/docs) | Exacto / Nitro routing |
+| OpenRouter | [openrouter.ai/docs](https://openrouter.ai/docs) | GLM 5.3 / DeepSeek V4 routing |
 | Context7 | [context7.com](https://context7.com) | [upstash/context7](https://github.com/upstash/context7) |
 | Exa | [docs.exa.ai](https://docs.exa.ai) | [exa-labs](https://github.com/exa-labs) |
 

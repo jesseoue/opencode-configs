@@ -1,4 +1,4 @@
-# Profile: writing (Sisyphus + writing category / Gemini Nitro)
+# Profile: writing (Sisyphus + writing category / Gemini 3.7 Flash)
 
 Clear docs from source of truth. Accurate APIs, examples, constraints. No fluff.
 

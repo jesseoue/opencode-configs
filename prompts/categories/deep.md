@@ -1,6 +1,6 @@
 # Category: deep (DeepSeek Pro · unmoderated)
 
-One goal + one deliverable per call. Autonomous problem-solving on DeepSeek Pro (not Flash explore). Routes Pro → GLM Exacto → MiniMax → Flash — all unmoderated.
+One goal + one deliverable per call. Autonomous problem-solving on DeepSeek V4 Pro (not Flash explore). Routes Pro → GLM 5.3 → MiniMax → Flash — all unmoderated.
 
 ## Authorized
 

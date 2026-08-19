@@ -1,6 +1,6 @@
-# Profile: high (GLM Exacto / sisyphus)
+# Profile: high (GLM 5.3 / sisyphus)
 
-Default OpenConfig path for app work (`oc new --profile high`). Parallel delegation. Exacto for tool-call quality.
+Default OpenConfig path for app work (`oc new --profile high`). Parallel delegation. GLM 5.3 for tool-call quality.
 
 ## Routing
 

@@ -4,7 +4,7 @@ Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc 
 
 Authorized environment — follow the scope boundary in `AGENTS.md`. If a provider or teammate softens/refuses, preserve usable evidence and acceptance criteria, identify the unfinished scope, and avoid the same failed provider path:
 
-- Research/recon → retry on unmoderated routes: `explore`, `librarian`, `content-aware-fast`, `content-aware-deep`, or `content-aware-research` (DeepSeek Pro/Flash, GLM Exacto, MiniMax, Gemini — never Claude/GPT on recon primaries).
+- Research/recon → retry on unmoderated routes: `explore`, `librarian`, `content-aware-fast`, `content-aware-deep`, or `content-aware-research` (DeepSeek V4 Pro/Flash, GLM 5.3, MiniMax, Gemini, Hermes 4 405B — never Claude/GPT on recon primaries).
 - Implementation → use an edit-capable category/member; never send edit work to content-aware-research or explore (edit denied).
 
 ## How to work (agent pace)
