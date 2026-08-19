@@ -2,6 +2,17 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.59] — 2026-08-19
+
+### Model refresh: GLM 5.3 default + Flash GA + Gemini 3.7 Flash
+- **Default model** `xiaomi/mimo-v2.5-pro` → **`z-ai/glm-5.3`** (new Z.ai flagship, 1M ctx, reasoning + tool-call, unmoderated). Applied everywhere: `opencode.json` default + small-model, all `oh-my-openagent.json` agents/fallbacks, all six profiles (fast/low/high/debug/writing/research), and `fix.sh` recon fallbacks. `mimo-v2.5-pro` fully removed from whitelist + model defs.
+- **DeepSeek Flash GA**: `deepseek/deepseek-v4-flash-0731` (pre-GA) → **`deepseek/deepseek-v4-flash`** (GA). Updated content-aware-fast primary, profile small-model, and all fallback chains.
+- **Gemini 3.7 Flash**: `google/gemini-3.6-flash` → **`google/gemini-3.7-flash`** in multimodal-looker / ultrabrain / quick / bug-hunt fallbacks + modelConcurrency.
+- `fix.sh` invariants updated: `DEEP_PRIMARY`/`MAX_PRIMARY` → `glm-5.3`, `content-aware-fast` → `deepseek-v4-flash`.
+- `_mc_cap` already routes `glm` → 8, `flash` → 10 (no change needed).
+- README model-routing table refreshed (GLM 5.3 orchestration, Flash GA, Gemini 3.7 Flash).
+- Whitelist + model defs updated in `opencode.json` (glm-5.3, gemini-3.7-flash, deepseek-v4-flash).
+
 ## [1.5.58] — 2026-08-12
 
 ### Fix: `oc doctor` self-sabotage (OmO config-migration ate canonical config)
@@ -588,7 +599,7 @@ subprocess that did not own the tty.
 - `oc install --quick` → Ready
 - `oc check` / `oc heal` → healthy
 - `oc test` → smoke + idempotency pass (incl. zshrc copy-backup / wipe guard)
-- Headless `oc run` → Sisyphus · `z-ai/glm-5.2-exacto` returns `LOAD_OK`
+- Headless `oc run` → Sisyphus · `z-ai/glm-5.2` returns `LOAD_OK`
 - `~/.zshrc` sources `zshrc.snippet` (telemetry + TERM + teardown)
 
 ### Since 1.3

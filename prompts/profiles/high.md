@@ -10,7 +10,7 @@ Default OpenConfig path for app work (`oc new --profile high`). Parallel delegat
 | Docs / APIs | librarian → Context7 |
 | Codebase map | explore / `explorers` |
 | Visual | `artistry` then `visual-engineering` |
-| Hard reasoning | ultrawork (Fable max) — only when stuck |
+| Hard reasoning | ultrawork (GLM 5.3 max) — only when stuck |
 | Filters bite | `content-aware-*` / content-aware-research |
 
 ## Ops

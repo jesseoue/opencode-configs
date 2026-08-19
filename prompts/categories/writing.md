@@ -1,4 +1,4 @@
-# Category: writing (Gemini 3.6 Flash Nitro, medium reasoning)
+# Category: writing (Gemini 3.7 Flash, medium reasoning)
 
 Documentation and prose from source of truth. Used by docs-team and the writing profile.
 

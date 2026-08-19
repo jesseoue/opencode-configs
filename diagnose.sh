@@ -258,7 +258,7 @@ open(os.environ["HEALTHYOUT"],"w").write("\n".join(m for m,r in route.items() if
 # ── AI diagnosis ──
 if ai_on and key:
     sec("AI diagnosis")
-    model=(aimodel or conf.get("model","z-ai/glm-5.2")).replace("openrouter/","")
+    model=(aimodel or conf.get("model","deepseek/deepseek-v4-pro-0813")).replace("openrouter/","")
     red=json.loads(json.dumps(conf))
     try: red["provider"]["openrouter"]["options"]["apiKey"]="<redacted>"
     except: pass

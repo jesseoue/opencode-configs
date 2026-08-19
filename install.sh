@@ -690,7 +690,7 @@ if [[ -n "$(oc_get_env_key "$ENV_FILE" OPENROUTER_API_KEY 2>/dev/null || true)" 
   http_code="$(curl -sS --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}' \
     -H "Authorization: Bearer $or_key" \
     -H "Content-Type: application/json" \
-    -d '{"model":"z-ai/glm-5.2","messages":[{"role":"user","content":"ping"}],"max_tokens":16}' \
+    -d '{"model":"deepseek/deepseek-v4-pro-0813","messages":[{"role":"user","content":"ping"}],"max_tokens":16}' \
     https://openrouter.ai/api/v1/chat/completions 2>/dev/null || echo "000")"
   if [[ "$http_code" == "200" ]]; then
     ok "OpenRouter key verified (HTTP 200)"

@@ -2,7 +2,7 @@
 
 > **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 19 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
 
-**v1.5.58** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.59** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Claude · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -19,7 +19,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.58` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Pins** | OpenConfig `1.5.59` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM Exacto) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -39,7 +39,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter-only gateway** | Every model routes through OpenRouter — no direct OpenAI/Anthropic/Google keys, no provider lock-in |
-| **19 curated models** | DeepSeek V4 Pro/Flash (GA + pre-GA) · Claude Opus/Sonnet/Fable 5 · Gemini 3.x (4 variants) · GLM 5.2 · Qwen 3.7/3.8 · Kimi K3/K2.7 · MiniMax M3 — all probed live |
+| **19 curated models** | DeepSeek V4 Pro/Flash (GA + pre-GA) · GLM 5.3 · Gemini 3.x (4 variants) · Qwen 3.8 · Kimi K2.7 · MiniMax M3 · Hermes 4 405B · Laguna S 2.1 — all probed live |
 | **Content-aware uncensored routes** | `content-aware-research` / `-deep` / `-fast` pinned to pre-GA DeepSeek models (less alignment) with edit-deny guardrails |
 | **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
@@ -118,7 +118,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.58` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.59` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.17+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -179,7 +179,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | explore | DeepSeek Pro 0813 Exacto | Codebase + web recon (edit denied, unmoderated) |
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
 | metis | GLM Exacto | Pre-planning critic (unmoderated) |
-| momus | Claude Fable 5 max | Plan / review gate |
+| momus | GLM 5.3 max | Plan / review gate |
 | sisyphus-junior | DeepSeek Flash Nitro | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
@@ -195,13 +195,13 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `arch-review` | GLM Exacto | Coupling / blast radius (unmoderated) |
 | `content-aware-fast` | DeepSeek Flash 0731 Nitro | Attack-surface recon |
 | `content-aware-deep` | DeepSeek Pro (pre-GA) | Deep vuln research |
-| `writing` | Gemini 3.6 Flash Nitro | Docs / prose |
+| `writing` | Gemini 3.7 Flash | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
 | `quick` | DeepSeek Flash Nitro | Cheap fast tasks |
 | `deep` | DeepSeek Pro 0813 Exacto | Autonomous problem-solving (unmoderated) |
-| `ultrabrain` | Claude Fable 5 | Heavy / max reasoning |
-| `unspecified-low` / `unspecified-high` | Flash / Claude Fable | Hyperplan critics |
+| `ultrabrain` | GLM 5.3 | Heavy / max reasoning |
+| `unspecified-low` / `unspecified-high` | Laguna S 2.1 / GLM 5.3 | Hyperplan critics |
 
 ---
 
@@ -209,7 +209,7 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 
 | Say | Effect |
 | --- | --- |
-| `ultrawork` / `ulw` | Claude Fable max ceiling |
+| `ultrawork` / `ulw` | GLM 5.3 max ceiling |
 | `team` | Team-mode expansion |
 | `hyperplan` / `hpp` / `/hyperplan` | Adversarial planning (from **sisyphus**) |
 | `/goal` | **Disabled** — OmO 4.19 goal hook breaks `/start-work`. Use `/start-work` → Atlas (`prompts/goal.md`) |
@@ -242,19 +242,19 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 | Lane | Models | Used for |
 | --- | --- | --- |
-| Orchestration | `z-ai/glm-5.2:exacto` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor-safe / arch-review / metis |
-| Deep implement | DeepSeek Pro 0813 · Claude Fable 5 | Hephaestus / Oracle (Pro 0813) · Momus / ultrabrain (Fable 5) |
+| Orchestration | `z-ai/glm-5.3` | Sisyphus / Atlas / Prometheus / bug-hunt / refactor-safe / arch-review / metis |
+| Deep implement | GLM 5.3 · DeepSeek Pro 0813 | Hephaestus / Oracle / Momus / ultrabrain (GLM 5.3) · deep (Pro 0813) |
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
-| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM Exacto · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
-| **Content-aware (pre-GA)** | DeepSeek Pro (pre-GA) · Flash 0731 | content-aware-research / -deep / -fast |
-| Fast parallel | `deepseek/deepseek-v4-flash:nitro` · `deepseek/deepseek-v4-flash-0731:nitro` | sisyphus-junior / quick (Flash Nitro) · content-aware-fast (Flash 0731 Nitro) |
-| Housekeeping | `deepseek/deepseek-v4-flash:floor` | title / summary / compaction / profile small model |
-| Visual / writing | Gemini 3.1 Pro · 3.6 Flash Nitro | artistry / visual / writing |
-| Ceiling | `anthropic/claude-fable-5` | ultrawork · unspecified-high |
+| **Recon (unmoderated, GA)** | DeepSeek Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
+| **Content-aware (GA)** | DeepSeek Pro · Flash | content-aware-research / -deep / -fast |
+| Fast parallel | `deepseek/deepseek-v4-flash` | sisyphus-junior / quick / content-aware-fast |
+| Housekeeping | `deepseek/deepseek-v4-flash` | title / summary / compaction / profile small model |
+| Visual / writing | Gemini 3.1 Pro · 3.7 Flash | artistry / visual / writing |
+| Ceiling | `z-ai/glm-5.3` | ultrawork · unspecified-high |
 
 Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
 
-OpenRouter serves every active lane. Native `:nitro`, `:exacto`, and `:floor` routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
+OpenRouter serves every active lane. Native routing avoids stale provider pins; DeepSeek pins first-party (`provider.only: deepseek`). Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
@@ -264,7 +264,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | --- | --- |
 | `background_task.defaultConcurrency` | **10** |
 | OpenRouter provider concurrency | **12** (OpenRouter gateway) |
-| Flash / Exacto / Pro / Fable | **10 / 8 / 5 / 2** |
+| Flash / GLM / Pro / Hermes | **10 / 8 / 5 / 2** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
 

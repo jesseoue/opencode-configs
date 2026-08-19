@@ -1,4 +1,4 @@
-# Category: ultrabrain (Claude Fable 5 max · OpenRouter)
+# Category: ultrabrain (GLM 5.3 max · OpenRouter)
 
 Decision memo for ambiguous logic, architecture, and hyperplan-grade problems. Compare assumptions, alternatives, tradeoffs, and failure modes. Analysis-only unless explicitly assigned implementation. Security root-cause in teams prefers `content-aware-deep`.
 

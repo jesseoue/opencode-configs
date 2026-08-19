@@ -342,7 +342,7 @@ if $SYNC_ENV; then
       HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
         -H "Authorization: Bearer $OR_KEY" \
         -H "Content-Type: application/json" \
-        -d '{"model":"z-ai/glm-5.2","messages":[{"role":"user","content":"ping"}],"max_tokens":16}' \
+        -d '{"model":"deepseek/deepseek-v4-pro-0813","messages":[{"role":"user","content":"ping"}],"max_tokens":16}' \
         https://openrouter.ai/api/v1/chat/completions 2>/dev/null)
       if [[ "$HTTP_CODE" = "200" ]]; then
         ok ".env allowlisted keys from Infisical (verified HTTP 200)${imported:+ · $imported}"

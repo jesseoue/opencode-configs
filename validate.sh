@@ -169,67 +169,40 @@ if oc:
         if "zdr" in pv:
             err(f"opencode.json[{mid}]: provider.zdr restricts the provider pool — remove it for availability.")
         expected_require_parameters = fam in ("glm", "minimax")
-        if fam == "deepseek":
-            if pv.get("only") != ["deepseek"]:
-                err(f"opencode.json[{mid}]: deepseek must pin provider.only=['deepseek'] (first-party; no proxy moderation). Run: oc fix")
-            if pv.get("require_parameters") is not False:
-                err(f"opencode.json[{mid}]: deepseek provider.require_parameters must be false. Run: oc fix")
+        want_only = {
+            "deepseek": ["baseten/fp4", "siliconflow/fp8", "together", "fireworks"],
+            "glm": ["deepseek", "novita", "gmicloud", "streamlake", "baidu", "digitalocean", "deepinfra", "sail"],
+            "minimax": ["together"],
+        }.get(fam)
+        if want_only is not None:
+            if pv.get("only") != want_only:
+                err(f"opencode.json[{mid}]: {fam} must pin provider.only={want_only} (unmoderated providers only). Run: oc fix")
+            if fam == "deepseek":
+                if pv.get("require_parameters") is not False:
+                    err(f"opencode.json[{mid}]: deepseek provider.require_parameters must be false. Run: oc fix")
+            elif pv.get("require_parameters") is not expected_require_parameters:
+                err(
+                    f"opencode.json[{mid}]: provider.require_parameters must be "
+                    f"{str(expected_require_parameters).lower()} for {fam} routing."
+                )
         elif pv.get("require_parameters") is not expected_require_parameters:
             err(
                 f"opencode.json[{mid}]: provider.require_parameters must be "
                 f"{str(expected_require_parameters).lower()} for {fam} routing."
             )
-        # Exacto: OpenRouter docs say append :exacto to the slug (quality-first tool routing).
-        # Do NOT also set sort to price/throughput/latency — that overrides Exacto.
-        # Soft preferred_* / tight quant filters fight Exacto's provider ranking.
+        # OpenRouter auto-routes by default. No :exacto/:nitro/:floor suffixes remain
+        # in the live catalog — those routing variants were retired. Keep provider
+        # selection lean: no sort/order/ignore/preferred_* that fights auto-ranking.
         api_id = m.get("id") or mid
-        is_exacto = api_id.endswith(":exacto") or pv.get("sort") == "exacto" or mid.endswith("-exacto") or mid.endswith(":exacto")
-        is_nitro = api_id.endswith(":nitro") or pv.get("sort") == "throughput" or mid.endswith("-nitro") or mid.endswith(":nitro")
-        is_floor = api_id.endswith(":floor") or pv.get("sort") == "price" or mid.endswith("-floor") or mid.endswith(":floor")
-        if sum((is_exacto, is_nitro, is_floor)) > 1:
-            err(f"opencode.json[{mid}]: cannot combine Exacto, Nitro, and Floor routing modes.")
-        if is_exacto:
-            if not str(api_id).endswith(":exacto"):
-                err(f"opencode.json[{mid}]: Exacto models must use id ending in ':exacto' (got '{api_id}'). See https://openrouter.ai/docs/guides/routing/model-variants/exacto")
-            sort = pv.get("sort")
-            if sort in ("price", "throughput", "latency"):
-                err(f"opencode.json[{mid}]: provider.sort={sort!r} overrides Exacto — remove sort (the :exacto suffix already sets quality-first routing).")
-            if sort == "exacto":
-                warn(f"opencode.json[{mid}]: provider.sort='exacto' is redundant with id ':exacto' — drop sort.")
-            if pv.get("order"):
-                err(f"opencode.json[{mid}]: provider.order overrides Exacto quality ranking — remove order.")
-            if pv.get("ignore"):
-                err(f"opencode.json[{mid}]: provider.ignore narrows Exacto fallback coverage — remove it.")
-            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
-                err(f"opencode.json[{mid}]: Exacto + preferred_min_throughput/preferred_max_latency fights quality ranking — remove soft prefs.")
-            if q is not None:
-                warn(f"opencode.json[{mid}]: Exacto + quantizations filter may drop quality Exacto providers — prefer ignore/max_price only.")
-        if is_nitro:
-            if not str(api_id).endswith(":nitro") and pv.get("sort") != "throughput":
-                err(f"opencode.json[{mid}]: Nitro/speed models should use id ending in ':nitro' (got '{api_id}'). See https://openrouter.ai/docs/guides/routing/provider-selection")
-            sort = pv.get("sort")
-            if sort in ("price", "latency", "exacto"):
-                err(f"opencode.json[{mid}]: provider.sort={sort!r} fights Nitro throughput routing — remove sort (or use :nitro only).")
-            if sort == "throughput":
-                warn(f"opencode.json[{mid}]: provider.sort='throughput' is redundant with id ':nitro' — drop sort.")
-            if pv.get("order"):
-                err(f"opencode.json[{mid}]: provider.order overrides Nitro throughput ranking — remove order.")
-            if pv.get("ignore"):
-                err(f"opencode.json[{mid}]: provider.ignore narrows Nitro fallback coverage — remove it.")
-            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
-                err(f"opencode.json[{mid}]: Nitro + preferred_* fights native :nitro throughput ranking — remove (run: oc fix)")
-        if is_floor:
-            if not str(api_id).endswith(":floor") and pv.get("sort") != "price":
-                err(f"opencode.json[{mid}]: cost routes must use id ending in ':floor' (got '{api_id}').")
-            if pv.get("order"):
-                err(f"opencode.json[{mid}]: provider.order overrides Floor price ranking — remove order.")
-            if pv.get("ignore"):
-                err(f"opencode.json[{mid}]: provider.ignore narrows Floor fallback coverage — remove it.")
-            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
-                err(f"opencode.json[{mid}]: Floor + preferred_* fights native :floor price ranking — remove (run: oc fix)")
-        if not is_exacto and not is_nitro and not is_floor:
-            if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
-                err(f"opencode.json[{mid}]: preferred_* on auto-routed models fights OpenRouter adaptive ranking — remove (run: oc fix)")
+        sort = pv.get("sort")
+        if sort in ("price", "throughput", "latency", "exacto"):
+            warn(f"opencode.json[{mid}]: provider.sort={sort!r} overrides OpenRouter auto-ranking — prefer dropping sort.")
+        if pv.get("order"):
+            err(f"opencode.json[{mid}]: provider.order overrides auto-ranking — remove order.")
+        if pv.get("ignore"):
+            err(f"opencode.json[{mid}]: provider.ignore narrows fallback coverage — remove it.")
+        if "preferred_min_throughput" in pv or "preferred_max_latency" in pv:
+            err(f"opencode.json[{mid}]: preferred_* fights OpenRouter adaptive ranking — remove (run: oc fix)")
         # Claude and DeepSeek have first-party endpoints reporting quant 'unknown'
         # (DeepSeek first-party is the cheapest + best cache) — filtering without
         # 'unknown' matches ZERO providers for them. GLM excluding low quant
@@ -296,16 +269,16 @@ if oc and os.path.isfile(tui_path):
 
 # ---- 3. oh-my-openagent.json footguns + cross-file refs ----
 if omo:
-    # Schema URL must resolve (upstream asset basename is still oh-my-opencode.schema.json)
+    # Schema URL must resolve (canonical asset basename is omo.schema.json on dev)
     schema = omo.get("$schema") or ""
     if not schema:
         err("oh-my-openagent.json: missing $schema")
-    elif "oh-my-openagent.schema.json" in schema:
+    elif "oh-my-openagent.schema.json" in schema or "oh-my-opencode.schema.json" in schema:
         err(
-            "oh-my-openagent.json: $schema uses oh-my-openagent.schema.json which 404s upstream — "
-            "use assets/oh-my-opencode.schema.json (legacy asset basename; plugin package name stays oh-my-openagent)"
+            "oh-my-openagent.json: $schema uses a legacy basename that 404s upstream — "
+            "use assets/omo.schema.json (canonical runtime schema; plugin package name stays oh-my-openagent)"
         )
-    elif "oh-my-opencode.schema.json" not in schema:
+    elif "omo.schema.json" not in schema:
         warn(f"oh-my-openagent.json: unexpected $schema URL: {schema}")
     elif os.environ.get("OC_VALIDATE_OFFLINE") == "1":
         ok("$schema URL shape valid (reachability skipped by OC_VALIDATE_OFFLINE)")
@@ -318,7 +291,7 @@ if omo:
             if int(code) >= 400:
                 err(f"oh-my-openagent.json: $schema URL returned HTTP {code}: {schema}")
             else:
-                ok("$schema URL reachable (oh-my-opencode.schema.json asset)")
+                ok("$schema URL reachable (omo.schema.json asset)")
         except Exception as e:
             warn(f"oh-my-openagent.json: could not HEAD $schema ({e}) — skipped reachability check")
 
@@ -386,13 +359,31 @@ if omo:
     if os.path.isfile(omo_jsonc):
         with open(omo_jsonc, encoding="utf-8") as f:
             ojc = f.read()
-        if '"[opencode]"' in ojc and re.search(r'"models"\s*:\s*\[', ojc):
-            err(
-                "~/.omo/omo.jsonc has invalid migrated agents.models — breaks Sisyphus. "
-                "Run: oc fix (OpenConfig canonical source is oh-my-openagent.json)"
-            )
+        # Canonical runtime file: must wrap config under "[opencode]" with the
+        # canonical omo.schema.json. The legacy broken migration wrote a `models`
+        # array DIRECTLY under `agents` (agents.models) — that breaks OmO 4.19.4
+        # agent load. The correct 4.19.4 format uses agents.<name>.models (a list
+        # per agent), which is fine and must NOT be flagged.
+        if '"[opencode]"' not in ojc:
+            err("~/.omo/omo.jsonc missing \"[opencode]\" wrapper — run: oc fix")
+        elif "omo.schema.json" not in ojc:
+            err("~/.omo/omo.jsonc $schema must be assets/omo.schema.json — run: oc fix")
+        else:
+            try:
+                _ojc = json.loads(re.sub(r"^\s*//.*$", "", ojc, flags=re.M))
+                _cfg = _ojc.get("[opencode]", {})
+                _agents = _cfg.get("agents", {})
+                if isinstance(_agents, dict) and isinstance(_agents.get("models"), list):
+                    err(
+                        "~/.omo/omo.jsonc has invalid migrated agents.models — breaks Sisyphus. "
+                        "Run: oc fix"
+                    )
+                else:
+                    ok("~/.omo/omo.jsonc canonical ([opencode] wrapper + omo.schema.json)")
+            except Exception as _e:
+                err(f"~/.omo/omo.jsonc failed to parse for agents.models check: {_e}")
     else:
-        ok("~/.omo/omo.jsonc absent (oh-my-openagent.json is canonical)")
+        err("~/.omo/omo.jsonc missing — run: oc fix (runtime loads omo.jsonc, not oh-my-openagent.json)")
 
     # OmO injects security-* via a loopback skills.urls server; OpenCode can
     # deadlock fetching that index during `opencode run` bootstrap. Keep them disabled.
@@ -1402,7 +1393,7 @@ else:
     except Exception as e:
         err(f"signature.json: {e}")
 
-# ---- 4d. stale Opus-primary ultrawork wording (config uses Fable max) ----
+# ---- 4d. stale Opus-primary ultrawork wording (config uses GLM 5.3 max) ----
 stale_opus = []
 for root, _, files in os.walk(os.path.join(repo, "prompts")):
     for fn in files:
@@ -1420,7 +1411,7 @@ agents_txt = open(os.path.join(repo, "AGENTS.md"), encoding="utf-8").read().lowe
 if "ultrawork" in agents_txt and "opus max path" in agents_txt:
     stale_opus.append("AGENTS.md")
 if stale_opus:
-    warn(f"stale Opus-primary ultrawork wording (config uses Fable max): {stale_opus}")
+    warn(f"stale Opus-primary ultrawork wording (config uses GLM 5.3 max): {stale_opus}")
 else:
     ok("no stale Opus-primary ultrawork wording in prompts")
 
