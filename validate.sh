@@ -169,14 +169,17 @@ if oc:
         if "zdr" in pv:
             err(f"opencode.json[{mid}]: provider.zdr restricts the provider pool — remove it for availability.")
         expected_require_parameters = fam in ("glm", "minimax")
+        # Pin rosters mirror fix.sh want_only — rebuilt from LIVE endpoint data
+        # (2026-08-19): fp8/full-precision unmoderated hosts only, no fp4, no
+        # first-party. glm deliberately unpinned (glm-5.3 is z-ai-exclusive; a
+        # pin would match zero endpoints and blackhole the default model).
         want_only = {
-            "deepseek": ["baseten/fp4", "siliconflow/fp8", "together", "fireworks"],
-            "glm": ["deepseek", "novita", "gmicloud", "streamlake", "baidu", "digitalocean", "deepinfra", "sail"],
-            "minimax": ["together"],
+            "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
+            "minimax": ["gmicloud", "novita", "deepinfra", "together"],
         }.get(fam)
         if want_only is not None:
             if pv.get("only") != want_only:
-                err(f"opencode.json[{mid}]: {fam} must pin provider.only={want_only} (unmoderated providers only). Run: oc fix")
+                err(f"opencode.json[{mid}]: {fam} must pin provider.only={want_only} (live-verified unmoderated hosts, no fp4). Run: oc fix")
             if fam == "deepseek":
                 if pv.get("require_parameters") is not False:
                     err(f"opencode.json[{mid}]: deepseek provider.require_parameters must be false. Run: oc fix")
@@ -185,11 +188,14 @@ if oc:
                     f"opencode.json[{mid}]: provider.require_parameters must be "
                     f"{str(expected_require_parameters).lower()} for {fam} routing."
                 )
-        elif pv.get("require_parameters") is not expected_require_parameters:
-            err(
-                f"opencode.json[{mid}]: provider.require_parameters must be "
-                f"{str(expected_require_parameters).lower()} for {fam} routing."
-            )
+        else:
+            if pv.get("only"):
+                err(f"opencode.json[{mid}]: stale provider.only pin {pv.get('only')} — {fam or 'this family'} has no live pin roster. Run: oc fix")
+            if pv.get("require_parameters") is not expected_require_parameters:
+                err(
+                    f"opencode.json[{mid}]: provider.require_parameters must be "
+                    f"{str(expected_require_parameters).lower()} for {fam} routing."
+                )
         # OpenRouter auto-routes by default. No :exacto/:nitro/:floor suffixes remain
         # in the live catalog — those routing variants were retired. Keep provider
         # selection lean: no sort/order/ignore/preferred_* that fights auto-ranking.
@@ -497,6 +503,55 @@ if omo:
         ok("fast routes avoid slow/premium fallbacks; kimi-k3 not in routine chains")
     if mod_recon_ok:
         ok("recon routes use unmoderated primaries and fallbacks (DeepSeek/GLM/MiniMax/Gemini)")
+
+    # Vision agents/categories (multimodal-looker, visual-engineering, artistry)
+    # must have every model in their chain vision-capable (attachment:true) or
+    # the fallback path silently drops images.
+    vision_chains = {
+        "agents": ["multimodal-looker"],
+        "categories": ["visual-engineering", "artistry"],
+    }
+    for section, names in vision_chains.items():
+        src = agents if section == "agents" else (omo.get("categories") or {})
+        for name in names:
+            vc = src.get(name)
+            if not isinstance(vc, dict):
+                continue
+            vision_ok = True
+            for ref in [vc.get("model")] + list(vc.get("fallback_models") or []):
+                if not isinstance(ref, str):
+                    continue
+                mid = ref.split("/", 1)[-1] if "/" in ref else ref
+                mdef = models.get(mid)
+                if mdef is None:
+                    continue  # unresolved refs are caught by the cross-file check below
+                if mdef.get("attachment") is not True:
+                    vision_ok = False
+                    err(f"oh-my-openagent.json[{section}.{name}]: {ref!r} is not vision-capable (attachment != true) — use a vision model")
+            if vision_ok:
+                ok(f"{name} chain is fully vision-capable (attachment:true)")
+
+    # Tool-calling chains: every model routed by an agent/category must be
+    # tool_call:true, or delegated work dies on the first tool turn.
+    # content-aware-research is the single deliberate exception — Hermes 4 405B
+    # cannot tool-call and only reasons over pasted context (edit denied).
+    TOOLLESS_OK = {"content-aware-research"}
+    tools_ok = True
+    for section in ("agents", "categories"):
+        src = agents if section == "agents" else (omo.get("categories") or {})
+        for name, spec in src.items():
+            if name in TOOLLESS_OK or not isinstance(spec, dict):
+                continue
+            for ref in [spec.get("model")] + list(spec.get("fallback_models") or []):
+                if not isinstance(ref, str):
+                    continue
+                mid = ref.split("/", 1)[-1] if "/" in ref else ref
+                mdef = models.get(mid)
+                if mdef is not None and mdef.get("tool_call") is not True:
+                    tools_ok = False
+                    err(f"oh-my-openagent.json[{section}.{name}]: {ref!r} cannot tool-call (tool_call != true) — only content-aware-research may route a tool-less model")
+    if tools_ok:
+        ok("all tool-using agent/category chains route tool_call:true models (tool-less Hermes only on content-aware-research)")
 
     kd = omo.get("keyword_detector", {})
     allowed = {"ultrawork", "team", "hyperplan", "hyperplan-ultrawork"}

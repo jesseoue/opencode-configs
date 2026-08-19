@@ -26,8 +26,8 @@
 # Usage:
 #   ./fix.sh                       repair + format + validate
 #   ./fix.sh --dry-run             show what would change, write nothing
-#   ./fix.sh --set model=openrouter/z-ai/glm-5.2
-#   ./fix.sh --set default_agent=atlas --set small_model=openrouter/deepseek/deepseek-v4-flash
+#   ./fix.sh --set model=openrouter/z-ai/glm-5.3
+#   ./fix.sh --set default_agent=atlas --set small_model=openrouter/deepseek/deepseek-v4-flash-0731
 
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -299,22 +299,25 @@ if isinstance(or_models, dict):
             changes.append(f"{model_id}.provider.zdr removed (preserve provider availability)")
         require_parameters = model_cfg.get("family") in ("glm", "minimax")
         family = model_cfg.get("family")
-        # Unmoderated-provider pinning: skip first-party + moderated proxies that add
-        # their own runtime blocks (revealed by exploit/malware probes). Catalog
-        # moderationRequired is False for all of these, so this is a runtime guard.
+        # Unmoderated-provider pinning, rebuilt from the LIVE endpoint rosters
+        # (openrouter.ai/api/v1/models/{id}/endpoints, verified 2026-08-19):
+        # skip first-party + moderated proxies that add runtime blocks, and skip
+        # every fp4 endpoint (fp4 quant degrades tool-calling). Plain provider
+        # slugs only — each listed host serves the family at fp8/full precision.
+        # glm has NO pin: glm-5.3 is z-ai-exclusive today, so any pin list would
+        # match zero endpoints and 404 every request ("All providers ignored").
         want_only = {
-            "glm": ["deepseek", "novita", "gmicloud", "streamlake", "baidu", "digitalocean", "deepinfra", "sail"],
-            "minimax": ["together"],
-            "deepseek": ["baseten/fp4", "siliconflow/fp8", "together", "fireworks"],
+            "minimax": ["gmicloud", "novita", "deepinfra", "together"],
+            "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
         }.get(family)
         if want_only is not None:
             if provider_cfg.get("only") != want_only:
                 provider_cfg["only"] = want_only
-                changes.append(f"{model_id}.provider.only -> {want_only} (unmoderated providers only; skip moderated proxies)")
-            if provider_cfg.get("require_parameters") is not require_parameters:
-                provider_cfg["require_parameters"] = require_parameters
-                changes.append(f"{model_id}.provider.require_parameters -> {str(require_parameters).lower()}")
-        elif provider_cfg.get("require_parameters") is not require_parameters:
+                changes.append(f"{model_id}.provider.only -> {want_only} (live-verified unmoderated hosts; no fp4)")
+        elif "only" in provider_cfg:
+            del provider_cfg["only"]
+            changes.append(f"{model_id}.provider.only removed (stale pin — no live roster for this family)")
+        if provider_cfg.get("require_parameters") is not require_parameters:
             provider_cfg["require_parameters"] = require_parameters
             changes.append(f"{model_id}.provider.require_parameters -> {str(require_parameters).lower()}")
         route_id = str(model_cfg.get("id") or model_id)
@@ -452,18 +455,18 @@ MODERATED_FB = ("anthropic/claude", "openai/gpt", "meta-llama/", "cohere/")
 RECON_PRIMARY = {
     "explore": "openrouter/deepseek/deepseek-v4-pro-0813",
     "librarian": "openrouter/deepseek/deepseek-v4-pro-0813",
-    "metis": "openrouter/deepseek/deepseek-v4-pro-0813",
+    "metis": "openrouter/z-ai/glm-5.3",
     "multimodal-looker": "openrouter/google/gemini-3.1-pro-preview",
     "deep": "openrouter/deepseek/deepseek-v4-pro-0813",
-    "arch-review": "openrouter/deepseek/deepseek-v4-pro-0813",
-    "content-aware-research": "openrouter/deepseek/deepseek-v4-pro-0813",
+    "arch-review": "openrouter/z-ai/glm-5.3",
+    "content-aware-research": "openrouter/nousresearch/hermes-4-405b",
     "content-aware-deep": "openrouter/deepseek/deepseek-v4-pro-0813",
-    "content-aware-fast": "openrouter/deepseek/deepseek-v4-flash",
+    "content-aware-fast": "openrouter/deepseek/deepseek-v4-flash-0731",
 }
+# hermes-4-405b is NOT here: it cannot tool-call, so it may only ever be the
+# content-aware-research primary — never a fallback for tool-using recon agents.
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
-    "openrouter/nousresearch/hermes-4-405b",
-    "openrouter/nousresearch/hermes-4-70b",
     "openrouter/z-ai/glm-5.3",
     "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
@@ -652,7 +655,7 @@ if isinstance(bt, dict):
                 return 10
             if any(x in low for x in ("minimax", "glm", "mimo", "longcat")):
                 return 8
-            if any(x in low for x in ("sonnet", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7")):
+            if any(x in low for x in ("sonnet", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7", "deepseek-v4-pro")):
                 return 5
             return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
@@ -778,21 +781,9 @@ AGENT_COLORS = {
     "sisyphus-junior": "#7A8BFF",
     "content-aware-research": "#FF1744",
 }
-CATEGORY_COLORS = {
-    "visual-engineering": "#FF2D95",
-    "ultrabrain": "#B967FF",
-    "deep": "#00F0FF",
-    "artistry": "#FF5C00",
-    "quick": "#39FF14",
-    "unspecified-low": "#6B7A99",
-    "unspecified-high": "#9DFFFF",
-    "writing": "#00FFD1",
-    "bug-hunt": "#FFD400",
-    "refactor-safe": "#3DDC97",
-    "arch-review": "#6C63FF",
-    "content-aware-fast": "#FF1744",
-    "content-aware-deep": "#C51162",
-}
+# NOTE: categories do NOT get colors. The OmO 4.19.4 schema allows `color` on
+# agents only (properties.agents.*.color); categories have no color property,
+# and the unknown-key strip above removes any that sneak in.
 
 for n, a in omo.get("agents", {}).items():
     c = a.get("color")
@@ -811,22 +802,6 @@ for n, a in omo.get("agents", {}).items():
         if bad in a:
             del a[bad]
             changes.append(f"agent {n}: stripped '{bad}'")
-
-for n, a in omo.get("categories", {}).items():
-    if not isinstance(a, dict):
-        continue
-    c = a.get("color")
-    want = CATEGORY_COLORS.get(n)
-    if want is not None and str(c).upper() != want.upper():
-        a["color"] = want
-        changes.append(f"category {n}: color -> {want}")
-    elif c is not None and not HEX.match(str(c)):
-        if str(c) in THEME_HEX:
-            a["color"] = THEME_HEX[str(c)]
-            changes.append(f"category {n}: color '{c}' -> {a['color']}")
-        else:
-            del a["color"]
-            changes.append(f"category {n}: removed non-hex color '{c}'")
 
 # OmO skills sources — mirror opencode.json (global config + project ./skills)
 ALLOWED_SKILL_SOURCES = ["~/.config/opencode/skills", "./skills"]

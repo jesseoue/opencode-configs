@@ -475,7 +475,7 @@ STRONG = ("glm-5","glm-4.6","glm-4.5","deepseek-v4","deepseek-v3","deepseek-r1",
           "minimax-m","mistral-large","mistral-medium","magistral-medium","codestral",
           "claude-","gpt-5","o3","o4-","grok-4","grok-code","gemini-2.5-pro","gemini-3")
 # SMALL_OK = fast/cheap models acceptable for subagents (includes small tiers).
-SMALL_OK = STRONG + ("deepseek-v4-flash","qwen3.5-flash","qwen3-flash","gemini-2.5-flash",
+SMALL_OK = STRONG + ("deepseek-v4-flash-0731","qwen3.5-flash","qwen3-flash","gemini-2.5-flash",
           "gemini-3.5-flash","gemini-3.7-flash","gemini-flash","gpt-5-mini","gpt-oss","haiku",
           "ministral","mistral-nemo","llama-3.3","llama-4","glm-4.5-air","minimax-m2","-flash")
 # Exclude tiny variants from the workhorse/deep (default/reasoning) roles.

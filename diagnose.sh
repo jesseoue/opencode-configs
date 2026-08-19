@@ -324,7 +324,7 @@ if [[ $AGENTFIX -eq 1 ]]; then
     # Pick a model that VERIFIABLY routes (the broken model may be the default the
     # agent would otherwise use). Prefer a cheap healthy one; fall back to flash.
     healthy="$(head -1 "$HEALTHYFILE" 2>/dev/null)"
-    fixmodel="openrouter/${healthy:-deepseek/deepseek-v4-flash}"
+    fixmodel="openrouter/${healthy:-deepseek/deepseek-v4-flash-0731}"
     prompt="You are working in the OpenCode config repo at ${REPO} (this IS ~/.config/opencode). These issues were detected by ./diagnose.sh:
 ${issues}
 

@@ -1,6 +1,6 @@
-# Category: quick (DeepSeek Flash Nitro · unmoderated)
+# Category: quick (DeepSeek V4 Flash · unmoderated)
 
-Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon. Escalates to DeepSeek Pro → MiniMax → GLM Exacto on fallback — all unmoderated.
+Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon. Escalates to DeepSeek V4 Pro → MiniMax → GLM 5.3 on fallback — all unmoderated.
 
 ## Authorized
 

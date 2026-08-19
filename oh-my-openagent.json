@@ -29,7 +29,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "hephaestus": {
@@ -45,7 +46,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/qwen/qwen3.8-max",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "prometheus": {
@@ -58,7 +60,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "atlas": {
@@ -71,7 +74,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "oracle": {
@@ -84,7 +88,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/qwen/qwen3.8-max",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "librarian": {
@@ -97,7 +102,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "explore": {
@@ -116,7 +122,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "multimodal-looker": {
@@ -127,7 +134,8 @@
       "model": "openrouter/google/gemini-3.1-pro-preview",
       "fallback_models": [
         "openrouter/google/gemini-3.7-flash",
-        "openrouter/z-ai/glm-5.3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "metis": {
@@ -139,7 +147,8 @@
       "reasoning": "medium",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "momus": {
@@ -151,7 +160,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "xhigh",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "sisyphus-junior": {
@@ -164,7 +175,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "content-aware-research": {
@@ -184,7 +196,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max"
       ]
     }
   },
@@ -197,7 +210,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/google/gemini-3.7-flash",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "ultrabrain": {
@@ -206,7 +220,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "xhigh",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "deep": {
@@ -216,7 +232,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/qwen/qwen3.8-max",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "artistry": {
@@ -227,7 +244,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/google/gemini-3.7-flash",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "quick": {
@@ -237,7 +255,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "unspecified-low": {
@@ -247,7 +266,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "unspecified-high": {
@@ -256,7 +276,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "writing": {
@@ -266,7 +288,8 @@
       "reasoning": "medium",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "bug-hunt": {
@@ -277,7 +300,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "refactor-safe": {
@@ -288,7 +312,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "arch-review": {
@@ -299,29 +324,32 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/minimax/minimax-m3",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "content-aware-fast": {
       "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-fast.md",
       "maxTokens": 8192,
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "openrouter/deepseek/deepseek-v4-flash-0731",
       "reasoning": "low",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/deepseek/deepseek-v4-pro-0813",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     },
     "content-aware-deep": {
       "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-deep.md",
       "maxTokens": 32768,
-      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-flash",
-        "openrouter/minimax/minimax-m3"
+        "openrouter/deepseek/deepseek-v4-flash-0731",
+        "openrouter/minimax/minimax-m3",
+        "openrouter/qwen/qwen3.8-max"
       ]
     }
   },
@@ -332,14 +360,16 @@
     },
     "modelConcurrency": {
       "openrouter/z-ai/glm-5.3": 8,
+      "openrouter/poolside/laguna-s-2.1": 10,
+      "openrouter/meituan/longcat-2.0": 8,
       "openrouter/minimax/minimax-m3": 8,
       "openrouter/google/gemini-3.1-pro-preview": 5,
       "openrouter/google/gemini-3.7-flash": 10,
       "openrouter/qwen/qwen3.8-max": 5,
       "openrouter/moonshotai/kimi-k2.7-code": 5,
-      "openrouter/poolside/laguna-s-2.1": 10,
-      "openrouter/meituan/longcat-2.0": 8,
-      "openrouter/deepseek/deepseek-v4-flash": 10
+      "openrouter/deepseek/deepseek-v4-pro-0813": 5,
+      "openrouter/deepseek/deepseek-v4-flash-0731": 10,
+      "openrouter/nousresearch/hermes-4-405b": 2
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,

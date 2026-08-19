@@ -1,4 +1,4 @@
-# Category: artistry (Gemini 3.1 Pro Preview)
+# Category: artistry (Gemini 3.1 Pro)
 
 Creative direction lock + critic. Inspired by Open Design / Claude Design: discover the brief → lock a direction → critique → hand off. You do **not** ship product UI code (that is `visual-engineering`).
 

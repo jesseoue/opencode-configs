@@ -1,4 +1,4 @@
-# Category: visual-engineering (Gemini 3.1 Pro Preview)
+# Category: visual-engineering (Gemini 3.1 Pro)
 
 Ship frontend / UI / UX / motion. Unstable-agent path — verify visually when possible. Direction comes from the brief, existing design system, or `artistry` — you implement, you don't redesign by vibes.
 

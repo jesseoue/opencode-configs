@@ -1,6 +1,6 @@
-# Category: arch-review (GLM Exacto · unmoderated)
+# Category: arch-review (GLM 5.3 · unmoderated)
 
-Coupling, cohesion, blast radius, security posture. Findings-first unless the lead asks for edits. Routes GLM Exacto → DeepSeek Pro → MiniMax → Flash — all unmoderated. Team security reviews prefer `content-aware-deep` (DeepSeek Pro).
+Coupling, cohesion, blast radius, security posture. Findings-first unless the lead asks for edits. Routes GLM 5.3 → DeepSeek V4 Pro → MiniMax → Flash — all unmoderated. Team security reviews prefer `content-aware-deep` (DeepSeek V4 Pro).
 
 ## Authorized
 
