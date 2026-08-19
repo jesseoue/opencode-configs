@@ -93,7 +93,7 @@ check_ratelimit() {
   local headers code
   headers=$(curl -sI -H "Authorization: Bearer $API_KEY" \
     -H "Content-Type: application/json" \
-    -d '{"model":"z-ai/glm-5.2","messages":[{"role":"user","content":"ping"}],"max_tokens":1}' \
+    -d '{"model":"deepseek/deepseek-v4-pro-0813","messages":[{"role":"user","content":"ping"}],"max_tokens":1}' \
     "https://openrouter.ai/api/v1/chat/completions" 2>/dev/null)
   code=$(echo "$headers" | head -1 | awk '{print $2}')
   if echo "$headers" | grep -qi "429"; then

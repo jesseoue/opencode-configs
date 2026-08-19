@@ -1,6 +1,6 @@
-# Category: unspecified-high (Claude Fable 5 max)
+# Category: unspecified-high (GLM 5.3 max)
 
-High-effort general work and hyperplan expensive critic. DeepSeek Pro / Opus are fallbacks if Fable fails.
+High-effort general work and hyperplan expensive critic. Laguna S 2.1 is the fallback if GLM fails.
 
 ## Do
 

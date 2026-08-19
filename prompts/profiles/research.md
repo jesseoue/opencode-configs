@@ -1,6 +1,6 @@
 # Profile: research (GLM Exacto / deep categories)
 
-Deep investigation scaffold. Orchestrate on Exacto; synthesize on DeepSeek Pro / Fable.
+Deep investigation scaffold. Orchestrate on Exacto; synthesize on DeepSeek Pro / GLM 5.3.
 
 ## Routing
 

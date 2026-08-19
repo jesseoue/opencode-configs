@@ -179,9 +179,10 @@ PY
 fi
 # NOTE: We deliberately do NOT run `bunx oh-my-openagent doctor` here.
 # Running the OmO CLI triggers its config-migration, which treats the repo's
-# canonical oh-my-openagent.json as a legacy source and MOVES it into a backup,
-# regenerating a broken ~/.omo/omo.jsonc. That self-sabotages the config on every
-# `oc doctor`. Static checks above (pin match + cache version) are sufficient.
+# oh-my-openagent.json as a legacy source and MOVES it into a backup, then
+# regenerates ~/.omo/omo.jsonc from it. That's redundant with `oc fix` (which
+# already syncs omo.jsonc canonically) and can leave a stale agents.*.models
+# array behind. Static checks above (pin match + cache version) are sufficient.
 if [[ -z "$pin" ]]; then
   bad "no oh-my-openagent@… pin in opencode.json"
 elif [[ -z "${OMOCLI_DOCTOR_ALLOWED:-}" ]]; then
@@ -239,9 +240,10 @@ fi
 #
 # NOTE: We do NOT run `opencode agent list` here at all. Loading the OmO plugin
 # triggers its config-migration, which treats the repo's canonical
-# oh-my-openagent.json as a legacy source and MOVES it into a backup,
-# regenerating a broken ~/.omo/omo.jsonc. That self-sabotages the config on every
-# full `oc doctor`. Static agent/category checks above are sufficient.
+# oh-my-openagent.json as a legacy source and MOVES it into a backup, then
+# regenerates ~/.omo/omo.jsonc from it. That's redundant with `oc fix` (which
+# already syncs omo.jsonc canonically) and can leave a stale agents.*.models
+# array behind. Static agent/category checks above are sufficient.
 sec "Runtime agent visibility"
 info "runtime 'opencode agent list' probe skipped — loading OmO triggers its config-migration (self-sabotage); static checks cover agent visibility"
 

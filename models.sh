@@ -76,9 +76,6 @@ def route_label(prov):
     if order:
         return "order:" + ",".join(order[:4]) + ("…" if len(order) > 4 else "")
     rid = prov.get("_route_id") or ""
-    variant = rid.rsplit(":", 1)[-1]
-    if variant in ("exacto", "nitro", "floor"):
-        return f":{variant}"
     return "auto"
 
 def prov_policy(slug):
@@ -203,9 +200,6 @@ def route_label(prov, rid):
     order = prov.get("order") or []
     if order:
         return "order:" + ",".join(order[:3])
-    variant = rid.rsplit(":", 1)[-1]
-    if variant in ("exacto", "nitro", "floor"):
-        return f":{variant}"
     return "auto"
 
 def probe(rid):
@@ -419,9 +413,7 @@ for key,cfg in models.items():
         flags.append(f"prefer {top3[0]} over {order[0]}")
     mark=G("✓") if not flags else Y("⚠")
     print(f"  {mark} {cfg.get('id') or key}")
-    variant=(cfg.get("id") or "").rsplit(":",1)[-1]
-    route=(f"native :{variant}" if variant in ("exacto","nitro","floor") and not order
-           else (", ".join(order[:6])+("…" if len(order)>6 else "") if order else "OpenRouter auto"))
+    route=(", ".join(order[:6])+("…" if len(order)>6 else "") if order else "OpenRouter auto")
     def endpoint_text(name):
         v=by[name]
         latency=f"{v['lat']/1000:.2f}s" if v["lat"] else "n/a"
@@ -435,7 +427,7 @@ print()
 D=lambda s: col("2",s)
 if issues:
     print(Y(f"  {issues} routing health signal(s) — review only explicit constraints."))
-    print(D("  Native :nitro/:exacto routing adapts automatically; do not pin transient endpoint rankings."))
+    print(D("  OpenRouter auto-routing adapts automatically; do not pin transient endpoint rankings."))
 else:
     print(G("  All configured routes reach healthy providers. Ready."))
 print()
@@ -484,7 +476,7 @@ STRONG = ("glm-5","glm-4.6","glm-4.5","deepseek-v4","deepseek-v3","deepseek-r1",
           "claude-","gpt-5","o3","o4-","grok-4","grok-code","gemini-2.5-pro","gemini-3")
 # SMALL_OK = fast/cheap models acceptable for subagents (includes small tiers).
 SMALL_OK = STRONG + ("deepseek-v4-flash","qwen3.5-flash","qwen3-flash","gemini-2.5-flash",
-          "gemini-3.5-flash","gemini-3.6-flash","gemini-flash","gpt-5-mini","gpt-oss","haiku",
+          "gemini-3.5-flash","gemini-3.7-flash","gemini-flash","gpt-5-mini","gpt-oss","haiku",
           "ministral","mistral-nemo","llama-3.3","llama-4","glm-4.5-air","minimax-m2","-flash")
 # Exclude tiny variants from the workhorse/deep (default/reasoning) roles.
 TINY = ("-mini","-xs","-lite","-nano","-tiny","-8b","-9b","-7b","-4b","-3b","-1.5b","-0.5b","-air","-small")
@@ -544,7 +536,7 @@ if mode=="json":
 if mode=="upgrade":
     import re
     apply=os.environ.get("APPLY")=="1"
-    def bare(mid): return mid.split(":",1)[0]  # strip :exacto/:nitro/:floor
+    def bare(mid): return mid.split(":",1)[0]  # strip any routing suffix
     def shape(mid): return re.sub(r"\d+(?:\.\d+)*","#", bare(mid))
     def vertuple(mid): return tuple(int(x) for x in re.findall(r"\d+", re.sub(r"[^0-9.]"," ", bare(mid))))
     print(B("== Model freshness (are we on the newest versions?) =="))
@@ -586,7 +578,7 @@ if mode=="audit":
     print(B("== Configured models =="))
     for full,cm in configured.items():
         rid=cm.get("id",full.split("/",1)[1])
-        bare=rid.split(":",1)[0]  # :exacto/:nitro are virtual variants, not catalog rows
+        bare=rid.split(":",1)[0]  # strip any routing suffix
         live=by_id.get(bare) or by_id.get(rid) or by_id.get(full.split("/",1)[1])
         name=cm.get("name",rid)
         if not live:
@@ -627,21 +619,20 @@ d_rid=rid_of(default_model); s_rid=rid_of(small_model)
 d_bare, s_bare = bare(d_rid), bare(s_rid)
 w_ids=[m["id"] for m in rank("workhorse")[:5]]
 s_ids=[m["id"] for m in rank("small")[:5]]
-# Exacto/Nitro/Floor are routing suffixes — compare bare catalog ids for drift.
-# GLM Exacto as default is an intentional quality pick (tool-call reliability > cheapest).
+# Routing suffixes are compared as bare catalog ids for drift.
+# GLM as default is an intentional quality pick (tool-call reliability > cheapest).
 if d_rid:
-    if d_bare in w_ids or d_rid in w_ids or "glm-5" in d_bare or ":exacto" in d_rid:
-        print("  "+G("✓")+f" default '{d_rid}' is a strong workhorse pick (Exacto = quality-first routing)")
+    if d_bare in w_ids or d_rid in w_ids or "glm-5" in d_bare:
+        print("  "+G("✓")+f" default '{d_rid}' is a strong workhorse pick (quality-first routing)")
     else:
         print("  "+Y("⚠")+f" default '{d_rid}' not in the top-5 workhorse tier; cheapest strong pick: '{w_ids[0]}' → ./fix.sh --set model=openrouter/{w_ids[0]}")
 if s_rid:
     if s_bare in s_ids or s_rid in s_ids:
-        mode="Floor = price-first" if ":floor" in s_rid else "Nitro = throughput"
-        print("  "+G("✓")+f" small_model '{s_rid}' is a top-tier cheap pick ({mode})")
+        print("  "+G("✓")+f" small_model '{s_rid}' is a top-tier cheap pick")
     else:
         print("  "+Y("⚠")+f" small_model '{s_rid}' not in the top-5 cheap tier; best: '{s_ids[0]}' → ./fix.sh --set small_model=openrouter/{s_ids[0]}")
 print("\n  "+D("Quality is heuristic (gated to proven coder families; the API has no benchmarks). Treat as cost guidance, verify quality yourself."))
-print("  "+D(":exacto = tool quality · :nitro = throughput · :floor = price · Auto Exacto covers bare tool calls."))
+print("  "+D("OpenRouter auto-routing covers bare tool calls; no manual routing suffixes needed."))
 print()
 PY
 

@@ -6,7 +6,7 @@ Cost-first scaffold. Sisyphus stays on GLM Exacto for tool quality; prefer Flash
 
 - Routes: `quick` category; explore, librarian, and sisyphus-junior agents
 - Short answers. Batch tools. Skip deep orchestration.
-- Context7 via librarian for docs — don't burn Pro / Fable on trivial lookups.
+- Context7 via librarian for docs — don't burn Pro / GLM on trivial lookups.
 
 ## Avoid
 
