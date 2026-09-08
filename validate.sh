@@ -102,9 +102,20 @@ if oc:
     hdrs = popts.get("headers") if isinstance(popts.get("headers"), dict) else {}
     if hdrs.get("HTTP-Referer") != want_referer:
         err(f"opencode.json: openrouter.headers.HTTP-Referer must match signature github_b64 ({want_referer}). Run: oc fix")
-    elif hdrs.get("X-Title") != "OpenConfig":
+    if hdrs.get("X-Title") != "OpenConfig":
         err("opencode.json: openrouter.headers.X-Title must be OpenConfig")
-    else:
+    if hdrs.get("X-OpenRouter-Title") != "OpenConfig":
+        err("opencode.json: openrouter.headers.X-OpenRouter-Title must be OpenConfig")
+    # Marketplace categories are hyphenated slugs; "cli,agent" is silently dropped.
+    # https://openrouter.ai/docs/app-attribution
+    if hdrs.get("X-OpenRouter-Categories") != "cli-agent":
+        err("opencode.json: openrouter.headers.X-OpenRouter-Categories must be cli-agent (OpenRouter marketplace). Run: oc fix")
+    if (
+        hdrs.get("HTTP-Referer") == want_referer
+        and hdrs.get("X-Title") == "OpenConfig"
+        and hdrs.get("X-OpenRouter-Title") == "OpenConfig"
+        and hdrs.get("X-OpenRouter-Categories") == "cli-agent"
+    ):
         ok("openrouter attribution headers aligned with signature")
     direct_opts = ((oc.get("provider") or {}).get("openai") or {}).get("options") or {}
     enabled_providers = oc.get("enabled_providers")
@@ -183,12 +194,13 @@ if oc:
             err(f"opencode.json[{mid}]: provider.zdr restricts the provider pool — remove it for availability.")
         expected_require_parameters = fam in ("glm", "minimax")
         # Pin rosters mirror fix.sh want_only — rebuilt from LIVE endpoint data
-        # (2026-08-19): fp8/full-precision unmoderated hosts only, no fp4, no
-        # first-party. glm deliberately unpinned: Auto Exacto + require_parameters
-        # pick tool-capable hosts; a static only-roster can blackhole on churn.
+        # (rechecked 2026-09-08): fp8/full-precision unmoderated hosts only, no
+        # fp4, no first-party. glm deliberately unpinned: Auto Exacto +
+        # require_parameters pick tool-capable hosts; a static only-roster can
+        # blackhole on churn. MiniMax includes parasail (fp8 + tools).
         want_only = {
             "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
-            "minimax": ["gmicloud", "novita", "deepinfra", "together"],
+            "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
         }.get(fam)
         if want_only is not None:
             if pv.get("only") != want_only:
@@ -778,6 +790,14 @@ if omo:
              + ("…" if len(miss_mc) > 5 else ""))
     elif ref_ids:
         ok(f"modelConcurrency covers {len(ref_ids)} referenced models")
+    ds_pro = mc.get("openrouter/deepseek/deepseek-v4-pro-0813")
+    if ds_pro != 8:
+        err(
+            "modelConcurrency openrouter/deepseek/deepseek-v4-pro-0813 must be 8 "
+            f"(explore+librarian+deep share it; got {ds_pro!r}) — run: oc fix"
+        )
+    else:
+        ok("modelConcurrency DeepSeek Pro 0813=8")
 
     # team specs (~/.omo/teams via repo teams/) — OmO hard-rejects read-only agents as members
     # https://omo.vibetip.help/docs + docs/guide/team-mode.md

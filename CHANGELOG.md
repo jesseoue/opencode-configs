@@ -2,7 +2,17 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.70):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.71):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.71] — 2026-09-08
+
+### OpenRouter attribution + concurrency guards (docs + live endpoints)
+
+- **Attribution:** `X-OpenRouter-Categories` `cli,agent` → **`cli-agent`**. OpenRouter marketplace only accepts hyphenated slugs (`cli-agent`, `ide-extension`, …); unrecognized values are silently dropped. Keep `HTTP-Referer` + `X-OpenRouter-Title` / `X-Title` (docs still accept the legacy alias).
+- **Concurrency numbers unchanged** (paid OpenRouter has no documented request-concurrency cap — credit limits + per-provider 429s + DDoS only). Caps stay: default **10**, OpenRouter provider **12**, Flash/GLM/DeepSeek Pro 0813/Venice/Hermes **10/8/8/5/2**.
+- **`oc fix` regression:** `_mc_cap` treated `deepseek-v4-pro*` as 5 and would overwrite the intentional 1.5.65 raise back to 5. OpenRouter Pro 0813 now stays **8** (explore + librarian + deep share it). Venice DeepSeek stays **5**.
+- **MiniMax `provider.only`:** add **parasail** (live 2026-09-08: fp8 + tools; already on the DeepSeek unmoderated roster). DeepSeek 8-host pin still all healthy — no first-party / fp4 / unverified hosts added. GLM stays unpinned (`require_parameters: true`).
+- `oc validate` / smoke now require `cli-agent` headers and DeepSeek Pro 0813 cap 8.
 
 ## [1.5.70] — 2026-09-08
 

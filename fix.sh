@@ -277,7 +277,7 @@ if isinstance(or_opts, dict):
             "HTTP-Referer": github_repo_url(),
             "X-Title": "OpenConfig",
             "X-OpenRouter-Title": "OpenConfig",
-            "X-OpenRouter-Categories": "cli,agent",
+            "X-OpenRouter-Categories": "cli-agent",
         }
         for hk, hv in want_hdrs.items():
             if hdrs.get(hk) != hv:
@@ -299,16 +299,17 @@ if isinstance(or_models, dict):
             changes.append(f"{model_id}.provider.zdr removed (preserve provider availability)")
         require_parameters = model_cfg.get("family") in ("glm", "minimax")
         family = model_cfg.get("family")
-        # Unmoderated-provider pinning, rebuilt from the LIVE endpoint rosters
-        # (openrouter.ai/api/v1/models/{id}/endpoints, verified 2026-08-19):
+        # Unmoderated-provider pinning, rebuilt from LIVE endpoints
+        # (openrouter.ai/api/v1/models/{id}/endpoints, rechecked 2026-09-08):
         # skip first-party + moderated proxies that add runtime blocks, and skip
         # every fp4 endpoint (fp4 quant degrades tool-calling). Plain provider
         # slugs only — each listed host serves the family at fp8/full precision.
         # glm has NO pin: glm-5.3 now has many hosts; Auto Exacto (on by default
         # for tool requests) + require_parameters is the quality pin. A static
         # provider.only roster would fight that and can 404 if hosts churn.
+        # MiniMax: parasail added 2026-09-08 (fp8 + tools; already on DeepSeek roster).
         want_only = {
-            "minimax": ["gmicloud", "novita", "deepinfra", "together"],
+            "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
             "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
         }.get(family)
         if want_only is not None:
@@ -672,9 +673,13 @@ if isinstance(bt, dict):
             low = str(model_key).lower()
             if any(x in low for x in ("flash", "luna", "qwen3.7", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3-flash", "gemini-3.5-flash-lite", "laguna")):
                 return 10
+            # OpenRouter DeepSeek Pro 0813 is shared by explore+librarian+deep — keep 8.
+            # Venice DeepSeek is hardcoded to 5 below (not this helper).
+            if "deepseek-v4-pro" in low:
+                return 8
             if any(x in low for x in ("minimax", "glm", "mimo", "longcat")):
                 return 8
-            if any(x in low for x in ("sonnet", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7", "deepseek-v4-pro")):
+            if any(x in low for x in ("sonnet", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7")):
                 return 5
             return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []

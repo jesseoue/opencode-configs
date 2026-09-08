@@ -201,13 +201,33 @@ import json, sys
 omo=json.load(open(sys.argv[1]))
 bt=omo.get("background_task") or {}
 pc=bt.get("providerConcurrency") or {}
+mc=bt.get("modelConcurrency") or {}
 ok=(bt.get("defaultConcurrency")==10
-    and pc.get("openrouter")==12 and "openai" not in pc and "anthropic" not in pc)
+    and pc.get("openrouter")==12 and "openai" not in pc and "anthropic" not in pc
+    and mc.get("openrouter/deepseek/deepseek-v4-pro-0813")==8
+    and mc.get("venice/deepseek-v4-pro-0813")==5)
 sys.exit(0 if ok else 1)
 ' "$REPO/oh-my-openagent.json"; then
-  ok "fast concurrency pins (default=10 openrouter=12 only)"
+  ok "fast concurrency pins (default=10 openrouter=12 DeepSeek Pro=8 Venice=5)"
 else
   bad "concurrency drift — run: oc fix"
+fi
+
+# OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)
+if python3 -c '
+import json, sys
+oc=json.load(open(sys.argv[1]))
+h=((oc.get("provider") or {}).get("openrouter") or {}).get("options") or {}
+hdrs=h.get("headers") or {}
+ok=(hdrs.get("X-OpenRouter-Title")=="OpenConfig"
+    and hdrs.get("X-Title")=="OpenConfig"
+    and hdrs.get("X-OpenRouter-Categories")=="cli-agent"
+    and str(hdrs.get("HTTP-Referer") or "").endswith("jesseoue/opencode-configs"))
+sys.exit(0 if ok else 1)
+' "$REPO/opencode.json"; then
+  ok "openrouter attribution (cli-agent + OpenConfig title)"
+else
+  bad "openrouter attribution headers — run: oc fix"
 fi
 
 # Team mode schema + ~/.omo/teams → live ~/.config/opencode (not this checkout)

@@ -87,7 +87,7 @@
           "HTTP-Referer": "https://github.com/jesseoue/opencode-configs",
           "X-Title": "OpenConfig",
           "X-OpenRouter-Title": "OpenConfig",
-          "X-OpenRouter-Categories": "cli,agent"
+          "X-OpenRouter-Categories": "cli-agent"
         }
       },
       "models": {
@@ -327,7 +327,7 @@
               "require_parameters": true,
               "data_collection": "allow",
               "allow_fallbacks": true,
-              "only": ["gmicloud", "novita", "deepinfra", "together"]
+              "only": ["gmicloud", "novita", "deepinfra", "together", "parasail"]
             },
             "reasoning": {
               "effort": "high"
