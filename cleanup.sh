@@ -50,8 +50,8 @@ drift=0
 sec "Required files"
 REQUIRED=(
   opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json cursor-openrouter.json
+  .github/workflows/check.yml
   validate.sh doctor.sh cleanup.sh fix.sh models.sh versions.sh diagnose.sh setup.sh install.sh maintain.sh
-# Add locate.sh to required list
   opencode.sh run.sh openrouter-admin.sh cursor.sh oc locate.sh signature.sh
   lib/common.sh
   agents/content-aware-research.md

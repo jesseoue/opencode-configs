@@ -46,6 +46,8 @@
 !teams/**
 !tests/
 !tests/**
+!.github/
+!.github/**
 
 # ── Never track — even inside allowlisted trees ─────────────────────
 # Secrets

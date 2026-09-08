@@ -53,7 +53,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
 | **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (112 checks), `oc fix` self-repair, 50 smoke checks |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (112 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
@@ -407,6 +407,7 @@ opencode-configs/
 ├── openrouter-admin.sh · cursor.sh · cursor-openrouter.json
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · vault.json · AGENTS.md
+├── .github/workflows/check.yml
 ├── agents/content-aware-research.md
 ├── profiles/ · prompts/ · teams/ · skills/
 ├── .env.example  (vault.local.json is gitignored)
@@ -426,6 +427,15 @@ opencode-configs/
 oc signature && oc test && oc validate && oc versions && oc doctor
 oc deploy check                    # pre-deployment gate (credits, models, git, signature)
 bunx oh-my-openagent@4.19.4 doctor   # upstream: System OK
+```
+
+Hermetic checks (no API keys, no live `~/.config/opencode` — same as GitHub Actions `.github/workflows/check.yml`):
+
+```bash
+OC_VALIDATE_REPO="$PWD" OC_VALIDATE_OFFLINE=1 ./validate.sh --quiet
+bash -n oc && find . -name '*.sh' -not -path './.git/*' -exec bash -n {} +
+./signature.sh --json
+OC_CI=1 ./tests/smoke.sh
 ```
 
 Idempotency: re-running install / setup / heal / fix on a healthy box must not clobber `.env`, rewrite correct symlinks, or bump clean config mtimes.

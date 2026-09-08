@@ -17,6 +17,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - `launch-desktop.sh` / `serve-desktop.sh` call `oc_telemetry_off`. `.env.example` documents `OC_PROJECTS_DIR` / `OC_DEFAULT_WORKSPACE` / `OC_DEFAULT_PROFILE`.
 - AGENTS.md command list: test, models, env, secrets, setup, cleanup, cursor, new, projects. docs-team “Gemini Nitro” → Gemini 3.8 Flash.
 - Smoke: `signature.version` == `versions.json`; `.env.example` names vs `OC_ENV_ALLOWLIST`. 1.5.69 badge/section chrome kept.
+- GitHub Actions `.github/workflows/check.yml`: hermetic `bash -n` + `./validate.sh --quiet` + `./signature.sh` (no secrets / no OpenRouter). `OC_CI=1` smoke skips doctor, setup, live `~/.omo/teams`, and key-backed model probes. `.gitignore` allowlists `.github/`.
 
 ## [1.5.69] — 2026-09-08
 

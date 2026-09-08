@@ -5,11 +5,29 @@
 # cleanup --dry-run, setup --check. Safe on a live machine.
 #
 # Usage: ./tests/smoke.sh   |   oc test
+#        OC_CI=1 ./tests/smoke.sh   hermetic (no live install / no API keys)
 #
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
+
+for arg in "$@"; do
+  case "$arg" in
+    --ci) export OC_CI=1 ;;
+    -h|--help)
+      sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0 ;;
+    *) echo "Unknown flag: $arg (try --ci)"; exit 2 ;;
+  esac
+done
+
+# GitHub Actions / OC_CI=1: skip doctor, setup, live team links, key-backed probes.
+if [[ "${OC_CI:-}" == "1" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  export OC_CI=1
+  export OC_VALIDATE_OFFLINE="${OC_VALIDATE_OFFLINE:-1}"
+  export OC_VALIDATE_REPO="${OC_VALIDATE_REPO:-$REPO}"
+fi
 
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
   c_g=$'\033[32m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
@@ -98,16 +116,19 @@ run_step "locate --json" "$REPO/locate.sh" --json
 run_step "signature" "$REPO/signature.sh"
 run_step "fix --dry-run" "$REPO/fix.sh" --dry-run
 run_step "cleanup --dry-run" "$REPO/cleanup.sh" --dry-run
-run_step "setup --check" "$REPO/setup.sh" --check
 run_step "oc secrets --help" "$REPO/oc" secrets --help
-run_step "doctor --quick" "$REPO/doctor.sh" --quick
 run_step "versions --local" "$REPO/versions.sh" --local
-
 run_step "bash -n models.sh" bash -n "$REPO/models.sh"
-run_step "models --moderation" "$REPO/models.sh" --moderation >/dev/null
 
-# doctor --json schema (machine summary for heal/check tooling)
-if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '
+if [[ "${OC_CI:-}" == "1" ]]; then
+  ok "skipped setup/doctor/models probes (OC_CI=1 hermetic)"
+else
+  run_step "setup --check" "$REPO/setup.sh" --check
+  run_step "doctor --quick" "$REPO/doctor.sh" --quick
+  run_step "models --moderation" "$REPO/models.sh" --moderation
+
+  # doctor --json schema (machine summary for heal/check tooling)
+  if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '
 import json,sys
 raw=sys.stdin.read()
 if "──" in raw: raise SystemExit(4)
@@ -118,9 +139,10 @@ if missing: raise SystemExit(1)
 if d.get("critical", 1) != 0: raise SystemExit(2)
 if d.get("verdict") not in ("ready", "core_ready"): raise SystemExit(3)
 '; then
-  ok "doctor --json schema"
-else
-  bad "doctor --json schema"
+    ok "doctor --json schema"
+  else
+    bad "doctor --json schema"
+  fi
 fi
 if ! "$REPO/validate.sh" --quiet 2>/dev/null | grep -q '──'; then
   ok "validate --quiet no chrome"
@@ -165,6 +187,7 @@ sys.exit(0 if ok else 1)
   && grep -q 'plugins' "$REPO/.gitignore" \
   && grep -qE '^/\*$' "$REPO/.gitignore" \
   && grep -q '!prompts/' "$REPO/.gitignore" \
+  && grep -q '!.github/' "$REPO/.gitignore" \
   && ! grep -qE '/Users/[A-Za-z0-9_-]+/' "$REPO/zshrc.snippet" \
   && grep -q 'plugins' "$REPO/lib/common.sh"; then
   ok "goal off + ralph removed + plugins scrubbed + deny-all gitignore + no host paths"
@@ -204,6 +227,8 @@ if tm.get("enabled") is not True or any(k not in tm for k in need):
 tx = omo.get("tmux") or {}
 if tx.get("enabled") is not True or tx.get("layout") != "main-vertical":
     sys.exit(2)
+if os.environ.get("OC_CI") == "1":
+    sys.exit(0)
 
 def is_openconfig(path):
     sig_p = os.path.join(path, "signature.json")
@@ -235,7 +260,11 @@ for name in os.listdir(tdir):
 sys.exit(0)
 PY
 then
-  ok "team mode schema + ~/.omo/teams → live config"
+  if [[ "${OC_CI:-}" == "1" ]]; then
+    ok "team mode schema (live ~/.omo/teams skipped — OC_CI=1)"
+  else
+    ok "team mode schema + ~/.omo/teams → live config"
+  fi
 else
   bad "team mode incomplete — run: oc setup from the live install"
 fi

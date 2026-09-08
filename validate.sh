@@ -1073,8 +1073,15 @@ try:
         err(".gitignore missing root deny-all '/*' (config-only allowlist required)")
     elif "!prompts/" not in gi_noncomment and "!prompts/**" not in gi_noncomment:
         err(".gitignore deny-all missing prompts/ allowlist entries")
+    elif "!.github/" not in gi_noncomment and "!.github/**" not in gi_noncomment:
+        err(".gitignore deny-all missing .github/ allowlist (CI workflows would be untracked)")
     else:
         ok(".gitignore is deny-all + allowlist (config-only)")
+    wf = os.path.join(repo, ".github", "workflows", "check.yml")
+    if not os.path.isfile(wf):
+        err(".github/workflows/check.yml missing — hermetic CI required")
+    else:
+        ok("GitHub Actions check.yml present")
 except FileNotFoundError:
     warn("git not available — skipped ignore coverage check")
 

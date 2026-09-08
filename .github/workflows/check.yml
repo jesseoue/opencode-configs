@@ -1,0 +1,62 @@
+# Hermetic repo checks — no secrets, no 1Password, no live OpenRouter.
+# Local equivalent:
+#   OC_VALIDATE_REPO="$PWD" OC_VALIDATE_OFFLINE=1 ./validate.sh --quiet
+#   bash -n oc && find . -name '*.sh' -not -path './.git/*' -exec bash -n {} +
+#   ./signature.sh --json
+#   OC_CI=1 ./tests/smoke.sh
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: validate
+    runs-on: ubuntu-latest
+    env:
+      OC_VALIDATE_REPO: ${{ github.workspace }}
+      OC_VALIDATE_OFFLINE: "1"
+      OC_CI: "1"
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x oc validate.sh signature.sh tests/smoke.sh
+
+      - name: bash -n
+        run: |
+          set -euo pipefail
+          bash -n oc
+          while IFS= read -r f; do
+            bash -n "$f"
+          done < <(find . -name '*.sh' -not -path './.git/*' | sort)
+
+      - name: validate
+        run: ./validate.sh --quiet
+
+      - name: signature
+        run: ./signature.sh --json
+
+  smoke:
+    name: smoke (hermetic)
+    runs-on: ubuntu-latest
+    env:
+      OC_VALIDATE_REPO: ${{ github.workspace }}
+      OC_VALIDATE_OFFLINE: "1"
+      OC_CI: "1"
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x oc validate.sh signature.sh tests/smoke.sh
+
+      - name: smoke
+        run: ./tests/smoke.sh
