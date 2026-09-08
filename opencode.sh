@@ -5,7 +5,7 @@
 # Loads allowlisted keys from ~/.config/opencode/.env (never `source`s the file —
 # values with & in DB URLs break shell source). Does NOT wrap Infisical/Doppler
 # (that injects vault-wide secrets into the agent). Sync keys with:
-#   oc setup --sync-env
+#   oc secrets sync   or   oc setup --sync-env
 
 set -euo pipefail
 
@@ -53,6 +53,7 @@ fi
 
 oc_telemetry_off
 oc_export_env_file "$ENV_FILE"
+oc_export_vault_allowlist
 # Live OpenCode may drop package.json/node_modules into the config symlink target
 oc_scrub_config_strays "$REPO" >/dev/null
 

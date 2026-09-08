@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "backend": "auto",
+  "note": "Public template — no secret values and no personal 1Password account, vault, or item IDs. Copy this file to vault.local.json (gitignored) and replace the example op://Vault/Item/field refs with your own. oc secrets sync writes allowlisted keys into local .env (gitignored). Never wrap the agent with `op run` or `infisical run`. Infisical: set INFISICAL_DIR.",
+  "onepassword": {
+    "account": "",
+    "vault_id": "",
+    "refs": {
+      "OPENROUTER_API_KEY": "op://Vault/OpenRouter/credential",
+      "VENICE_API_KEY": "op://Vault/Venice/credential",
+      "EXA_API_KEY": "op://Vault/Exa/credential",
+      "CONTEXT7_API_KEY": "op://Vault/Context7/credential"
+    }
+  },
+  "infisical": {
+    "env": "dev",
+    "dir_env": "INFISICAL_DIR"
+  }
+}

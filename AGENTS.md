@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.65** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.66** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.65**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.66**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.
@@ -86,11 +86,11 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - Allow-everything on this trusted local box (no interactive prompts for normal tools).
 - Hard-deny catastrophic bash: `rm -rf /`, `rm -rf ~`, `mkfs`, `sudo`, `git push --force`, `gh repo delete`.
 - External directories, team tools, LSP, MCP allowed: Context7 · Exa websearch · grep_app · codegraph · lsp (OmO builtins + `opencode.json` Context7).
-- Keys in `.env` (never commit): `OPENROUTER_API_KEY`, `EXA_API_KEY`, `CONTEXT7_API_KEY`. OpenRouter-only — no `OPENAI_API_KEY` or direct provider keys.
+- Keys in `.env` (never commit): `OPENROUTER_API_KEY`, `EXA_API_KEY`, `CONTEXT7_API_KEY`, `VENICE_API_KEY`. Sync from 1Password / Infisical via `oc secrets sync` (`vault.json` examples + gitignored `vault.local.json` overlay). OpenRouter-only — no `OPENAI_API_KEY` or direct provider keys.
 
 ## Commands
 
-`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
+`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc secrets` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
 
 ## Projects & scaffolding
 
@@ -119,7 +119,7 @@ Do not scaffold into the config repo. Prefer `oc new`; use `--here` / `--dir` on
 - No `\033[?1049l` in teardown.
 - No `package.json` / `node_modules` / `.omo` / `.sisyphus` / `command/` / `plugins/` in this config repo — scrub with `./cleanup.sh`.
 - Do not scaffold app projects into this config repo — use `oc new` (projects home).
-- Do not commit `.env` or secrets.
+- Do not commit `.env`, `vault.local.json`, or secrets.
 - Do not delete failing tests to make them pass.
 - Do not use `as any`, `@ts-ignore`, or `@ts-expect-error`.
 - Do not re-enable OmO/OpenCode telemetry (`telemetry`, PostHog, `share`, OTel exporters) — `oc_telemetry_off` + `oc fix` keep them dark.

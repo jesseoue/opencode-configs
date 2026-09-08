@@ -2,6 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.66] — 2026-09-08
+
+### 1Password + Infisical vault sync (allowlisted keys only)
+
+- **`vault.json`** is a public template (`op://Vault/Item/field` examples only — no personal account, vault, or item IDs).
+- **`vault.local.json`** (gitignored) overlays personal 1Password refs. `oc secrets sync` merges local over public; empty/example refs no-op and fall through to Infisical (`INFISICAL_DIR`) / Doppler.
+- **`oc secrets`** (`status` / `check` / `sync`) and `oc setup --sync-env` import **allowlisted keys only** into `.env`.
+- Launch paths (`opencode.sh`, `run.sh`, `launch-desktop.sh`, `serve-desktop.sh`) load `.env` via `oc_export_env_file` then fill missing keys from 1Password. **Never** `source .env`, `op run`, or `infisical run`.
+
 ## [1.5.65] — 2026-09-07
 
 ### OpenRouter catalog refresh (Venice content-aware untouched)

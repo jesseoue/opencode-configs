@@ -72,6 +72,7 @@ run_step "signature" "$REPO/signature.sh"
 run_step "fix --dry-run" "$REPO/fix.sh" --dry-run
 run_step "cleanup --dry-run" "$REPO/cleanup.sh" --dry-run
 run_step "setup --check" "$REPO/setup.sh" --check
+run_step "oc secrets --help" "$REPO/oc" secrets --help
 run_step "doctor --quick" "$REPO/doctor.sh" --quick
 run_step "versions --local" "$REPO/versions.sh" --local
 
@@ -107,7 +108,7 @@ else
 fi
 
 # Helpers exist
-for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature; do
+for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs; do
   if grep -q "${fn}()" "$REPO/lib/common.sh"; then
     ok "helper $fn"
   else
@@ -188,6 +189,15 @@ then
   ok "team mode schema + ~/.omo/teams symlinks"
 else
   bad "team mode incomplete — run: oc fix && oc setup"
+fi
+
+# Public vault.json must stay generic; personal refs live in vault.local.json
+if git -C "$REPO" check-ignore -q vault.local.json \
+  && grep -q 'vault.local.json' "$REPO/.gitignore" \
+  && ! grep -qE '[a-z0-9.-]+\.1password\.com|op://[a-z0-9]{20,}/' "$REPO/vault.json"; then
+  ok "vault.json generic + vault.local.json gitignored"
+else
+  bad "vault.json leaked personal 1Password ids or vault.local.json is trackable"
 fi
 
 printf "\n${c_bold}Result:${c_0} %d passed · %d failed\n\n" "$pass" "$fail"

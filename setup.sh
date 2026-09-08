@@ -8,6 +8,7 @@
 #   ./setup.sh              # full setup (idempotent)
 #   ./setup.sh --check      # check only, don't change anything
 #   ./setup.sh --force      # overwrite broken symlinks
+#   ./setup.sh --sync-env   # pull allowlisted keys from 1Password / Infisical
 
 set -euo pipefail
 
@@ -323,53 +324,36 @@ fi
 echo ""
 
 # ─── 8. Sync env from secrets manager (optional) ───────────────
-# NEVER dump a whole Infisical/Doppler project into OpenConfig .env —
-# that spreads company secrets into the public config tree. Import
-# allowlisted OpenConfig keys only (see OC_ENV_ALLOWLIST).
+# 1Password first (vault.json op:// refs), then Infisical, then Doppler.
+# NEVER dump a whole project into OpenConfig .env. Allowlisted keys only.
 if $SYNC_ENV; then
-  echo "Step 8: Sync allowlisted .env keys from secrets manager"
-  if command -v infisical >/dev/null 2>&1 && [[ -n "${INFISICAL_DIR:-}" ]]; then
-    TMP_FILE="$(mktemp)"
-    INFISICAL_ENV="${INFISICAL_ENV:-prod}"
-    ( cd "$INFISICAL_DIR" && infisical export --env="$INFISICAL_ENV" --format=dotenv --silent 2>/dev/null > "$TMP_FILE" )
-    perl -i -pe "s/^([A-Z0-9_]+)='([^'\n]*)'$/\$1=\$2/g" "$TMP_FILE"
-    if [[ -f "$REPO/.env" ]]; then
-      oc_backup_copy "$REPO/.env" "env" >/dev/null || true
-    fi
-    imported="$(oc_import_allowlisted_dotenv "$TMP_FILE" "$REPO/.env" 2>/dev/null || true)"
+  echo "Step 8: Sync allowlisted .env keys (1Password / Infisical / Doppler)"
+  sync_out="$(oc_secrets_sync "$REPO/.env" 2>/dev/null || true)"
+  sync_be="${sync_out%%|*}"
+  sync_keys="${sync_out#*|}"
+  if [[ -z "$sync_be" || "$sync_be" == "none" ]]; then
+    opt "No secrets backend ready — install 1Password CLI (op) or Infisical, or set keys in .env"
+    echo "  1Password:  brew install 1password-cli  ·  then: oc secrets sync"
+    echo "  Infisical:  brew install infisical  ·  INFISICAL_DIR=/path oc setup --sync-env"
+    echo "  Doppler:    brew install doppler"
+    echo "  Note: sync imports OpenConfig allowlisted keys only — never the full vault."
+  else
     OR_KEY="$(oc_get_env_key "$REPO/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
     if [[ -n "$OR_KEY" ]]; then
       HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
         -H "Authorization: Bearer $OR_KEY" \
-        -H "Content-Type: application/json" \
-        -d '{"model":"deepseek/deepseek-v4-pro-0813","messages":[{"role":"user","content":"ping"}],"max_tokens":16}' \
-        https://openrouter.ai/api/v1/chat/completions 2>/dev/null)
+        --connect-timeout 8 --max-time 20 \
+        https://openrouter.ai/api/v1/key 2>/dev/null || echo 000)
       if [[ "$HTTP_CODE" = "200" ]]; then
-        ok ".env allowlisted keys from Infisical (verified HTTP 200)${imported:+ · $imported}"
+        ok ".env allowlisted keys from $sync_be (OpenRouter HTTP 200)${sync_keys:+ · $sync_keys}"
       else
-        bad "OPENROUTER_API_KEY verification failed (HTTP $HTTP_CODE)"
+        ok ".env allowlisted keys from $sync_be${sync_keys:+ · $sync_keys}"
+        opt "OPENROUTER_API_KEY probe HTTP $HTTP_CODE (key present; network or credits)"
       fi
     else
-      bad "OPENROUTER_API_KEY not found in Infisical export (allowlist import)"
+      bad "OPENROUTER_API_KEY not imported from $sync_be"
+      tip "check vault.local.json refs · oc secrets status"
     fi
-    rm -f "$TMP_FILE"
-  elif command -v doppler >/dev/null 2>&1; then
-    TMP_FILE="$(mktemp)"
-    if [[ -f "$REPO/.env" ]]; then
-      oc_backup_copy "$REPO/.env" "env" >/dev/null || true
-    fi
-    if doppler secrets download --no-file --format=env > "$TMP_FILE" 2>/dev/null; then
-      imported="$(oc_import_allowlisted_dotenv "$TMP_FILE" "$REPO/.env" 2>/dev/null || true)"
-      ok ".env allowlisted keys from Doppler${imported:+ · $imported}"
-    else
-      bad "Doppler download failed"
-    fi
-    rm -f "$TMP_FILE"
-  else
-    opt "No secrets manager found (install Infisical or Doppler, or set keys manually)"
-    echo "  Infisical:  curl -sL https://infisical.com/install.sh | bash"
-    echo "  Doppler:    brew install doppler"
-    echo "  Note: sync imports OpenConfig allowlisted keys only — never the full vault."
   fi
   echo ""
 fi

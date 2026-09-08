@@ -19,7 +19,7 @@
 #   admin [status|health|…]               OpenRouter account admin (gateway only)
 #   cursor [setup|apply|status|usage|probe]  Cursor IDE → OpenRouter /api/v1/cursor
 #   launch | run | new | projects         Run / scaffold
-#   locate | signature | versions | plugin | env | maintain | diagnose
+#   locate | signature | versions | plugin | env | secrets | maintain | diagnose
 #   help | version
 
 set -uo pipefail
@@ -103,6 +103,7 @@ ${c_bold}Run & Launch:${c_0}
   ${c_g}launch${c_0}    [dir] [--here]                 Launch OpenCode (never config repo)
   ${c_g}opencode${c_0}  [dir]                          Same as oc launch (opencode.sh)
   ${c_g}env${c_0}       [--check|--scrub]               .env allowlist hygiene (never prints values)
+  ${c_g}secrets${c_0}   [status|sync|check]             1Password / Infisical → allowlisted .env
 
 ${c_bold}Deployment Protection:${c_0}
   ${c_g}deploy${c_0}    [check|lock|unlock|status|quarantine|health]
@@ -330,7 +331,7 @@ oc env — OpenConfig .env hygiene (never prints secret values)
   oc env --scrub   Rewrite .env to allowlisted keys only (copy-backup first)
 
 Foreign keys (company vault dumps) must not live in this public config tree.
-Use Infisical/Doppler for those; `oc setup --sync-env` imports allowlisted keys only.
+Use 1Password (`oc secrets sync`) or Infisical/Doppler — allowlisted keys only.
 ENVHELP
         return 0 ;;
       *) bad "unknown flag: $a"; return 2 ;;
@@ -357,6 +358,113 @@ ENVHELP
     return 1
   fi
   ok ".env allowlist-clean"
+  return 0
+}
+
+# ── 1Password / Infisical sync (never prints secret values) ──
+do_secrets() {
+  local mode="${1:-status}"
+  shift || true
+  case "$mode" in
+    -h|--help)
+      cat <<'SECRETSHELP'
+oc secrets — Pull allowlisted keys from 1Password or Infisical
+
+  oc secrets           Status (backend + which keys resolve — names only)
+  oc secrets status    Same
+  oc secrets check     Status; exit 1 if required OPENROUTER_API_KEY missing
+  oc secrets sync      Write allowlisted keys into .env (copy-backup first)
+
+vault.json is the public template (example op://Vault/Item/field refs).
+Put personal account/vault/item IDs in vault.local.json (gitignored overlay).
+Never `op run` / `infisical run`. Infisical: set INFISICAL_DIR.
+SECRETSHELP
+      return 0
+      ;;
+    status|check|sync) ;;
+    *) bad "unknown secrets command: $mode"; tip "oc secrets --help"; return 2 ;;
+  esac
+
+  local backend cfg envf
+  cfg="$(oc_vault_json)"
+  envf="$REPO/.env"
+  if [[ ! -f "$cfg" ]]; then
+    bad "vault.json missing"
+    return 1
+  fi
+  backend="$(oc_secrets_backend)"
+  info "backend: $backend"
+  if [[ -f "$(oc_vault_local_json)" ]]; then
+    info "overlay: vault.local.json (gitignored)"
+  fi
+  if command -v op >/dev/null 2>&1; then
+    if oc_secrets_1password_ready; then
+      ok "1Password CLI signed in"
+    else
+      opt "1Password CLI present but not signed in (op signin / app integration)"
+    fi
+  else
+    opt "1Password CLI (op) not on PATH"
+  fi
+  if command -v infisical >/dev/null 2>&1; then
+    if oc_secrets_infisical_ready; then
+      ok "Infisical CLI + INFISICAL_DIR"
+    else
+      opt "Infisical CLI present — set INFISICAL_DIR to a linked project"
+    fi
+  else
+    info "Infisical CLI not installed (optional fallback)"
+  fi
+
+  local key ref resolved=0 missing=0 acct="" live_n=0
+  acct="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("onepassword") or {}).get("account") or "").strip())
+except Exception:
+    print("")
+')"
+  acct="${OP_ACCOUNT:-$acct}"
+  while IFS=$'\t' read -r key ref; do
+    [[ -n "$key" ]] || continue
+    live_n=$((live_n + 1))
+    _val=""
+    if oc_secrets_1password_ready; then
+      if [[ -n "$acct" ]]; then
+        _val="$(op read --account "$acct" "$ref" 2>/dev/null || true)"
+      else
+        _val="$(op read "$ref" 2>/dev/null || true)"
+      fi
+    fi
+    if [[ -n "$_val" ]]; then
+      ok "$key (1Password ref resolves)"
+      resolved=$((resolved + 1))
+    else
+      opt "$key (ref not readable)"
+      missing=$((missing + 1))
+    fi
+    unset _val
+  done < <(oc_vault_op_refs)
+  if [[ "$live_n" -eq 0 ]]; then
+    opt "no live 1Password refs (public vault.json is example placeholders)"
+    tip "copy vault.json → vault.local.json and set your op:// refs (gitignored)"
+  fi
+
+  if [[ "$mode" == "sync" ]]; then
+    local out be keys
+    if ! out="$(oc_secrets_sync "$envf")"; then
+      bad "sync failed (backend=${out%%|*})"
+      tip "edit vault.local.json  ·  op signin  ·  INFISICAL_DIR=… oc secrets sync"
+      return 1
+    fi
+    be="${out%%|*}"
+    keys="${out#*|}"
+    ok "synced from $be → .env${keys:+ · $keys}"
+    return 0
+  fi
+
+  if [[ "$mode" == "check" ]]; then
+    [[ "$resolved" -gt 0 && "$backend" != "none" ]] || return 1
+  fi
   return 0
 }
 
@@ -1154,6 +1262,9 @@ case "$cmd" in
     ;;
   env)
     do_env "$@"
+    ;;
+  secrets|vault)
+    do_secrets "$@"
     ;;
 
   help|-h|--help)

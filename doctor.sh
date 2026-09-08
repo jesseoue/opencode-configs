@@ -459,6 +459,43 @@ else
   tip "or full stack: bash \"$REPO/install.sh\""
 fi
 
+# ─── Secrets backends (1Password / Infisical) ────────────────────────
+sec "Secrets backends"
+if [[ -f "$REPO/vault.json" ]]; then
+  ok "vault.json present"
+  _be="$(oc_secrets_backend 2>/dev/null || echo none)"
+  info "active backend: $_be"
+  if command -v op >/dev/null 2>&1; then
+    if oc_secrets_1password_ready; then
+      ok "1Password CLI signed in"
+      _n=0
+      while IFS=$'\t' read -r _k _r; do
+        [[ -n "$_k" ]] || continue
+        _n=$((_n + 1))
+      done < <(oc_vault_op_refs)
+      if [[ "$_n" -gt 0 ]]; then
+        ok "$_n 1Password ref(s) configured (names only)"
+      else
+        opt "no live 1Password refs — edit vault.local.json (gitignored overlay)"
+      fi
+    else
+      opt "1Password CLI present — sign in (Developer → Integrate with 1Password CLI)"
+    fi
+  else
+    opt "1Password CLI (op) not installed — brew install 1password-cli"
+  fi
+  if command -v infisical >/dev/null 2>&1; then
+    if oc_secrets_infisical_ready; then
+      ok "Infisical fallback ready"
+    else
+      info "Infisical CLI present (set INFISICAL_DIR to use as fallback)"
+    fi
+  fi
+  tip "sync: oc secrets sync   ·  status: oc secrets status"
+else
+  bad "vault.json missing"
+fi
+
 # ─── Projects directory ──────────────────────────────────────────────
 sec "Projects directory"
 _pd="$(oc_projects_dir 2>/dev/null || true)"

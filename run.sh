@@ -69,6 +69,7 @@ esac
 
 oc_telemetry_off
 oc_export_env_file "$ENV_FILE"
+oc_export_vault_allowlist
 
 # bunx writes package.json/node_modules into cwd — never run it from the
 # config repo (or a user project). Use a dedicated cache dir instead.

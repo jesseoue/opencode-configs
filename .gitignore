@@ -17,6 +17,7 @@
 !ghostty.conf
 !projects.json
 !versions.json
+!vault.json
 !signature.json
 !cursor-openrouter.json
 !t3-opencode.json
@@ -51,6 +52,8 @@
 .env
 .env.*
 !.env.example
+vault.local.json
+**/vault.local.json
 *.pem
 *.key
 *.p12

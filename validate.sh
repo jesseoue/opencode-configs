@@ -1003,6 +1003,7 @@ ignore_targets = [
     "node_modules", "node_modules/pkg", "package.json", "package-lock.json",
     "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode",
     ".cursor", "plugins", "stray-not-in-allowlist.txt", "opencode.log", "logs/x.log",
+    "vault.local.json",
 ]
 try:
     r = subprocess.run(
@@ -1014,6 +1015,7 @@ try:
         "node_modules", "package.json", ".omo", ".sisyphus", ".codegraph",
         "command", ".opencode", ".cursor", "plugins",
         "stray-not-in-allowlist.txt", "opencode.log",
+        "vault.local.json",
     }
     missing_ignore = sorted(required - ignored)
     if missing_ignore:
@@ -1334,6 +1336,7 @@ missing_helpers = [fn for fn in (
     "oc_set_env_key_if_unset", "oc_ensure_env_file", "oc_link_points_to", "oc_ensure_symlink",
     "oc_verify_signature", "oc_signature_compute", "oc_signature_refresh",
     "oc_scrub_env_to_allowlist", "oc_import_allowlisted_dotenv", "oc_env_foreign_key_count",
+    "oc_secrets_sync", "oc_secrets_backend", "oc_export_vault_allowlist", "oc_vault_op_refs",
     "oc_backup_copy",
 ) if f"{fn}()" not in common_sh]
 if missing_helpers:
@@ -1341,7 +1344,7 @@ if missing_helpers:
 elif "OpenConfig" in common_sh:
     ok("lib/common.sh has OpenConfig banner + path/version helpers")
 
-# Secrets hygiene: .env must never be tracked; launch must not Infisical-wrap
+# Secrets hygiene: .env must never be tracked; launch must not wrap vault CLIs
 env_tracked = subprocess.run(
     ["git", "-C", repo, "ls-files", "--error-unmatch", ".env"],
     capture_output=True, text=True,
@@ -1350,17 +1353,53 @@ if env_tracked:
     err(".env is tracked by git — remove it immediately (secrets leak)")
 else:
     ok(".env is not tracked by git")
-for rel in ("opencode.sh", "run.sh", "oc"):
+wrap_needles = (
+    "infisical run --",
+    "op run --",
+    "doppler run --",
+)
+for rel in ("opencode.sh", "run.sh", "oc", "launch-desktop.sh", "serve-desktop.sh", "setup.sh", "lib/common.sh"):
     body = open(os.path.join(repo, rel), encoding="utf-8").read()
-    if "infisical run --env=ops" in body or "infisical run --env=prod" in body:
-        err(f"{rel}: Infisical process wrap injects vault secrets — remove (use oc setup --sync-env)")
-if not any(
-    "infisical run --env=ops" in open(os.path.join(repo, rel), encoding="utf-8").read()
-    for rel in ("opencode.sh", "run.sh", "oc")
-):
-    ok("launch/run paths do not Infisical-wrap the agent process")
+    hits = [n.strip() for n in wrap_needles if n in body]
+    if hits:
+        err(f"{rel}: vault process wrap ({', '.join(hits)}) — use oc secrets sync")
+vault_path = os.path.join(repo, "vault.json")
+if not os.path.isfile(vault_path):
+    err("vault.json missing (1Password / Infisical refs)")
 else:
-    err("lib/common.sh missing OpenConfig branding")
+    try:
+        vault = json.load(open(vault_path, encoding="utf-8"))
+        refs = ((vault.get("onepassword") or {}).get("refs") or {})
+        bad_refs = [k for k, v in refs.items() if not isinstance(v, str) or not v.startswith("op://")]
+        leaked = []
+        raw = open(vault_path, encoding="utf-8").read()
+        if re.search(r"sk-or-v1-|sk-[A-Za-z0-9]{20,}", raw):
+            leaked.append("looks like a live API key")
+        if re.search(r"[a-z0-9.-]+\.1password\.com", raw):
+            leaked.append("1Password account hostname")
+        if re.search(r"op://[a-z0-9]{20,}/", raw):
+            leaked.append("live vault/item id")
+        vault_id = ((vault.get("onepassword") or {}).get("vault_id") or "")
+        if isinstance(vault_id, str) and re.fullmatch(r"[a-z0-9]{16,}", vault_id):
+            leaked.append("live vault_id")
+        if bad_refs:
+            err(f"vault.json refs must be op://… ({bad_refs})")
+        elif leaked:
+            err(f"vault.json must stay generic — put personal refs in vault.local.json ({', '.join(leaked)})")
+        elif not refs:
+            ok("vault.json has empty 1Password refs (fill vault.local.json or example op://Vault/Item/field)")
+        else:
+            ok(f"vault.json ({len(refs)} example 1Password refs, no personal ids)")
+    except Exception as e:
+        err(f"vault.json invalid: {e}")
+if not any(
+    needle in open(os.path.join(repo, rel), encoding="utf-8").read()
+    for rel in ("opencode.sh", "run.sh", "oc", "launch-desktop.sh", "serve-desktop.sh")
+    for needle in ("infisical run --", "op run --", "doppler run --")
+):
+    ok("launch/run paths do not wrap op/infisical/doppler")
+else:
+    err("launch/run still wraps a secrets CLI")
 
 oc_cli = open(os.path.join(repo, "oc"), encoding="utf-8").read()
 if "OpenConfig" not in oc_cli:
@@ -1375,8 +1414,10 @@ elif "locate" not in oc_cli:
     err("oc CLI missing locate command")
 elif "signature" not in oc_cli:
     err("oc CLI missing signature command")
+elif "do_secrets" not in oc_cli:
+    err("oc CLI missing secrets command")
 else:
-    ok("oc CLI branded OpenConfig with install + heal + locate + test + signature")
+    ok("oc CLI branded OpenConfig with install + heal + locate + test + signature + secrets")
 
 # ---- 4c7. docs / env example / bunfig / zshrc ----
 for rel, label in (
@@ -1386,6 +1427,7 @@ for rel, label in (
     ("bunfig.toml", "bunfig.toml"),
     ("zshrc.snippet", "zshrc.snippet"),
     ("projects.json", "projects.json"),
+    ("vault.json", "vault.json"),
 ):
     if not os.path.isfile(os.path.join(repo, rel)):
         err(f"{label} missing")

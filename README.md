@@ -2,7 +2,7 @@
 
 > **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 12 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
 
-**v1.5.65** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.66** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Claude · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -19,7 +19,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.65` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Pins** | OpenConfig `1.5.66` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -121,7 +121,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.65` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.66` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.17+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -302,7 +302,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | `OC_PROJECTS_DIR` | optional | `oc new` home (default `~/Projects`) |
 
 Copy `.env.example` → `.env` (`chmod 600`). Never commit `.env`.  
-`oc setup --sync-env` imports **allowlisted keys only** from Infisical/Doppler — never a full vault dump.
+`vault.json` is a **public template** (`op://Vault/Item/field` examples). Copy it to **`vault.local.json`** (gitignored) and put your own 1Password account / vault / item refs there. `oc secrets sync` (or `oc setup --sync-env`) merges local over public and imports **allowlisted keys only** from 1Password, then Infisical (`INFISICAL_DIR`), then Doppler — never a full vault dump, never `op run` / `infisical run`. Empty or example refs no-op.
 
 ---
 

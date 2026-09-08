@@ -1032,7 +1032,7 @@ oc_scrub_env_to_allowlist() {
 oc_import_allowlisted_dotenv() {
   local dump="${1:?}" dest="${2:?}"
   [[ -f "$dump" ]] || return 1
-  oc_ensure_env_file "$dest" >/dev/null 2>&1 || true
+  oc_ensure_env_file "$dest" "${REPO}/.env.example" >/dev/null 2>&1 || true
   local key val imported=()
   for key in "${OC_ENV_ALLOWLIST[@]}"; do
     val="$(oc_get_env_key "$dump" "$key" 2>/dev/null || true)"
@@ -1052,6 +1052,309 @@ oc_import_allowlisted_dotenv() {
   if [[ ${#imported[@]} -gt 0 ]]; then
     printf '%s\n' "${imported[*]}"
   fi
+}
+
+# ── Secrets backends (1Password → Infisical → Doppler) ──────────────
+# vault.json is the public template (example op://Vault/Item/field refs).
+# vault.local.json (gitignored) overlays personal account/vault/item IDs.
+# Launch/run export allowlisted keys. Never `op run` / `infisical run`.
+
+oc_vault_json() {
+  printf '%s\n' "${REPO:-}/vault.json"
+}
+
+oc_vault_local_json() {
+  printf '%s\n' "${REPO:-}/vault.local.json"
+}
+
+# Public template, then vault.local.json overlay (local wins).
+oc_vault_merged_json() {
+  python3 - "${REPO:-}/vault.json" "${REPO:-}/vault.local.json" <<'PY'
+import json, sys
+
+def merge(base, overlay):
+    if isinstance(base, dict) and isinstance(overlay, dict):
+        out = dict(base)
+        for k, v in overlay.items():
+            out[k] = merge(out[k], v) if k in out else v
+        return out
+    return overlay
+
+cfg = {}
+for path in sys.argv[1:]:
+    try:
+        part = json.load(open(path, encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        continue
+    if isinstance(part, dict):
+        cfg = merge(cfg, part)
+print(json.dumps(cfg, separators=(",", ":")))
+PY
+}
+
+# Example placeholders in the public template — not live refs.
+oc_vault_ref_is_example() {
+  local ref="${1:-}"
+  [[ "$ref" == op://Vault/* ]]
+}
+
+# Print live onepassword.refs as KEY<TAB>op://… (allowlisted; skip examples).
+oc_vault_op_refs() {
+  ALLOW="$(IFS=,; echo "${OC_ENV_ALLOWLIST[*]}")" \
+  python3 - "${REPO:-}/vault.json" "${REPO:-}/vault.local.json" <<'PY'
+import json, os, sys
+
+def merge(base, overlay):
+    if isinstance(base, dict) and isinstance(overlay, dict):
+        out = dict(base)
+        for k, v in overlay.items():
+            out[k] = merge(out[k], v) if k in out else v
+        return out
+    return overlay
+
+cfg = {}
+for path in sys.argv[1:]:
+    try:
+        part = json.load(open(path, encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        continue
+    if isinstance(part, dict):
+        cfg = merge(cfg, part)
+allow = set(os.environ.get("ALLOW", "").split(","))
+refs = ((cfg.get("onepassword") or {}).get("refs") or {})
+for k, v in refs.items():
+    if k not in allow:
+        continue
+    if not isinstance(v, str) or not v.startswith("op://"):
+        continue
+    first = v[5:].split("/", 1)[0]
+    if first in ("", "Vault", "VAULT"):
+        continue
+    print(f"{k}\t{v}")
+PY
+}
+
+oc_vault_has_live_op_refs() {
+  oc_vault_op_refs | grep -q $'\t'
+}
+
+oc_secrets_1password_ready() {
+  command -v op >/dev/null 2>&1 || return 1
+  op account get >/dev/null 2>&1
+}
+
+oc_secrets_infisical_ready() {
+  local dir
+  command -v infisical >/dev/null 2>&1 || return 1
+  dir="${INFISICAL_DIR:-}"
+  if [[ -z "$dir" ]]; then
+    dir="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("infisical") or {}).get("dir") or "").strip())
+except Exception:
+    print("")
+')"
+  fi
+  [[ -n "$dir" && -d "$dir" ]]
+}
+
+oc_secrets_doppler_ready() {
+  command -v doppler >/dev/null 2>&1 && doppler me >/dev/null 2>&1
+}
+
+# Chosen backend: vault.json backend=auto|1password|infisical|doppler|none
+# 1Password is selected only when the CLI is signed in AND live refs exist
+# (example op://Vault/… placeholders do not count — fall through to Infisical).
+# Prints one token. Exit 0 even when none (prints none).
+oc_secrets_backend() {
+  local want cfg
+  cfg="$(oc_vault_json)"
+  want="auto"
+  if [[ -f "$cfg" ]] || [[ -f "$(oc_vault_local_json)" ]]; then
+    want="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print((json.load(sys.stdin).get("backend") or "auto").strip().lower())
+except Exception:
+    print("auto")
+')"
+  fi
+  case "$want" in
+    1password|op)
+      oc_secrets_1password_ready && oc_vault_has_live_op_refs && { echo 1password; return 0; }
+      echo none
+      return 0
+      ;;
+    infisical)
+      oc_secrets_infisical_ready && { echo infisical; return 0; }
+      echo none
+      return 0
+      ;;
+    doppler)
+      oc_secrets_doppler_ready && { echo doppler; return 0; }
+      echo none
+      return 0
+      ;;
+    none) echo none; return 0 ;;
+    auto|*)
+      oc_secrets_1password_ready && oc_vault_has_live_op_refs && { echo 1password; return 0; }
+      oc_secrets_infisical_ready && { echo infisical; return 0; }
+      oc_secrets_doppler_ready && { echo doppler; return 0; }
+      echo none
+      return 0
+      ;;
+  esac
+}
+
+# Merge allowlisted KEY=value lines from 1Password refs into dest (0600).
+# Never truncates dest (keeps existing keys). Never prints values.
+# Prints imported key names. Returns 0 if at least one key resolved.
+oc_secrets_export_1password() {
+  local dest="${1:?}" account="" key ref val imported=()
+  oc_ensure_env_file "$dest" "${REPO}/.env.example" >/dev/null 2>&1 || {
+    umask 077
+    : >>"$dest"
+    chmod 600 "$dest" 2>/dev/null || true
+  }
+  account="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("onepassword") or {}).get("account") or "").strip())
+except Exception:
+    print("")
+')"
+  account="${OP_ACCOUNT:-$account}"
+  if ! oc_vault_has_live_op_refs; then
+    return 1
+  fi
+  while IFS=$'\t' read -r key ref; do
+    [[ -n "$key" && -n "$ref" ]] || continue
+    val=""
+    if [[ -n "$account" ]]; then
+      val="$(op read --account "$account" "$ref" 2>/dev/null || true)"
+    else
+      val="$(op read "$ref" 2>/dev/null || true)"
+    fi
+    [[ -n "$val" ]] || continue
+    oc_set_env_key "$dest" "$key" "$val"
+    imported+=("$key")
+  done < <(oc_vault_op_refs)
+  if [[ ${#imported[@]} -gt 0 ]]; then
+    printf '%s\n' "${imported[*]}"
+    return 0
+  fi
+  return 1
+}
+
+oc_secrets_export_infisical() {
+  local dest="${1:?}" dir env_name
+  dir="${INFISICAL_DIR:-}"
+  env_name="${INFISICAL_ENV:-}"
+  if [[ -z "$dir" || -z "$env_name" ]]; then
+    if [[ -z "$dir" ]]; then
+      dir="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("infisical") or {}).get("dir") or "").strip())
+except Exception:
+    print("")
+')"
+    fi
+    if [[ -z "$env_name" ]]; then
+      env_name="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("infisical") or {}).get("env") or "dev").strip())
+except Exception:
+    print("dev")
+')"
+    fi
+  fi
+  env_name="${env_name:-dev}"
+  [[ -n "$dir" && -d "$dir" ]] || return 1
+  ( cd "$dir" && infisical export --env="$env_name" --format=dotenv --silent >"$dest" ) || return 1
+  perl -i -pe "s/^([A-Z0-9_]+)='([^'\n]*)'$/\$1=\$2/g" "$dest" 2>/dev/null || true
+  chmod 600 "$dest" 2>/dev/null || true
+  [[ -s "$dest" ]]
+}
+
+oc_secrets_export_doppler() {
+  local dest="${1:?}"
+  doppler secrets download --no-file --format=env >"$dest" 2>/dev/null || return 1
+  chmod 600 "$dest" 2>/dev/null || true
+  [[ -s "$dest" ]]
+}
+
+# Import allowlisted keys from the active backend into dest .env.
+# Prints: backend|imported keys (names only)   or backend|  on empty.
+# Usage: oc_secrets_sync ["$REPO/.env"]
+oc_secrets_sync() {
+  local dest="${1:-${REPO}/.env}" backend tmp imported=""
+  backend="$(oc_secrets_backend)"
+  if [[ "$backend" == "none" ]]; then
+    echo "none|"
+    return 1
+  fi
+  if [[ -f "$dest" ]]; then
+    oc_backup_copy "$dest" "env" >/dev/null || true
+  fi
+  case "$backend" in
+    1password)
+      imported="$(oc_secrets_export_1password "$dest" 2>/dev/null || true)"
+      if [[ -z "$imported" ]]; then
+        echo "1password|"
+        return 1
+      fi
+      oc_set_env_key_if_unset "$dest" DO_NOT_TRACK 1 >/dev/null
+      oc_set_env_key_if_unset "$dest" OMO_DISABLE_POSTHOG 1 >/dev/null
+      oc_set_env_key_if_unset "$dest" OMO_SEND_ANONYMOUS_TELEMETRY 0 >/dev/null
+      oc_set_env_key_if_unset "$dest" OMO_CODEX_DISABLE_POSTHOG 1 >/dev/null
+      oc_set_env_key_if_unset "$dest" OMO_CODEX_SEND_ANONYMOUS_TELEMETRY 0 >/dev/null
+      oc_set_env_key_if_unset "$dest" CODEGRAPH_TELEMETRY 0 >/dev/null
+      oc_set_env_key_if_unset "$dest" OTEL_SDK_DISABLED true >/dev/null
+      chmod 600 "$dest" 2>/dev/null || true
+      printf '%s|%s\n' "$backend" "$imported"
+      return 0
+      ;;
+    infisical|doppler)
+      tmp="$(mktemp "${TMPDIR:-/tmp}/oc-vault.XXXXXX")"
+      if [[ "$backend" == "infisical" ]]; then
+        oc_secrets_export_infisical "$tmp" || { rm -f "$tmp"; echo "infisical|"; return 1; }
+      else
+        oc_secrets_export_doppler "$tmp" || { rm -f "$tmp"; echo "doppler|"; return 1; }
+      fi
+      imported="$(oc_import_allowlisted_dotenv "$tmp" "$dest" 2>/dev/null || true)"
+      rm -f "$tmp"
+      printf '%s|%s\n' "$backend" "$imported"
+      return 0
+      ;;
+    *) echo "none|"; return 1 ;;
+  esac
+}
+
+# Export allowlisted keys that are unset in the current process from 1Password.
+# Does not write .env. Safe to call after oc_export_env_file.
+oc_export_vault_allowlist() {
+  local key ref val account=""
+  oc_secrets_1password_ready || return 0
+  oc_vault_has_live_op_refs || return 0
+  account="$(oc_vault_merged_json | python3 -c 'import json,sys
+try:
+    print(((json.load(sys.stdin).get("onepassword") or {}).get("account") or "").strip())
+except Exception:
+    print("")
+')"
+  account="${OP_ACCOUNT:-$account}"
+  while IFS=$'\t' read -r key ref; do
+    [[ -n "$key" && -n "$ref" ]] || continue
+    if [[ -n "${!key:-}" ]]; then
+      continue
+    fi
+    val=""
+    if [[ -n "$account" ]]; then
+      val="$(op read --account "$account" "$ref" 2>/dev/null || true)"
+    else
+      val="$(op read "$ref" 2>/dev/null || true)"
+    fi
+    [[ -n "$val" ]] || continue
+    export "$key=$val"
+  done < <(oc_vault_op_refs)
 }
 
 # Count non-allowlisted keys in a .env (names only — never prints values).
