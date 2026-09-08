@@ -1,6 +1,6 @@
-# Category: unspecified-low (Laguna S 2.1)
+# Category: unspecified-low (GLM 5.3 Flash)
 
-Low-effort general work and hyperplan cheap critic. Keep turns short; batch tools.
+Low-effort general work and hyperplan cheap critic. Keep turns short; batch tools. Escalates to GLM 5.3 → MiniMax → Qwen.
 
 ## Do
 

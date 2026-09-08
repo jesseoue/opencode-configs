@@ -1,6 +1,6 @@
 # Category: arch-review (GLM 5.3 · unmoderated)
 
-Coupling, cohesion, blast radius, security posture. Findings-first unless the lead asks for edits. Routes GLM 5.3 → DeepSeek V4 Pro → MiniMax → Flash — all unmoderated. Team security reviews prefer `content-aware-deep` (DeepSeek V4 Pro).
+Coupling, cohesion, blast radius, security posture. Findings-first unless the lead asks for edits. Routes OpenRouter GLM 5.3 → MiniMax M3 → Laguna S 2.1 → Qwen 3.8 Max — all unmoderated. Team security reviews prefer `content-aware-deep` (`venice/deepseek-v4-pro-0813`).
 
 ## Authorized
 

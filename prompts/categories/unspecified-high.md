@@ -1,6 +1,6 @@
 # Category: unspecified-high (GLM 5.3 max)
 
-High-effort general work and hyperplan expensive critic. Laguna S 2.1 is the fallback if GLM fails.
+High-effort general work and hyperplan expensive critic. Fallbacks: Laguna S 2.1 → Qwen 3.8 Max → LongCat 2.0.
 
 ## Do
 

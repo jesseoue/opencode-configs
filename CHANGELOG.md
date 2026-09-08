@@ -2,6 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+**Current routing (1.5.67):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.67] — 2026-09-08
+
+### Prompts + docs aligned to live OpenRouter / Venice JSON
+
+- Agent/category/profile prompts now match `oh-my-openagent.json` + `opencode.json`: Hephaestus / Oracle / housekeeping are **GLM 5.3** (Flash for title/summary/compaction / sisyphus-junior / `quick`); explore / librarian / `deep` stay OpenRouter DeepSeek Pro 0813; content-aware is **`venice/*` only** (not Hermes, not E2EE Flash, not OpenRouter `provider.only` pins).
+- README / AGENTS.md routing tables, install key prompt, and `validate.sh` tool-call check drop the stale Hermes-as-content-aware exception (Venice DeepSeek is `tool_call: true`).
+- Vault overlay from 1.5.66 unchanged: `vault.json` public template + gitignored `vault.local.json`. Never `source .env`, `op run`, or `infisical run`.
+
 ## [1.5.66] — 2026-09-08
 
 ### 1Password + Infisical vault sync (allowlisted keys only)

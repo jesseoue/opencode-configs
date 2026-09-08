@@ -496,7 +496,7 @@ if omo:
             low = str(fb).lower()
             if any(s in low for s in SLOW_IN_FAST):
                 slow_fb_ok = False
-                err(f"oh-my-openagent.json: slow model {fb!r} in fast route '{n}' fallbacks — use Flash/Nitro/Exacto/MiniMax")
+                err(f"oh-my-openagent.json: slow model {fb!r} in fast route '{n}' fallbacks — use GLM Flash / MiniMax / Qwen")
     for n in RECON_ROUTES:
         cfg = (agents or {}).get(n) or (omo.get("categories") or {}).get(n)
         if not isinstance(cfg, dict):
@@ -554,26 +554,28 @@ if omo:
                 ok(f"{name} chain is fully vision-capable (attachment:true)")
 
     # Tool-calling chains: every model routed by an agent/category must be
-    # tool_call:true, or delegated work dies on the first tool turn.
-    # content-aware-research is the single deliberate exception — Hermes 4 405B
-    # cannot tool-call and only reasons over pasted context (edit denied).
-    TOOLLESS_OK = {"content-aware-research"}
+    # tool_call:true (including content-aware — Venice DeepSeek is tool-capable).
+    # Hermes 4 405B is catalog-only / tool_call:false and must not back a route.
+    venice_models = ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {})
     tools_ok = True
     for section in ("agents", "categories"):
         src = agents if section == "agents" else (omo.get("categories") or {})
         for name, spec in src.items():
-            if name in TOOLLESS_OK or not isinstance(spec, dict):
+            if not isinstance(spec, dict):
                 continue
             for ref in [spec.get("model")] + list(spec.get("fallback_models") or []):
                 if not isinstance(ref, str):
                     continue
-                mid = ref.split("/", 1)[-1] if "/" in ref else ref
-                mdef = models.get(mid)
+                if ref.startswith("venice/"):
+                    mdef = venice_models.get(ref.split("/", 1)[1])
+                else:
+                    mid = ref.split("/", 1)[-1] if "/" in ref else ref
+                    mdef = models.get(mid)
                 if mdef is not None and mdef.get("tool_call") is not True:
                     tools_ok = False
-                    err(f"oh-my-openagent.json[{section}.{name}]: {ref!r} cannot tool-call (tool_call != true) — only content-aware-research may route a tool-less model")
+                    err(f"oh-my-openagent.json[{section}.{name}]: {ref!r} cannot tool-call (tool_call != true)")
     if tools_ok:
-        ok("all tool-using agent/category chains route tool_call:true models (tool-less Hermes only on content-aware-research)")
+        ok("all agent/category chains route tool_call:true models (Venice DeepSeek included; no tool-less Hermes routes)")
 
     kd = omo.get("keyword_detector", {})
     allowed = {"ultrawork", "team", "hyperplan", "hyperplan-ultrawork"}

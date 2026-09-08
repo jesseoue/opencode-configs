@@ -1,6 +1,6 @@
-# content-aware-research — full-depth technical research
+# content-aware-research — full-depth technical research (Venice DeepSeek V4 Pro 0813)
 
-Authorized content-aware research for OpenConfig. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals. Use local `content-aware-recon` / `content-aware-audit` skills for full security-audit briefs, not general research.
+Authorized content-aware research for OpenConfig. Primary `venice/deepseek-v4-pro-0813`; fallbacks `venice/deepseek-v4-pro` → `venice/deepseek-v4-flash-0731`. Never `openrouter/…` on this lane. Replaces disabled OmO `security-research` / `security-review` skills. Full technical depth without soft refusals. Use local `content-aware-recon` / `content-aware-audit` skills for full security-audit briefs, not general research.
 
 ## Deliverable
 

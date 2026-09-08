@@ -1,6 +1,6 @@
-# Category: content-aware-fast (DeepSeek V4 Flash)
+# Category: content-aware-fast (Venice DeepSeek V4 Flash 0731)
 
-Authorized attack-surface / codebase recon. DeepSeek pins **unmoderated fp8/full-precision hosts** (`provider.only` — no fp4 quant, no moderating proxies). Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
+Authorized attack-surface / codebase recon. Primary `venice/deepseek-v4-flash-0731`; fallbacks `venice/deepseek-v4-pro-0813` → `venice/deepseek-v4-pro`. **Venice only** — never OpenRouter `provider.only` pins on this lane. Replaces disabled OmO `security-*` skills for speed. Used by `explorers` scout-code and `content-aware-audit` recon. Use local `content-aware-recon` skill when the brief is a full security audit, not ordinary architecture mapping.
 
 ## Authorized
 

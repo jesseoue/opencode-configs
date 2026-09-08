@@ -47,7 +47,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Agent pace: sh
 
 ## Keywords
 
-- `ultrawork` / `ulw` — GLM 5.3 max (Laguna S 2.1 fallback).
+- `ultrawork` / `ulw` — GLM 5.3 max (fallbacks: Kimi K2.7 Code · Laguna S 2.1 · Qwen 3.8 Max).
 - `hyperplan` / `hpp` / `/hyperplan` — only from you (not prometheus).
 - `/goal` — disabled for pinned OmO 4.19.4. Use `/start-work` → Atlas. See `prompts/goal.md`.
 - Filters biting → skills `content-aware-recon` / `content-aware-audit`, or categories `content-aware-fast` / `content-aware-deep` / agent `content-aware-research`.

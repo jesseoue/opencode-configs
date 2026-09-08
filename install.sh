@@ -666,14 +666,18 @@ echo "  File: $ENV_FILE (chmod 600, gitignored)"
 
 # Prefer env pre-seed so lazy users can: OPENROUTER_API_KEY=… ./install.sh
 seed_key_from_env OPENROUTER_API_KEY
+seed_key_from_env VENICE_API_KEY
 seed_key_from_env EXA_API_KEY
 seed_key_from_env CONTEXT7_API_KEY
 seed_key_from_env OPENROUTER_MGMT_KEY
 
 if $DO_KEYS; then
   prompt_api_key OPENROUTER_API_KEY \
-    "OpenRouter (required — GLM/Flash/Claude/Gemini/GPT/…)" \
+    "OpenRouter (required — GLM/DeepSeek/Gemini/Qwen/Kimi/…)" \
     "https://openrouter.ai/keys" true
+  prompt_api_key VENICE_API_KEY \
+    "Venice (content-aware lane — DeepSeek V4 Pro/Flash)" \
+    "https://venice.ai" false
   prompt_api_key EXA_API_KEY \
     "Exa (recommended — web search)" \
     "https://exa.ai" false

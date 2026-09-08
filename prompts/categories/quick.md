@@ -1,6 +1,6 @@
-# Category: quick (DeepSeek V4 Flash · unmoderated)
+# Category: quick (GLM 5.3 Flash · OpenRouter)
 
-Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon. Escalates to DeepSeek V4 Pro → MiniMax → GLM 5.3 on fallback — all unmoderated.
+Trivial / bounded work. Prefer single-file or small scoped changes. Used by `explorers` scout-docs for fast docs/API recon. Escalates to GLM 5.3 → MiniMax → Qwen 3.8 Max on fallback — all unmoderated OpenRouter.
 
 ## Authorized
 
