@@ -2,7 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.67):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.68):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.68] — 2026-09-08
+
+### Doctor / validate: live install vs secondary checkout
+
+- **`~/.omo/teams`** compares to `realpath ~/.config/opencode` (when that tree is OpenConfig), not “must equal this checkout”. A clone next to a Shared live install no longer fails doctor/validate for healthy team links.
+- **`oc setup`** heals team (and tmux/ghostty) links to the live tree. A secondary checkout never retargets a healthy live `~/.config/opencode` symlink.
+- **OpenRouter key probe:** missing vs rejected vs network vs “this checkout has no `.env`”. Critical only on the live config dir; optional/soft on a secondary checkout. Never prints secrets; curl body is a temp file that is deleted.
+- Help text points at `oc secrets`. `oc_omo_teams_ok` / `oc_live_config_root` in `lib/common.sh`.
 
 ## [1.5.67] — 2026-09-08
 

@@ -7,7 +7,7 @@
 # hardening.
 #
 # Usage: ./doctor.sh [--quick] [--json] [--fix] [--harden] [--ai-fix]
-#   --quick   skip live model-routing probes (still checks OpenRouter key + latency)
+#   --quick   skip live model-routing probes (still classifies OpenRouter key)
 #   --json    machine-readable summary only (implies quiet human sections)
 #   --fix     run fix.sh (colors, footguns, skills lock, goal off) then re-check
 #   --harden  remove opencode-owned external junk + disable external loading
@@ -16,7 +16,10 @@
 # Exit: 0 = no critical issues (optional/soft advisories allowed)
 #       1 = critical issues present
 #
-# Related: oc check · oc validate · oc heal · oc diagnose
+# Teams + keys: compare to the live ~/.config/opencode tree when that is
+# OpenConfig. A secondary checkout is check-only (no retarget, no key-critical
+# unless this tree *is* the live install). Never prints secrets.
+# Related: oc check · oc validate · oc heal · oc diagnose · oc secrets
 
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -24,6 +27,10 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$REPO/lib/common.sh"
 OC_BIN="${OC_DOCTOR_BIN:-$(command -v opencode 2>/dev/null || echo "$OC_CLI_BIN")}"
 LINK="${OC_CONFIG_LINK}"
+LIVE_ROOT="$(oc_live_config_root 2>/dev/null || true)"
+IS_LIVE=0
+oc_is_live_config "$REPO" && IS_LIVE=1
+export OC_LIVE_CONFIG="${LIVE_ROOT}"
 
 DO_QUICK=0 DO_FIX=0 DO_HARDEN=0 DO_AI=0 DO_JSON=0
 while [[ $# -gt 0 ]]; do
@@ -60,8 +67,14 @@ OC_DOCTOR_VER="$(oc_versions_get opencode_configs 2>/dev/null || echo "?")"
 if [[ $DO_JSON -eq 0 ]]; then
   _flags=""
   [[ $DO_QUICK -eq 1 ]] && _flags="${_flags} · --quick"
-  printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · %s%s${c_0}\n" \
-    "$OC_DOCTOR_VER" "$REPO" "$_flags"
+  if [[ $IS_LIVE -eq 1 ]]; then
+    printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · live %s%s${c_0}\n" \
+      "$OC_DOCTOR_VER" "$REPO" "$_flags"
+  else
+    printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · %s%s${c_0}\n" \
+      "$OC_DOCTOR_VER" "$REPO" "$_flags"
+    [[ -n "$LIVE_ROOT" ]] && info "live install: $LIVE_ROOT"
+  fi
   unset _flags
 fi
 
@@ -78,17 +91,23 @@ fi
 
 # ─── Config link ─────────────────────────────────────────────────────
 sec "Config location (single source of truth)"
-if [[ -L "$LINK" ]]; then
+if [[ $IS_LIVE -eq 1 ]]; then
+  ok "$LINK → $REPO (live)"
+elif [[ -n "$LIVE_ROOT" ]]; then
+  ok "live install: $LINK → $LIVE_ROOT"
+  info "this checkout: $REPO (check-only — teams/keys follow the live tree)"
+elif [[ -L "$LINK" ]]; then
   tgt="$(readlink "$LINK")"
-  [[ "$tgt" == "$REPO" ]] && ok "$LINK -> $REPO" || opt "$LINK -> $tgt (expected $REPO; run: ln -sfn \"$REPO\" \"$LINK\")"
+  opt "$LINK → $tgt (not an OpenConfig tree; run: oc setup from the intended install)"
 elif [[ -e "$LINK" ]]; then
-  opt "$LINK is a real dir, not a symlink to this repo (run: ln -sfn \"$REPO\" \"$LINK\")"
+  opt "$LINK is a real dir, not a symlink (run: oc setup)"
 else
-  bad "$LINK does not exist (run: ln -sfn \"$REPO\" \"$LINK\")"
+  bad "$LINK does not exist (run: oc setup)"
 fi
-# Leftover copies (exclude ~/.opencode CLI install dir)
+# Leftover copies (exclude ~/.opencode CLI install dir + the live install)
 for d in "$HOME/.opencode" "$HOME/opencode-configs" /usr/local/opencode; do
   [[ "$d" == "$REPO" ]] && continue
+  [[ -n "$LIVE_ROOT" ]] && oc_same_path "$d" "$LIVE_ROOT" && continue
   [[ ! -d "$d" ]] && continue
   if [[ "$d" == "$HOME/.opencode" ]] && oc_is_cli_install_dir "$d"; then
     continue
@@ -391,13 +410,15 @@ done < <(python3 -c "import json;[print(k,(v.get('command') or [''])[0]) for k,v
 sec "API keys (.env)"
 ENV_FILE="$REPO/.env"
 getkey(){ oc_get_env_key "${ENV_FILE:-$REPO/.env}" "$1"; }
+# Key severity: critical only on the live install. Secondary checkouts are
+# optional/soft (clone may have no .env, a stale key, or no network).
+_key_bad(){ if [[ $IS_LIVE -eq 1 ]]; then bad "$@"; else opt "$@"; fi; }
 if [[ -f "$ENV_FILE" ]]; then
   for k in OPENROUTER_API_KEY; do
     if [[ -n "$(getkey $k)" ]]; then ok "$k set"
     else
-      bad "$k MISSING — required to run any model"
-      tip "get a key: https://openrouter.ai/keys"
-      tip "then: edit $ENV_FILE  (or: bash \"$REPO/install.sh\")"
+      _key_bad "$k unset"
+      tip "https://openrouter.ai/keys  ·  then: oc secrets sync"
     fi
   done
   for k in CONTEXT7_API_KEY EXA_API_KEY; do
@@ -406,11 +427,11 @@ if [[ -f "$ENV_FILE" ]]; then
       case "$k" in
         CONTEXT7_API_KEY)
           opt "$k unset (Context7 docs MCP unauthenticated)"
-          tip "https://context7.com/dashboard → add CONTEXT7_API_KEY=… to $ENV_FILE"
+          tip "https://context7.com/dashboard  ·  oc secrets sync"
           ;;
         EXA_API_KEY)
           opt "$k unset (Exa web search unavailable)"
-          tip "https://exa.ai → add EXA_API_KEY=… to $ENV_FILE"
+          tip "https://exa.ai  ·  oc secrets sync"
           ;;
       esac
     fi
@@ -421,7 +442,6 @@ if [[ -f "$ENV_FILE" ]]; then
     ok "OpenRouter-only (no OPENAI_API_KEY)"
   fi
   # Foreign (non-allowlisted) keys — never print names/values; count only.
-  # Company vault dumps in this tree are a leak risk for a public config repo.
   _foreign="$(oc_env_foreign_key_count "$ENV_FILE" 2>/dev/null || echo 0)"
   if [[ "${_foreign:-0}" -gt 0 ]]; then
     opt ".env has $_foreign non-allowlisted key(s) (company secrets don't belong here)"
@@ -429,34 +449,48 @@ if [[ -f "$ENV_FILE" ]]; then
   else
     ok ".env allowlist-clean (OpenConfig keys only)"
   fi
-  # Live OpenRouter key check + latency (healthy is typically ~100–400ms; blips are soft)
+  # Live OpenRouter probe — never dump the body or the key.
   ork="$(getkey OPENROUTER_API_KEY)"
   if [[ -n "$ork" ]] && command -v curl >/dev/null; then
-    _or_out="$(curl -sS -o /tmp/oc-doctor-or-key.json -w '%{http_code} %{time_total}' \
+    _or_tmp="$(mktemp "${TMPDIR:-/tmp}/oc-doctor-or.XXXXXX")"
+    _or_out="$(curl -sS -o "$_or_tmp" -w '%{http_code} %{time_total}' \
       --connect-timeout 5 --max-time 15 \
-      -H "Authorization: Bearer $ork" https://openrouter.ai/api/v1/key 2>/dev/null || echo "000 0")"
+      -H "Authorization: Bearer ${ork}" https://openrouter.ai/api/v1/key 2>/dev/null || echo "000 0")"
+    rm -f "$_or_tmp"
+    unset ork
     code="${_or_out%% *}"
     secs="${_or_out##* }"
     ms="$(python3 -c "print(int(round(float('$secs')*1000)))" 2>/dev/null || echo "?")"
     if [[ "$code" == "200" ]]; then
-      ok "OpenRouter key live (HTTP 200, ${ms}ms)"
+      ok "OpenRouter key accepted (HTTP 200, ${ms}ms)"
       if [[ "$ms" != "?" && "$ms" -gt 800 ]]; then
-        soft "OpenRouter latency ${ms}ms (typical ~200–400ms) — network blip, not a missing install item"
+        soft "OpenRouter latency ${ms}ms (typical ~200–400ms) — network blip"
       elif [[ "$ms" != "?" && "$ms" -gt 400 ]]; then
         info "OpenRouter latency ${ms}ms — usually fine"
       fi
     elif [[ "$code" == "401" || "$code" == "403" ]]; then
-      bad "OpenRouter key rejected (HTTP $code)"
-      tip "verify key at https://openrouter.ai/keys · credits: oc admin credits"
+      _key_bad "OpenRouter key rejected (HTTP $code)"
+      if [[ $IS_LIVE -eq 1 ]]; then
+        tip "rotate at https://openrouter.ai/keys  ·  oc secrets sync  ·  oc admin credits"
+      else
+        info "this checkout's .env; live install is authoritative"
+        tip "oc secrets sync   ·  or ignore if you only run OpenCode from the live tree"
+      fi
+    elif [[ "$code" == "000" ]]; then
+      soft "OpenRouter key check unreachable (network) — retry or oc admin health"
     else
       soft "OpenRouter key check returned HTTP $code (${ms}ms) — retry or oc admin health"
-      tip "verify key at https://openrouter.ai/keys"
     fi
+    unset _or_tmp _or_out code secs ms
   fi
 else
-  bad ".env missing — copy .env.example and add OPENROUTER_API_KEY"
-  tip "cp \"$REPO/.env.example\" \"$REPO/.env\" && chmod 600 \"$REPO/.env\""
-  tip "or full stack: bash \"$REPO/install.sh\""
+  if [[ $IS_LIVE -eq 1 ]]; then
+    bad ".env missing — copy .env.example and add OPENROUTER_API_KEY"
+    tip "oc secrets sync   ·  or: cp \"$REPO/.env.example\" \"$REPO/.env\" && chmod 600 \"$REPO/.env\""
+  else
+    opt ".env absent in this checkout (secondary — secrets live on the install tree)"
+    tip "oc secrets sync   ·  or run doctor from the live install"
+  fi
 fi
 
 # ─── Secrets backends (1Password / Infisical) ────────────────────────
@@ -943,16 +977,44 @@ if heph and (heph.get("permission") or {}).get("teammate") != "allow":
     print("BAD|hephaestus lacks permission.teammate=allow — cannot be a team member — run: oc fix")
 else:
     print("OK|hephaestus.permission.teammate = allow")
-# declared specs — must be symlinks into the repo (not stale directory copies)
+# declared specs — ~/.omo/teams must symlink to the live OpenConfig tree
+def _is_openconfig_tree(path):
+    if not path or not os.path.isdir(path):
+        return False
+    sig_p = os.path.join(path, "signature.json")
+    if not (
+        os.path.isfile(os.path.join(path, "opencode.json"))
+        and os.path.isdir(os.path.join(path, "teams"))
+        and os.path.isfile(sig_p)
+    ):
+        return False
+    try:
+        sig = json.load(open(sig_p, encoding="utf-8"))
+    except Exception:
+        return False
+    return (
+        sig.get("product") == "OpenConfig"
+        and sig.get("cli") == "oc"
+        and sig.get("id") == "jesseoue/opencode-configs"
+    )
+
+live_root = os.environ.get("OC_LIVE_CONFIG") or ""
+if live_root:
+    live_root = os.path.realpath(live_root)
+repo_real = os.path.realpath(repo)
+if live_root and _is_openconfig_tree(live_root):
+    canonical = live_root
+else:
+    canonical = repo_real
 base = (tm.get("base_dir") or "~/.omo").replace("~", os.path.expanduser("~"))
 tracked = []
 tdir = os.path.join(repo, "teams")
 if os.path.isdir(tdir):
     tracked = [d for d in os.listdir(tdir) if os.path.isfile(os.path.join(tdir, d, "config.json"))]
-live = []
+provisioned = []
 ldir = os.path.join(base, "teams")
 if os.path.isdir(ldir):
-    live = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json")) or os.path.islink(os.path.join(ldir, d))]
+    provisioned = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json")) or os.path.islink(os.path.join(ldir, d))]
 if tracked: print("OK|%d team spec(s) tracked in repo/teams: %s" % (len(tracked), ", ".join(sorted(tracked))))
 else: print("OPT|no team specs in repo/teams — nothing for team_create to spawn")
 for name in sorted(tracked):
@@ -971,14 +1033,14 @@ for name in sorted(tracked):
         print("OK|route %s: lead=%s; %s" % (name, lead_route, ", ".join(members)))
     except Exception as exc:
         print("BAD|route %s unreadable: %s" % (name, exc))
-missing = [t for t in tracked if t not in live]
+missing = [t for t in tracked if t not in provisioned]
 if missing:
-    print("OPT|tracked but not provisioned to %s/teams: %s — run: oc setup" % (base, ", ".join(sorted(missing))))
+    print("OPT|tracked but not provisioned to %s/teams: %s — run: oc setup from the live install" % (base, ", ".join(sorted(missing))))
 copies = []
 wrong = []
 for t in tracked:
     link = os.path.join(ldir, t)
-    want = os.path.join(tdir, t)
+    want = os.path.realpath(os.path.join(canonical, "teams", t))
     if not os.path.lexists(link):
         continue
     if not os.path.islink(link):
@@ -986,16 +1048,16 @@ for t in tracked:
         continue
     try:
         got = os.path.realpath(link)
-        if got != os.path.realpath(want):
+        if got != want:
             wrong.append(t)
     except OSError:
         wrong.append(t)
 if copies:
-    print("BAD|team specs are directory copies (not symlinks): %s — run: oc setup" % ", ".join(sorted(copies)))
+    print("BAD|team specs are directory copies (not symlinks): %s — run: oc setup from the live install" % ", ".join(sorted(copies)))
 elif wrong:
-    print("BAD|team symlinks point elsewhere: %s — run: oc setup" % ", ".join(sorted(wrong)))
+    print("BAD|team symlinks drift from live %s: %s — run: oc setup from the live install" % (canonical, ", ".join(sorted(wrong))))
 elif tracked and not missing:
-    print("OK|all %d team specs symlinked into %s/teams" % (len(tracked), base))
+    print("OK|all %d team specs → live %s/teams" % (len(tracked), canonical))
 # schema completeness (OmO 4.19 team_mode)
 for key in (
     "tmux_visualization", "max_messages_per_run", "max_member_turns",
@@ -1394,14 +1456,14 @@ fi
 sec "Terminal configs"
 # tmux binary + conf symlink + load-test + OmO-critical options
 if command -v tmux >/dev/null 2>&1; then
-  if [[ -L "$HOME/.tmux.conf" ]] && [[ "$(readlink "$HOME/.tmux.conf")" = "$REPO/tmux.conf" ]]; then
-    ok "tmux.conf → $REPO/tmux.conf"
+  if oc_runtime_conf_ok "$HOME/.tmux.conf" tmux.conf; then
+    ok "tmux.conf → live install"
   elif [[ -f "$HOME/.tmux.conf" || -L "$HOME/.tmux.conf" ]]; then
-    opt "tmux.conf exists but not symlinked to repo"
-    tip "link: ln -sfn \"$REPO/tmux.conf\" ~/.tmux.conf   # or: oc setup --force"
+    opt "tmux.conf exists but not linked to the live install"
+    tip "from the live tree: oc setup"
   else
     opt "tmux.conf not linked"
-    tip "link: ln -sfn \"$REPO/tmux.conf\" ~/.tmux.conf   # or: oc setup"
+    tip "from the live tree: oc setup"
   fi
   # Syntax / load check in an isolated server (does not touch your sessions)
   _sock="ocdoctor$$"
@@ -1460,19 +1522,19 @@ elif [[ -x /Applications/Ghostty.app/Contents/MacOS/ghostty ]]; then
   _gbin="/Applications/Ghostty.app/Contents/MacOS/ghostty"
 fi
 if [[ -n "$_gbin" ]]; then
-  if [[ -L "$HOME/.config/ghostty/config" ]] && [[ "$(readlink "$HOME/.config/ghostty/config")" = "$REPO/ghostty.conf" ]]; then
-    ok "ghostty.conf → $REPO/ghostty.conf"
+  if oc_runtime_conf_ok "$HOME/.config/ghostty/config" ghostty.conf; then
+    ok "ghostty.conf → live install"
   elif [[ -d "$HOME/.config/ghostty" ]]; then
     if [[ -f "$HOME/.config/ghostty/config" || -L "$HOME/.config/ghostty/config" ]]; then
-      opt "ghostty config exists but not symlinked to repo"
-      tip "link: mkdir -p ~/.config/ghostty && ln -sfn \"$REPO/ghostty.conf\" ~/.config/ghostty/config"
+      opt "ghostty config exists but not linked to the live install"
+      tip "from the live tree: oc setup"
     else
       opt "Ghostty present but no config linked"
-      tip "link: mkdir -p ~/.config/ghostty && ln -sfn \"$REPO/ghostty.conf\" ~/.config/ghostty/config"
+      tip "from the live tree: oc setup"
     fi
   else
     info "Ghostty binary found; ~/.config/ghostty not created yet"
-    tip "link: mkdir -p ~/.config/ghostty && ln -sfn \"$REPO/ghostty.conf\" ~/.config/ghostty/config"
+    tip "from the live tree: oc setup"
   fi
   if "$_gbin" +validate-config --config-file="$REPO/ghostty.conf" >/tmp/oc-ghostty-doctor.out 2>&1; then
     ok "ghostty.conf validates"
@@ -1846,15 +1908,15 @@ if [[ $crit -eq 0 && $miss -eq 0 ]]; then
 elif [[ $crit -eq 0 ]]; then
   printf "  ${c_g}Core is ready.${c_0} ${c_y}$miss optional item(s) missing (see ⚠ above).${c_0}\n"
   [[ $softn -gt 0 ]] && info "$softn advisory note(s) (~) — latency/network, not install gaps"
-  tip "full install tips above · or: bash \"$REPO/install.sh\" · oc fix · oc setup"
+  tip "oc secrets sync · oc setup (from the live install) · oc fix"
 else
   printf "  ${c_r}$crit critical issue(s)${c_0}"
   [[ $miss -gt 0 ]] && printf " + ${c_y}$miss optional${c_0}"
   [[ $softn -gt 0 ]] && printf " · ${c_dim}$softn advisory${c_0}"
   printf " — fix ✗ items before coding.\n"
-  tip "bash \"$REPO/install.sh\"   # full stack"
-  tip "oc fix                     # colors + config footguns"
-  tip "oc validate && oc doctor   # re-check"
+  tip "oc secrets sync            # allowlisted keys → .env"
+  tip "oc setup                   # from the live ~/.config/opencode tree"
+  tip "oc fix && oc validate && oc doctor"
 fi
 [[ $DO_JSON -eq 0 ]] && echo ""
 exit $(( crit > 0 ? 1 : 0 ))

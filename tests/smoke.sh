@@ -108,7 +108,7 @@ else
 fi
 
 # Helpers exist
-for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs; do
+for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok; do
   if grep -q "${fn}()" "$REPO/lib/common.sh"; then
     ok "helper $fn"
   else
@@ -153,7 +153,7 @@ else
   bad "concurrency drift — run: oc fix"
 fi
 
-# Team mode schema + ~/.omo/teams symlinks (not directory copies)
+# Team mode schema + ~/.omo/teams → live ~/.config/opencode (not this checkout)
 if python3 - "$REPO" <<'PY'
 import json, os, sys
 repo = sys.argv[1]
@@ -170,25 +170,40 @@ if tm.get("enabled") is not True or any(k not in tm for k in need):
 tx = omo.get("tmux") or {}
 if tx.get("enabled") is not True or tx.get("layout") != "main-vertical":
     sys.exit(2)
+
+def is_openconfig(path):
+    sig_p = os.path.join(path, "signature.json")
+    if not (os.path.isfile(os.path.join(path, "opencode.json")) and os.path.isdir(os.path.join(path, "teams")) and os.path.isfile(sig_p)):
+        return False
+    try:
+        sig = json.load(open(sig_p, encoding="utf-8"))
+    except Exception:
+        return False
+    return sig.get("product") == "OpenConfig" and sig.get("cli") == "oc" and sig.get("id") == "jesseoue/opencode-configs"
+
+xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
+link = os.path.join(xdg, "opencode")
+live = os.path.realpath(link) if os.path.lexists(link) else ""
+canonical = live if live and is_openconfig(live) else os.path.realpath(repo)
 base = tm.get("base_dir") or "~/.omo"
 if base.startswith("~/"):
     base = os.path.join(os.path.expanduser("~"), base[2:])
 ldir = os.path.join(base, "teams")
-tdir = os.path.join(repo, "teams")
+tdir = os.path.join(canonical, "teams")
 for name in os.listdir(tdir):
     if not os.path.isfile(os.path.join(tdir, name, "config.json")):
         continue
-    link = os.path.join(ldir, name)
-    if not os.path.islink(link):
+    linkp = os.path.join(ldir, name)
+    if not os.path.islink(linkp):
         sys.exit(3)
-    if os.path.realpath(link) != os.path.realpath(os.path.join(tdir, name)):
+    if os.path.realpath(linkp) != os.path.realpath(os.path.join(tdir, name)):
         sys.exit(4)
 sys.exit(0)
 PY
 then
-  ok "team mode schema + ~/.omo/teams symlinks"
+  ok "team mode schema + ~/.omo/teams → live config"
 else
-  bad "team mode incomplete — run: oc fix && oc setup"
+  bad "team mode incomplete — run: oc setup from the live install"
 fi
 
 # Public vault.json must stay generic; personal refs live in vault.local.json

@@ -7,6 +7,10 @@
 # Usage:
 #   ./validate.sh           full report
 #   ./validate.sh --quiet   summary only (exit code still set)
+#
+# ~/.omo/teams must symlink to the *live* install (realpath ~/.config/opencode)
+# when that tree is OpenConfig — not necessarily this checkout.
+# Related: oc setup · oc doctor · oc secrets
 
 set -euo pipefail
 
@@ -23,6 +27,9 @@ for arg in "$@"; do
 done
 
 [[ "$QUIET" == "--quiet" ]] && export VALIDATE_QUIET=1
+
+OC_LIVE_CONFIG="$(oc_live_config_root 2>/dev/null || true)"
+export OC_LIVE_CONFIG
 
 python3 - "$REPO" <<'PY'
 import json, sys, os, re, glob, subprocess
@@ -931,7 +938,38 @@ if omo:
                 else:
                     ownership[scope] = m.get("name")
         ok(f"{len(team_cfgs)} team spec(s) checked against OmO eligibility and lifecycle rules")
-        # Provisioned ~/.omo/teams entries must be symlinks into this repo
+        # Provisioned ~/.omo/teams must symlink to the live OpenConfig tree
+        # (realpath ~/.config/opencode), not "must equal this checkout".
+        def _is_openconfig_tree(path):
+            if not path or not os.path.isdir(path):
+                return False
+            sig_p = os.path.join(path, "signature.json")
+            if not (
+                os.path.isfile(os.path.join(path, "opencode.json"))
+                and os.path.isdir(os.path.join(path, "teams"))
+                and os.path.isfile(sig_p)
+            ):
+                return False
+            try:
+                sig = json.load(open(sig_p, encoding="utf-8"))
+            except Exception:
+                return False
+            return (
+                sig.get("product") == "OpenConfig"
+                and sig.get("cli") == "oc"
+                and sig.get("id") == "jesseoue/opencode-configs"
+            )
+
+        live = os.environ.get("OC_LIVE_CONFIG") or ""
+        if live:
+            live = os.path.realpath(live)
+        repo_real = os.path.realpath(repo)
+        if live and _is_openconfig_tree(live):
+            canonical = live
+        elif _is_openconfig_tree(repo_real):
+            canonical = repo_real
+        else:
+            canonical = repo_real
         base = (tm.get("base_dir") or "~/.omo")
         if isinstance(base, str) and base.startswith("~/"):
             base = os.path.join(os.path.expanduser("~"), base[2:])
@@ -943,17 +981,17 @@ if omo:
             for cfg_path in team_cfgs:
                 name = os.path.basename(os.path.dirname(cfg_path))
                 link = os.path.join(ldir, name)
-                want = os.path.realpath(os.path.dirname(cfg_path))
+                want = os.path.realpath(os.path.join(canonical, "teams", name))
                 if not os.path.lexists(link):
-                    bad_links.append(f"{name} (missing — run oc setup)")
+                    bad_links.append(f"{name} (missing — run oc setup from the live install)")
                 elif not os.path.islink(link):
-                    bad_links.append(f"{name} (directory copy — run oc setup)")
+                    bad_links.append(f"{name} (directory copy — run oc setup from the live install)")
                 elif os.path.realpath(link) != want:
-                    bad_links.append(f"{name} (symlink drift — run oc setup)")
+                    bad_links.append(f"{name} (want {want})")
             if bad_links:
-                err(f"~/.omo/teams provision drift: {', '.join(bad_links)}")
+                err(f"~/.omo/teams provision drift (live {canonical}): {', '.join(bad_links)}")
             else:
-                ok(f"{len(team_cfgs)} team specs symlinked under {ldir}")
+                ok(f"{len(team_cfgs)} team specs → live {canonical}/teams")
 
     # cross-file: every agent/category model + fallback resolves to a defined model
     if oc:

@@ -78,9 +78,9 @@ ${c_bold}Install & self-heal (start here):${c_0}
   ${c_g}test${c_0}      [smoke|idempotency|runtime]   Self-test suite (safe)
 
 ${c_bold}Setup & Health:${c_0}
-  ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams, LSP, projects)
+  ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams → live config, LSP, projects)
   ${c_g}doctor${c_0}    [--quick|--json|--fix|--harden|--ai-fix]
-                                         Full readiness (keys, skills, teams, MCP, …)
+                                         Full readiness. Keys via oc secrets. Teams follow ~/.config/opencode.
   ${c_g}validate${c_0}  [--quiet]                      Config validator + footgun detector
   ${c_g}diagnose${c_0}  [--no-ai|--fix|--agent-fix]    AI-assisted deep diagnostics
 

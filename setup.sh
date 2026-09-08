@@ -3,12 +3,14 @@
 #
 # Gets this repo working as ~/.config/opencode.
 # Safe to run multiple times. Won't clobber existing .env or working symlinks.
+# From a secondary checkout: does NOT retarget a healthy live install
+# (~/.config/opencode → another OpenConfig tree). Team links heal to the live tree.
 #
 # Usage:
 #   ./setup.sh              # full setup (idempotent)
 #   ./setup.sh --check      # check only, don't change anything
-#   ./setup.sh --force      # overwrite broken symlinks
-#   ./setup.sh --sync-env   # pull allowlisted keys from 1Password / Infisical
+#   ./setup.sh --force      # overwrite broken symlinks (never steals a healthy live link)
+#   ./setup.sh --sync-env   # pull allowlisted keys (oc secrets sync)
 
 set -euo pipefail
 
@@ -46,6 +48,15 @@ ok(){ printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 opt(){ printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){ printf "  ${c_r}✗${c_0} %s\n" "$*"; }
 info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
+tip(){ printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
+
+LIVE_ROOT="$(oc_live_config_root 2>/dev/null || true)"
+IS_LIVE=false
+oc_is_live_config "$REPO" && IS_LIVE=true
+TEAM_ROOT="$REPO"
+if ! $IS_LIVE && [[ -n "$LIVE_ROOT" ]]; then
+  TEAM_ROOT="$LIVE_ROOT"
+fi
 
 oc_banner "$OC_VERSION" "OpenConfig setup — OpenCode · OpenRouter · OmO"
 
@@ -64,14 +75,24 @@ fi
 echo ""
 
 # ─── 2. Config symlink ────────────────────────────────────────────
-echo "Step 2: Config symlink (~/.config/opencode → this repo)"
+echo "Step 2: Config symlink (~/.config/opencode → live install)"
 mkdir -p "$(dirname "$LINK")"
-if oc_link_points_to "$LINK" "$REPO" 2>/dev/null; then
+if $IS_LIVE; then
+  ok "live install: $LINK → $REPO"
+elif [[ -n "$LIVE_ROOT" ]]; then
+  ok "live install already at $LIVE_ROOT"
+  info "this checkout is secondary — not retargeting $LINK"
+elif oc_link_points_to "$LINK" "$REPO" 2>/dev/null; then
   ok "symlink correct"
 elif [ -L "$LINK" ]; then
   tgt="$(oc_readlink_abs "$LINK" 2>/dev/null || readlink "$LINK" || true)"
-  opt "symlink points to $tgt (expected $REPO)"
-  $FORCE && { fix ln -sfn "$REPO" "$LINK"; ok "symlink updated"; } || echo "  Run with --force to fix"
+  opt "symlink points to $tgt (not OpenConfig)"
+  if $FORCE; then
+    fix ln -sfn "$REPO" "$LINK"
+    ok "symlink updated"
+  else
+    tip "run with --force to point $LINK at this tree"
+  fi
 elif [ -d "$LINK" ]; then
   opt "$LINK is a real directory, not a symlink"
   if $FORCE; then
@@ -79,7 +100,7 @@ elif [ -d "$LINK" ]; then
     fix ln -sfn "$REPO" "$LINK"
     ok "backed up to ${OC_BACKUP_PATH:-} and symlinked (sessions untouched at $OC_SESSIONS_DIR)"
   else
-    echo "  Run with --force to replace (backs up first; never deletes sessions)"
+    tip "run with --force to replace (backs up first; never deletes sessions)"
   fi
 elif [ ! -e "$LINK" ]; then
   fix ln -sfn "$REPO" "$LINK"
@@ -110,7 +131,7 @@ if ! $CHECK_ONLY; then
     ok ".env preserved (merged any new keys from .env.example; values never clobbered)"
   fi
   if [[ -z "$(oc_get_env_key "$ENV_FILE" OPENROUTER_API_KEY 2>/dev/null || true)" ]]; then
-    opt "OPENROUTER_API_KEY unset — add it to $ENV_FILE"
+    opt "OPENROUTER_API_KEY unset — oc secrets sync  or  edit $ENV_FILE"
   else
     ok "OPENROUTER_API_KEY set"
   fi
@@ -118,55 +139,66 @@ else
   if [[ -f "$ENV_FILE" ]]; then
     ok ".env exists"
   else
-    opt ".env missing (would create from .env.example without overwriting later)"
+    opt ".env missing (would create from .env.example; or: oc secrets sync)"
   fi
 fi
 echo ""
 
 # ─── 4. Team specs ────────────────────────────────────────────────
-echo "Step 4: Team mode specs"
+echo "Step 4: Team mode specs (~/.omo/teams → live config)"
+if $IS_LIVE; then
+  info "healing team links → $TEAM_ROOT/teams"
+elif [[ -n "$LIVE_ROOT" ]]; then
+  info "live install is $LIVE_ROOT — will not retarget teams to this checkout"
+fi
 mkdir -p "$OMO_TEAMS"
-# Prune stale/broken symlinks (e.g. retired build-crew)
+# Prune stale/broken symlinks (e.g. retired build-crew) against the live tree
 for existing in "$OMO_TEAMS"/*; do
   [ -e "$existing" ] || [ -L "$existing" ] || continue
   name="$(basename "$existing")"
-  if [ ! -d "$REPO/teams/$name" ]; then
+  if [ ! -d "$TEAM_ROOT/teams/$name" ]; then
     if [ -L "$existing" ]; then
       fix rm -f "$existing"
       ok "removed stale team link '$name'"
     else
-      opt "orphan path $existing (not a symlink to this repo — leave alone)"
+      opt "orphan path $existing (not a symlink — leave alone)"
     fi
   fi
 done
-for spec_dir in "$REPO"/teams/*/; do
+for spec_dir in "$TEAM_ROOT"/teams/*/; do
   [ -d "$spec_dir" ] || continue
   team_name="$(basename "$spec_dir")"
   team_link="$OMO_TEAMS/$team_name"
   target="${spec_dir%/}"
-  # Resolve desired link text (no trailing slash)
   if [ -L "$team_link" ]; then
-    _cur="$(readlink "$team_link" 2>/dev/null || true)"
-    if [ "$_cur" = "$target" ] || [ "$_cur" = "$spec_dir" ]; then
-      ok "team '$team_name' provisioned (symlink)"
-      unset _cur
+    _got=""
+    if command -v realpath >/dev/null 2>&1; then
+      _got="$(realpath "$team_link" 2>/dev/null || true)"
+    fi
+    if oc_same_path "${_got:-}" "$target" || [ "$(readlink "$team_link" 2>/dev/null || true)" = "$target" ]; then
+      ok "team '$team_name' → live"
+      unset _got
       continue
     fi
-    unset _cur
+    unset _got
   fi
   # Real directory copies (or wrong links) must be replaced — macOS ln -sfn
   # will nest a symlink *inside* an existing directory instead of replacing it.
   if [ -d "$team_link" ] && [ ! -L "$team_link" ]; then
     if $CHECK_ONLY; then
-      opt "team '$team_name' is a directory copy (not symlink) — run setup to replace"
+      opt "team '$team_name' is a directory copy (not symlink) — run oc setup from the live install"
       continue
     fi
     fix rm -rf "$team_link"
   elif [ -e "$team_link" ] || [ -L "$team_link" ]; then
+    if $CHECK_ONLY; then
+      opt "team '$team_name' drift — run oc setup from the live install"
+      continue
+    fi
     fix rm -f "$team_link"
   fi
   fix ln -sfn "$target" "$team_link"
-  ok "team '$team_name' symlinked → $target"
+  ok "team '$team_name' → $target"
 done
 echo ""
 
@@ -239,42 +271,47 @@ echo ""
 
 # ─── 7. Tmux + Ghostty + Zshrc ────────────────────────────────
 echo "Step 7: Terminal configs"
+_conf_src="$TEAM_ROOT"
 if command -v tmux >/dev/null 2>&1; then
   TMUX_CONF="$HOME/.tmux.conf"
-  if [ -L "$TMUX_CONF" ] && [ "$(readlink "$TMUX_CONF")" = "$REPO/tmux.conf" ]; then
-    ok "tmux.conf symlinked"
+  if oc_runtime_conf_ok "$TMUX_CONF" tmux.conf; then
+    ok "tmux.conf → live install"
+  elif ! $IS_LIVE && [[ -n "$LIVE_ROOT" ]]; then
+    opt "tmux.conf not linked to live install (not retargeting from this checkout)"
   elif [ -f "$TMUX_CONF" ] || [ -L "$TMUX_CONF" ]; then
     opt "tmux.conf exists (not our symlink — run --force to replace; backs up first)"
     if $FORCE; then
       oc_backup_path "$TMUX_CONF" "tmux" >/dev/null
-      fix ln -sfn "$REPO/tmux.conf" "$TMUX_CONF"
-      ok "tmux.conf symlinked (backup → ${OC_BACKUP_PATH:-})"
+      fix ln -sfn "$_conf_src/tmux.conf" "$TMUX_CONF"
+      ok "tmux.conf → live (backup → ${OC_BACKUP_PATH:-})"
     fi
   else
-    fix ln -sfn "$REPO/tmux.conf" "$TMUX_CONF"
-    ok "tmux.conf symlinked"
+    fix ln -sfn "$_conf_src/tmux.conf" "$TMUX_CONF"
+    ok "tmux.conf → live"
   fi
 else
   opt "tmux not installed (team mode tmux_visualization won't work)"
-  echo "  Install: brew install tmux"
+  tip "install: brew install tmux"
 fi
 echo ""
 
 # ─── Ghostty config (optional) ───────────────────────────────
 if [[ -d "$HOME/.config/ghostty" ]]; then
   GHOSTTY_CONF="$HOME/.config/ghostty/config"
-  if [ -L "$GHOSTTY_CONF" ] && [ "$(readlink "$GHOSTTY_CONF")" = "$REPO/ghostty.conf" ]; then
-    ok "ghostty.conf symlinked"
+  if oc_runtime_conf_ok "$GHOSTTY_CONF" ghostty.conf; then
+    ok "ghostty.conf → live install"
+  elif ! $IS_LIVE && [[ -n "$LIVE_ROOT" ]]; then
+    opt "ghostty config not linked to live install (not retargeting from this checkout)"
   elif [ -f "$GHOSTTY_CONF" ] || [ -L "$GHOSTTY_CONF" ]; then
     opt "ghostty config exists (not our symlink — run --force to replace; backs up first)"
     if $FORCE; then
       oc_backup_path "$GHOSTTY_CONF" "ghostty" >/dev/null
-      fix ln -sfn "$REPO/ghostty.conf" "$GHOSTTY_CONF"
-      ok "ghostty.conf symlinked (backup → ${OC_BACKUP_PATH:-})"
+      fix ln -sfn "$_conf_src/ghostty.conf" "$GHOSTTY_CONF"
+      ok "ghostty.conf → live (backup → ${OC_BACKUP_PATH:-})"
     fi
   else
-    fix ln -sfn "$REPO/ghostty.conf" "$GHOSTTY_CONF"
-    ok "ghostty.conf symlinked"
+    fix ln -sfn "$_conf_src/ghostty.conf" "$GHOSTTY_CONF"
+    ok "ghostty.conf → live"
   fi
 else
   info "Ghostty not detected — skip ghostty.conf"
@@ -423,6 +460,10 @@ if [ -x "$REPO/doctor.sh" ] && ! $CHECK_ONLY; then
 fi
 
 echo ""
-echo -e "${c_g}Setup complete.${c_0}"
-$CHECK_ONLY && echo "Run without --check to apply fixes."
+printf '%b\n' "${c_g}Setup complete.${c_0}"
+if $CHECK_ONLY; then
+  tip "run without --check to apply fixes  ·  oc secrets sync  ·  oc doctor --quick"
+else
+  tip "oc secrets sync  ·  oc doctor --quick --json"
+fi
 exit 0

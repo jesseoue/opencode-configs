@@ -677,6 +677,112 @@ oc_readlink_abs() {
   printf '%s\n' "$dir/$tgt"
 }
 
+# True if $1 is an OpenConfig tree (signature + opencode.json + teams/).
+oc_is_openconfig_tree() {
+  local root="${1:-}"
+  [[ -n "$root" && -f "$root/opencode.json" && -d "$root/teams" && -f "$root/signature.json" ]] || return 1
+  python3 -c '
+import json, sys
+try:
+    s = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception:
+    raise SystemExit(1)
+raise SystemExit(0 if (
+    s.get("product") == "OpenConfig"
+    and s.get("cli") == "oc"
+    and s.get("id") == "jesseoue/opencode-configs"
+) else 1)
+' "$root/signature.json" 2>/dev/null
+}
+
+# Realpath of ~/.config/opencode when that tree is OpenConfig.
+# Empty + rc 1 if the link is missing or not this product.
+oc_live_config_root() {
+  local link="${OC_CONFIG_LINK:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}"
+  local root=""
+  if [[ -e "$link" || -L "$link" ]]; then
+    if command -v realpath >/dev/null 2>&1; then
+      root="$(realpath "$link" 2>/dev/null || true)"
+    else
+      root="$(cd "$link" 2>/dev/null && pwd -P || true)"
+    fi
+  fi
+  if [[ -n "$root" ]] && oc_is_openconfig_tree "$root"; then
+    printf '%s\n' "$root"
+    return 0
+  fi
+  return 1
+}
+
+# True if $1 (default REPO) is the live ~/.config/opencode tree.
+oc_is_live_config() {
+  local repo="${1:-${REPO:-}}" live
+  [[ -n "$repo" ]] || return 1
+  live="$(oc_live_config_root 2>/dev/null || true)"
+  [[ -n "$live" ]] || return 1
+  oc_same_path "$repo" "$live"
+}
+
+# Canonical tree for ~/.omo/teams: live config if OpenConfig, else $1/REPO.
+oc_omo_teams_canonical() {
+  local repo="${1:-${REPO:-}}" live
+  live="$(oc_live_config_root 2>/dev/null || true)"
+  if [[ -n "$live" ]]; then
+    printf '%s\n' "$live"
+    return 0
+  fi
+  if [[ -n "$repo" ]] && oc_is_openconfig_tree "$repo"; then
+    printf '%s\n' "$repo"
+    return 0
+  fi
+  [[ -n "$repo" ]] || return 1
+  printf '%s\n' "$repo"
+}
+
+# True if every tracked team under canonical/teams is a symlink to that tree.
+# Compares ~/.omo/teams/<name> → realpath(live ~/.config/opencode)/teams/<name>
+# (or REPO when that *is* the config link). Missing / copies / foreign targets fail.
+oc_omo_teams_ok() {
+  local repo="${1:-${REPO:-}}" canonical tdir ldir name link got
+  canonical="$(oc_omo_teams_canonical "$repo")" || return 1
+  tdir="$canonical/teams"
+  ldir="${HOME}/.omo/teams"
+  [[ -d "$tdir" && -d "$ldir" ]] || return 1
+  for name in "$tdir"/*/; do
+    [[ -f "${name}config.json" ]] || continue
+    name="$(basename "$name")"
+    link="$ldir/$name"
+    [[ -L "$link" ]] || return 1
+    if command -v realpath >/dev/null 2>&1; then
+      got="$(realpath "$link" 2>/dev/null || true)"
+    else
+      got="$(cd "$link" 2>/dev/null && pwd -P || true)"
+    fi
+    oc_same_path "$got" "$tdir/$name" || return 1
+  done
+  return 0
+}
+
+# True if symlink $1 resolves to $canonical/$2 (live config, or REPO if that is live).
+# Usage: oc_runtime_conf_ok ~/.tmux.conf tmux.conf
+oc_runtime_conf_ok() {
+  local link="${1:?}" rel="${2:?}" live tgt
+  [[ -L "$link" ]] || return 1
+  if command -v realpath >/dev/null 2>&1; then
+    tgt="$(realpath "$link" 2>/dev/null || true)"
+  else
+    tgt="$(oc_readlink_abs "$link" 2>/dev/null || true)"
+  fi
+  [[ -n "$tgt" ]] || return 1
+  live="$(oc_live_config_root 2>/dev/null || true)"
+  if [[ -n "$live" ]]; then
+    oc_same_path "$tgt" "$live/$rel" && return 0
+    return 1
+  fi
+  [[ -n "${REPO:-}" ]] || return 1
+  oc_same_path "$tgt" "$REPO/$rel"
+}
+
 # Set KEY=value only when the key is missing or empty. Never clobbers a set value.
 # Prints "set" if written, "keep" if left alone. Returns 0 either way.
 # Usage: oc_set_env_key_if_unset "$file" KEY value
