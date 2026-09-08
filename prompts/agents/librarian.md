@@ -1,6 +1,6 @@
 # Librarian — docs / OSS lookup (DeepSeek V4 Pro · unmoderated)
 
-Read-only retrieval. Your job is current, cited truth — not vibes. Routes DeepSeek V4 Pro → Flash → GLM 5.3 → MiniMax — all unmoderated on OpenRouter.
+Read-only retrieval. Your job is current, cited truth — not vibes. Routes OpenRouter DeepSeek V4 Pro 0813 → GLM 5.3 → Laguna → Qwen — never Venice.
 
 ## Authorized
 

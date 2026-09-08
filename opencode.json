@@ -4,7 +4,7 @@
   "logLevel": "ERROR",
   "username": "user",
   "model": "openrouter/z-ai/glm-5.3",
-  "small_model": "openrouter/poolside/laguna-s-2.1",
+  "small_model": "openrouter/z-ai/glm-5.3-flash",
   "default_agent": "sisyphus",
   "autoupdate": false,
   "share": "disabled",
@@ -14,40 +14,29 @@
     "hostname": "127.0.0.1",
     "mdns": false
   },
-  "enabled_providers": [
-    "openrouter"
-  ],
-  "instructions": [
-    "AGENTS.md",
-    "prompts/core.md",
-    "prompts/goal.md"
-  ],
-  "plugin": [
-    "oh-my-openagent@4.19.4"
-  ],
+  "enabled_providers": ["openrouter", "venice"],
+  "instructions": ["AGENTS.md", "prompts/core.md", "prompts/goal.md"],
+  "plugin": ["oh-my-openagent@4.19.4"],
   "skills": {
-    "paths": [
-      "~/.config/opencode/skills",
-      "./skills"
-    ]
+    "paths": ["~/.config/opencode/skills", "./skills"]
   },
   "agent": {
     "title": {
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "temperature": 0.1,
       "steps": 1,
       "options": {},
       "permission": {}
     },
     "summary": {
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "temperature": 0.2,
       "steps": 1,
       "options": {},
       "permission": {}
     },
     "compaction": {
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "temperature": 0.1,
       "steps": 1,
       "options": {},
@@ -62,18 +51,28 @@
       "disable": true,
       "options": {},
       "permission": {}
+    },
+    "hephaestus": {
+      "name": "Hephaestus - Implementer",
+      "description": "Deep implement / critique on GLM 5.3",
+      "mode": "primary",
+      "model": "openrouter/z-ai/glm-5.3",
+      "hidden": false,
+      "options": {},
+      "permission": {}
     }
   },
   "provider": {
     "openrouter": {
       "whitelist": [
         "z-ai/glm-5.3",
+        "z-ai/glm-5.3-flash",
         "poolside/laguna-s-2.1",
         "meituan/longcat-2.0",
         "minimax/minimax-m3",
         "google/gemini-3.1-pro-preview",
-        "google/gemini-3.7-flash",
-        "qwen/qwen3.8-max",
+        "google/gemini-3.8-flash",
+        "qwen/qwen3.8-max-0902",
         "moonshotai/kimi-k2.7-code",
         "deepseek/deepseek-v4-pro-0813",
         "deepseek/deepseek-v4-flash-0731",
@@ -102,7 +101,50 @@
           "attachment": false,
           "status": "active",
           "limit": {
-            "context": 1048576,
+            "context": 1310720,
+            "output": 131072
+          },
+          "options": {
+            "provider": {
+              "require_parameters": true,
+              "data_collection": "allow",
+              "allow_fallbacks": true
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
+        "z-ai/glm-5.3-flash": {
+          "id": "z-ai/glm-5.3-flash",
+          "name": "Z.ai GLM 5.3 Flash",
+          "family": "glm",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1310720,
             "output": 131072
           },
           "options": {
@@ -285,12 +327,7 @@
               "require_parameters": true,
               "data_collection": "allow",
               "allow_fallbacks": true,
-              "only": [
-                "gmicloud",
-                "novita",
-                "deepinfra",
-                "together"
-              ]
+              "only": ["gmicloud", "novita", "deepinfra", "together"]
             },
             "reasoning": {
               "effort": "high"
@@ -365,9 +402,9 @@
             }
           }
         },
-        "google/gemini-3.7-flash": {
-          "id": "google/gemini-3.7-flash",
-          "name": "Gemini 3.7 Flash",
+        "google/gemini-3.8-flash": {
+          "id": "google/gemini-3.8-flash",
+          "name": "Gemini 3.8 Flash",
           "family": "gemini",
           "reasoning": true,
           "tool_call": true,
@@ -411,8 +448,8 @@
             }
           }
         },
-        "qwen/qwen3.8-max": {
-          "id": "qwen/qwen3.8-max",
+        "qwen/qwen3.8-max-0902": {
+          "id": "qwen/qwen3.8-max-0902",
           "name": "Qwen 3.8 Max",
           "family": "qwen",
           "reasoning": true,
@@ -610,6 +647,56 @@
           }
         }
       }
+    },
+    "venice": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Venice",
+      "whitelist": [
+        "deepseek-v4-pro-0813",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash-0731"
+      ],
+      "options": {
+        "baseURL": "https://api.venice.ai/api/v1"
+      },
+      "models": {
+        "deepseek-v4-pro-0813": {
+          "name": "DeepSeek V4 Pro 0813",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 1000000, "output": 32768 },
+          "variants": {
+            "low": { "reasoning": { "effort": "low" } },
+            "medium": { "reasoning": { "effort": "medium" } },
+            "high": { "reasoning": { "effort": "high" } },
+            "max": { "reasoning": { "effort": "high" } }
+          }
+        },
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 1000000, "output": 32768 },
+          "variants": {
+            "low": { "reasoning": { "effort": "low" } },
+            "medium": { "reasoning": { "effort": "medium" } },
+            "high": { "reasoning": { "effort": "high" } },
+            "max": { "reasoning": { "effort": "high" } }
+          }
+        },
+        "deepseek-v4-flash-0731": {
+          "name": "DeepSeek V4 Flash 0731",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": { "context": 1000000, "output": 32768 },
+          "variants": {
+            "low": { "reasoning": { "effort": "low" } },
+            "medium": { "reasoning": { "effort": "medium" } },
+            "high": { "reasoning": { "effort": "high" } },
+            "max": { "reasoning": { "effort": "high" } }
+          }
+        }
+      }
     }
   },
   "permission": {
@@ -693,13 +780,13 @@
   "compaction": {
     "auto": true,
     "prune": true,
-    "reserved": 48000,
+    "reserved": 24000,
     "tail_turns": 2,
-    "preserve_recent_tokens": 10000
+    "preserve_recent_tokens": 8000
   },
   "tool_output": {
-    "max_lines": 300,
-    "max_bytes": 12000
+    "max_lines": 200,
+    "max_bytes": 8000
   },
   "watcher": {
     "ignore": [
@@ -735,11 +822,7 @@
   },
   "formatter": {
     "prettier": {
-      "command": [
-        "prettier",
-        "--write",
-        "$FILE"
-      ],
+      "command": ["prettier", "--write", "$FILE"],
       "extensions": [
         ".ts",
         ".tsx",
@@ -753,15 +836,8 @@
       ]
     },
     "ruff": {
-      "command": [
-        "ruff",
-        "format",
-        "$FILE"
-      ],
-      "extensions": [
-        ".py",
-        ".pyi"
-      ]
+      "command": ["ruff", "format", "$FILE"],
+      "extensions": [".py", ".pyi"]
     },
     "biome": {
       "disabled": true
@@ -778,18 +854,8 @@
       "disabled": true
     },
     "typescript": {
-      "command": [
-        "typescript-language-server",
-        "--stdio"
-      ],
-      "extensions": [
-        ".ts",
-        ".tsx",
-        ".js",
-        ".jsx",
-        ".mts",
-        ".cts"
-      ]
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]
     },
     "tinymist": {
       "disabled": true
@@ -894,23 +960,12 @@
       "disabled": true
     },
     "python": {
-      "command": [
-        "basedpyright-langserver",
-        "--stdio"
-      ],
-      "extensions": [
-        ".py",
-        ".pyi"
-      ]
+      "command": ["basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyi"]
     },
     "go": {
-      "command": [
-        "gopls",
-        "--stdio"
-      ],
-      "extensions": [
-        ".go"
-      ]
+      "command": ["gopls", "--stdio"],
+      "extensions": [".go"]
     },
     "php intelephense": {
       "disabled": true
@@ -927,6 +982,11 @@
         "effect": "allow",
         "action": "provider.use",
         "resource": "openrouter"
+      },
+      {
+        "effect": "allow",
+        "action": "provider.use",
+        "resource": "venice"
       },
       {
         "effect": "deny",

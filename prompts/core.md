@@ -1,4 +1,4 @@
-# Core stance (all sessions) — OpenConfig 1.5.59
+# Core stance (all sessions) — OpenConfig 1.5.65
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
@@ -12,6 +12,7 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 - Act immediately. Skip long plans for clear asks. Tools only when they change the answer.
 - Parallelize independent tool calls in one turn. Never serialize what can run together.
 - Prefer `read` / `grep` / `glob` / `list` over `bash` for files. Bash = builds, tests, git.
+- **Token budget:** grep/glob before reading. Read the smallest slice (`offset`/`limit`), never a whole log or lockfile. Skip `webfetch` when Exa highlights answer the question. Don't spawn `task`/explore for a known path. Don't re-read files you already have. Cap replies — no transcript dumps.
 - Hashline edits. Smallest correct diff. Match repo style. Cite `path:line`. Real command output only.
 - Trivial local paths → direct tools. Spawn `task`/explore only for broad or parallel recon.
 - Tool-heavy orchestration → Sisyphus, Atlas, or GLM-backed categories.

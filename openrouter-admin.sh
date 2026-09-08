@@ -5,6 +5,7 @@
 # Commands:
 #   status    — Account overview (credits, keys, spend, rate limits)
 #   keys      — List all API keys with usage + rate limit analysis
+#   cursor    — Last-30-day activity by model (Cursor BYOK)
 #   credits   — Credit balance + projection
 #   alert     — Check if credits below threshold (default $50)
 #   health    — Live probe all configured models + rate limit check
@@ -241,6 +242,10 @@ print(f'{d[\"total_credits\"] - d[\"total_usage\"]:.2f}')
     else
       echo "OK: \$${remaining} remaining (threshold: \$${threshold})"
     fi
+    ;;
+
+  cursor)
+    exec "$REPO/cursor.sh" usage
     ;;
 
   status|*)

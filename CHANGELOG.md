@@ -2,6 +2,50 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
+## [1.5.65] — 2026-09-07
+
+### OpenRouter catalog refresh (Venice content-aware untouched)
+
+- **Gemini Flash** `google/gemini-3.7-flash` → **`google/gemini-3.8-flash`** (same $0.75/$3.75, 1M ctx, tools; catalog successor). Writing primary + visual fallbacks.
+- **Exacto:** still not a catalog id (`z-ai/glm-5.3:exacto` missing). Keep GLM unpinned (`require_parameters: true`) so Auto Exacto can pick hosts. Do not ship `:exacto` slugs.
+- **OmO recon drift:** `explore` / `librarian` / `deep` back on **OpenRouter** `deepseek/deepseek-v4-pro-0813`. `oc fix` now enforces those primaries. Content-aware stays **`venice/*` only**.
+- **Concurrency:** OpenRouter DeepSeek Pro 0813 `5 → 8` (explore + librarian + deep share it). Venice caps stay 5. Gemini 3.8 Flash cap 10.
+- **Skipped:** `kimi-k3` ($3/$15), OmO `5.0.0-beta.*` (pin stays `4.19.4` stable), generic `deepseek-v4-pro` (0813 is cheaper GA).
+
+## [1.5.64] — 2026-09-07
+
+### T3 Code + live catalog pins (no secrets in JSON)
+
+- **Qwen pin** `qwen/qwen3.8-max` → **`qwen/qwen3.8-max-0902`** (bare slug missing from OpenRouter catalog).
+- **Venice** no longer stores `{env:VENICE_API_KEY}` in `opencode.json`. Auth is `opencode auth` + `.env` via `launch-desktop.sh` / `serve-desktop.sh`.
+- **`t3-opencode.json`** is the T3 Code OpenCode provider pin: port 4097, curated OpenRouter + Venice slugs, no keys.
+
+## [1.5.63] — 2026-08-31
+
+### Sisyphus / planning: live GLM 5.3 + Flash small lane (no dead Exacto slug)
+
+- **Lead stays `z-ai/glm-5.3`** (catalog flagship, 1.31M ctx, tools + reasoning). Live chat/completions 200. Not swapped to `:exacto`: that suffix is a **virtual sort**, not a catalog id (0 Exacto slugs in `/api/v1/models` today). Tool requests already get **Auto Exacto**. GLM stays **unpinned** (`require_parameters: true`) so Auto Exacto can choose among ~20 live hosts — a static `provider.only` roster is how we blackholed glm-5.3 before.
+- **`z-ai/glm-5.3:exacto` probed 200** (AkashML) but not shipped as a whitelist/model id.
+- **small_model / title / summary / compaction / FAST_PRIMARY** → **`z-ai/glm-5.3-flash`** (live 200, tools, multimodal, multi-host). Laguna S 2.1 kept as fallback. Venice content-aware lane unchanged.
+- Whitelist 11 → 12. GLM 5.3 context limit aligned to catalog `1310720`.
+
+## [1.5.62] — 2026-08-26
+
+### Cursor + OpenRouter dedicated endpoint, tighter token/tool budgets
+
+- **Cursor BYOK** uses OpenRouter's dedicated `https://openrouter.ai/api/v1/cursor` path (generic `/api/v1` breaks Cursor tool calls). Pin file `cursor-openrouter.json` + `oc cursor` (`setup` / `apply` / `usage` / `probe` / `models`). Same OpenRouter whitelist as OpenCode; default `z-ai/glm-5.3`. `oc cursor apply` encrypts `OPENROUTER_API_KEY` into Cursor Safe Storage and waits for a full Cursor quit (Cmd+Q) before writing `userAddedModels` — Reload Window flushes Strix back over sqlite.
+- **Token + tool-call cuts:** default `tool_output` 200 lines / 8 KB (was 300 / 12 KB); compaction reserved 24k; `max_tools` 32; background `maxToolCalls` 80; team `max_messages_per_run` 600 / `max_member_turns` 80; Hephaestus/Oracle/Momus/content-aware-research output caps 16k; explore reasoning `high` → `low`. Prompts: grep/slice before full reads.
+- `oc fix` keeps `enabled_providers` as `openrouter` + `venice` and no longer wipes `venice/*` `modelConcurrency`. Venice models locked to **`e2ee-deepseek-v4-flash` only** (DeepSeek Pro/Flash stay on OpenRouter).
+
+## [1.5.61] — 2026-08-25
+
+### Venice provider added: native DeepSeek + E2EE context-aware lane
+
+- **New `venice` provider** (`enabled_providers` now `["openrouter", "venice"]`) with three models: `deepseek-v4-pro-0813` (1M ctx / 32768 out), `deepseek-v4-flash-0731` (1M ctx / 32768 out), and `e2ee-deepseek-v4-flash` (1M ctx / 8192 out, TEE + E2EE). All reasoning + tool-call enabled; native DeepSeek models verified tool-calling via live E2E probes.
+- **content-aware-research → `venice/e2ee-deepseek-v4-flash`** (context-aware, edit-denied lane); fallbacks deepseek-v4-pro-0813 → deepseek-v4-flash-0731 → glm-5.3. `profiles/content-aware.json` model + small_model aligned.
+- **`VENICE_API_KEY`** added to `OC_ENV_ALLOWLIST` (lib/common.sh) and `.env.example`; `launch-desktop.sh` re-added to inject OpenRouter + Venice + Exa keys into the GUI (launchd) environment.
+- `diagnose.sh`: tolerate empty `message.content` (tool-call-only responses) instead of crashing.
+
 ## [1.5.60] — 2026-08-19
 
 ### Live-endpoint alignment: provider pins rebuilt, Flash 0731 revert, Hermes research lane

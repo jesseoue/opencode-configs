@@ -277,7 +277,7 @@ if ai_on and key:
     rq=urllib.request.Request("https://openrouter.ai/api/v1/chat/completions",data=json.dumps(payload).encode(),
         headers={"Authorization":f"Bearer {key}","Content-Type":"application/json"})
     try:
-        d=json.load(urllib.request.urlopen(rq,timeout=90)); txt=d["choices"][0]["message"]["content"].strip()
+        d=json.load(urllib.request.urlopen(rq,timeout=90)); txt=(d["choices"][0]["message"].get("content") or "").strip()
         print("  "+D(f"model: {model}"))
         for ln in txt.splitlines(): print("  "+ln)
         cmds=re.findall(r"\./fix\.sh --set [^\n`\"']+", txt)

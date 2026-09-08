@@ -1155,10 +1155,10 @@ else:
     ok("start_work configured (auto_commit=%s)" % sw.get("auto_commit", "?"))
 
 mt = exp.get("max_tools")
-if isinstance(mt, int) and mt <= 48:
+if isinstance(mt, int) and mt <= 32:
     ok("experimental.max_tools=%s" % mt)
 elif isinstance(mt, int):
-    opt("experimental.max_tools=%s (high; 48 is the OpenConfig default)" % mt)
+    opt("experimental.max_tools=%s (high; 32 is the OpenConfig default)" % mt)
 
 # MCP / stream timeouts (opencode.json)
 mcp_t = (oc.get("experimental") or {}).get("mcp_timeout")

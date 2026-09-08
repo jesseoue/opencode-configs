@@ -1,8 +1,8 @@
 # OpenConfig
 
-> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 11 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
+> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter-only model gateway, 12 curated models, deployment guards, cost-aware fallbacks, and content-aware uncensored routes — one install, zero drift.
 
-**v1.5.60** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.65** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Claude · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -19,7 +19,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.60` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Pins** | OpenConfig `1.5.65` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -39,13 +39,14 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter-only gateway** | Every model routes through OpenRouter — no direct OpenAI/Anthropic/Google keys, no provider lock-in |
-| **11 curated models** | DeepSeek V4 Pro 0813 / Flash 0731 · GLM 5.3 · Gemini 3.1 Pro / 3.7 Flash · Qwen 3.8 Max · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B · Laguna S 2.1 · LongCat 2.0 — all probed live |
+| **12 curated models** | DeepSeek V4 Pro 0813 / Flash 0731 · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B · Laguna S 2.1 · LongCat 2.0 — all probed live |
 | **Content-aware uncensored routes** | `content-aware-research` (Hermes 4 405B) / `-deep` / `-fast` (DeepSeek V4, unmoderated hosts) with edit-deny guardrails |
 | **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
 | **Deployment guards** | `oc deploy check` gates on credits, model health, rate limits, git cleanliness, and signature before you ship |
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
+| **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
 | **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (91 checks), `oc fix` self-repair, 29 smoke tests |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
@@ -83,12 +84,14 @@ oc launch [dir]        # TUI (never starts in the config repo)
 oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter model probes + rate limits
+oc cursor apply        # point Cursor at OpenRouter /api/v1/cursor
 oc models --probe       # fast parallel live test (latency + moderation flags)
 oc models --moderation  # provider moderation/data-policy catalog (no chat calls)
 oc models --providers   # OpenRouter endpoint health for routed models
 oc versions            # pins vs npm + GitHub (+ other opencode.json)
 oc versions --fix       # align ~/.opencode @opencode-ai/plugin to CLI
 oc plugin doctor       # OmO pin-cache doctor (also: oc plugin --fix)
+oc cursor setup        # Cursor + OpenRouter wiring (dedicated /api/v1/cursor endpoint)
 oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
 oc test                # smoke + idempotency + runtime diagnostics
@@ -118,7 +121,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.59` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.65` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.17+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -158,6 +161,24 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 
 ---
 
+## Cursor + OpenRouter
+
+Cursor BYOK must use OpenRouter's **dedicated Cursor endpoint**, not the generic OpenAI-compatible URL. The generic `/api/v1` path does not accept Cursor's flat tool format.
+
+Docs: [OpenRouter Cursor integration](https://openrouter.ai/docs/cookbook/coding-agents/cursor-integration)
+
+```bash
+oc cursor setup     # print wiring + current settings.json check
+oc cursor apply     # set openai.baseUrl → https://openrouter.ai/api/v1/cursor
+oc cursor models    # pinned model ids (same whitelist as OpenCode)
+oc cursor usage     # last-30-day OpenRouter activity by model
+oc cursor probe     # tiny live call through /api/v1/cursor
+```
+
+`oc cursor apply` writes `openai.baseUrl`, injects every pin in `cursor-openrouter.json`, and stores your `.env` `OPENROUTER_API_KEY` in Cursor Safe Storage (not git). **Fully quit Cursor (Cmd+Q) before the sqlite inject; Reload Window flushes the old in-memory list and undoes it.** Reopen, then pick `z-ai/glm-5.3` in Agent — not Composer (Composer ignores BYOK). Tab completions stay Cursor-native.
+
+---
+
 ## Agents
 
 ### Primary
@@ -168,7 +189,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | **hephaestus** | DeepSeek V4 Pro 0813 | Implementation |
 | **prometheus** | GLM 5.3 | Planner |
 | **atlas** | GLM 5.3 | Plan executor after `/start-work` |
-| **content-aware-research** | Hermes 4 405B | Full-depth research (edit denied) |
+| **content-aware-research** | Venice DeepSeek V4 Flash E2EE | Full-depth research (edit denied) |
 
 ### Subagents (`task` / `call_omo_agent` — not team members)
 
@@ -180,7 +201,7 @@ Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
 | metis | GLM 5.3 | Pre-planning critic (unmoderated) |
 | momus | GLM 5.3 max | Plan / review gate |
-| sisyphus-junior | DeepSeek V4 Flash | Cheap delegated work |
+| sisyphus-junior | GLM 5.3 Flash | Cheap delegated work |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
 
@@ -195,13 +216,13 @@ Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff 
 | `arch-review` | GLM 5.3 | Coupling / blast radius (unmoderated) |
 | `content-aware-fast` | DeepSeek V4 Flash | Attack-surface recon |
 | `content-aware-deep` | DeepSeek V4 Pro | Deep vuln research |
-| `writing` | Gemini 3.7 Flash | Docs / prose |
+| `writing` | Gemini 3.8 Flash | Docs / prose |
 | `visual-engineering` | Gemini 3.1 Pro | Ship UI |
 | `artistry` | Gemini 3.1 Pro | Design direction |
-| `quick` | DeepSeek V4 Flash | Cheap fast tasks |
+| `quick` | GLM 5.3 Flash | Cheap fast tasks |
 | `deep` | DeepSeek V4 Pro 0813 | Autonomous problem-solving (unmoderated) |
 | `ultrabrain` | GLM 5.3 | Heavy / max reasoning |
-| `unspecified-low` / `unspecified-high` | Laguna S 2.1 / GLM 5.3 | Hyperplan critics |
+| `unspecified-low` / `unspecified-high` | GLM 5.3 Flash / GLM 5.3 | Hyperplan critics |
 
 ---
 
@@ -246,15 +267,15 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Deep implement | GLM 5.3 · DeepSeek V4 Pro 0813 | Hephaestus / Oracle / Momus / ultrabrain (GLM 5.3) · deep (Pro 0813) |
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
 | **Recon (unmoderated)** | DeepSeek V4 Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
-| **Content-aware** | Hermes 4 405B · DeepSeek V4 Pro 0813 · Flash 0731 | content-aware-research (Hermes) · -deep (Pro 0813) · -fast (Flash 0731) |
-| Fast parallel | `deepseek/deepseek-v4-flash-0731` | sisyphus-junior / quick / content-aware-fast |
+| **Content-aware** | Venice DeepSeek V4 Pro 0813 / Pro / Flash 0731 | `venice/*` only — never OpenRouter on this lane |
+| Fast parallel | GLM 5.3 Flash · DeepSeek Flash 0731 | sisyphus-junior / quick (GLM Flash) · content-aware-fast (DeepSeek Flash) |
 | Housekeeping | `deepseek/deepseek-v4-flash-0731` | title / summary / compaction / profile small model |
-| Visual / writing | Gemini 3.1 Pro · 3.7 Flash | artistry / visual / writing |
+| Visual / writing | Gemini 3.1 Pro · 3.8 Flash | artistry / visual / writing |
 | Ceiling | `z-ai/glm-5.3` | ultrawork · unspecified-high |
 
 Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
 
-OpenRouter serves every active lane. DeepSeek and MiniMax pin live-verified unmoderated fp8/full-precision hosts (`provider.only` — no fp4, no moderating proxies); GLM 5.3 rides its sole z-ai endpoint unpinned. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
+OpenRouter serves every active lane. DeepSeek and MiniMax pin live-verified unmoderated fp8/full-precision hosts (`provider.only` — no fp4, no moderating proxies); GLM 5.3 stays unpinned so Auto Exacto can pick among live hosts (`require_parameters: true`). Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
@@ -375,7 +396,7 @@ opencode-configs/
 ├── oc · install.sh · setup.sh · doctor.sh · validate.sh · fix.sh
 ├── models.sh · versions.sh · cleanup.sh · signature.sh · locate.sh
 ├── deploy-guard.sh · diagnose.sh · maintain.sh · run.sh · opencode.sh
-├── openrouter-admin.sh
+├── openrouter-admin.sh · cursor.sh · cursor-openrouter.json
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · AGENTS.md
 ├── agents/content-aware-research.md

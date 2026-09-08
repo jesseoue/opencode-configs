@@ -11,6 +11,7 @@ Own the outcome end-to-end. Clarify once if blocked — then act. Agent pace: sh
 ## Tool speed
 
 - Batch independent tools every turn. Prefer `read`/`grep`/`glob` over bash for files.
+- Grep first. Read only the matching slice. Never cat huge files into context.
 - Hashline edits; smallest diff. Batch related checks, but do not cap verification: run the acceptance check, diagnostics for edited files, targeted tests, then broader typecheck/build checks when risk warrants.
 - Trivial local reads/edits → direct tools. Don't spawn explore just to open a known path.
 - No `background_output(block=true)`; no invented ids; no interactive_bash/monitors.

@@ -40,7 +40,9 @@ def load(path):
 # ---- 1. JSON syntax on every .json in the repo ----
 json_files = [os.path.join(repo, "opencode.json"),
               os.path.join(repo, "oh-my-openagent.json"),
-              os.path.join(repo, "tui.json")]
+              os.path.join(repo, "tui.json"),
+              os.path.join(repo, "cursor-openrouter.json"),
+              os.path.join(repo, "t3-opencode.json")]
 json_files += sorted(glob.glob(os.path.join(repo, "profiles", "*.json")))
 parsed = {}
 for p in json_files:
@@ -105,8 +107,8 @@ if oc:
     else:
         ok("direct OpenAI provider absent (OpenRouter-only)")
     tool_output = oc.get("tool_output") or {}
-    if tool_output.get("max_lines") != 300 or tool_output.get("max_bytes") != 12000:
-        err("opencode.json: tool_output must be 300 lines / 12000 bytes.")
+    if tool_output.get("max_lines") != 200 or tool_output.get("max_bytes") != 8000:
+        err("opencode.json: tool_output must be 200 lines / 8000 bytes.")
     if (oc.get("experimental") or {}).get("mcp_timeout") != 30000:
         err("opencode.json: experimental.mcp_timeout must match the 30000ms Context7 timeout.")
     if oc.get("logLevel") != "ERROR":
@@ -171,8 +173,8 @@ if oc:
         expected_require_parameters = fam in ("glm", "minimax")
         # Pin rosters mirror fix.sh want_only — rebuilt from LIVE endpoint data
         # (2026-08-19): fp8/full-precision unmoderated hosts only, no fp4, no
-        # first-party. glm deliberately unpinned (glm-5.3 is z-ai-exclusive; a
-        # pin would match zero endpoints and blackhole the default model).
+        # first-party. glm deliberately unpinned: Auto Exacto + require_parameters
+        # pick tool-capable hosts; a static only-roster can blackhole on churn.
         want_only = {
             "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
             "minimax": ["gmicloud", "novita", "deepinfra", "together"],
@@ -196,9 +198,9 @@ if oc:
                     f"opencode.json[{mid}]: provider.require_parameters must be "
                     f"{str(expected_require_parameters).lower()} for {fam} routing."
                 )
-        # OpenRouter auto-routes by default. No :exacto/:nitro/:floor suffixes remain
-        # in the live catalog — those routing variants were retired. Keep provider
-        # selection lean: no sort/order/ignore/preferred_* that fights auto-ranking.
+        # OpenRouter auto-routes by default. :exacto/:nitro/:floor are virtual
+        # suffixes (not catalog slugs). Keep provider selection lean: no
+        # sort/order/ignore/preferred_* that fights Auto Exacto.
         api_id = m.get("id") or mid
         sort = pv.get("sort")
         if sort in ("price", "throughput", "latency", "exacto"):
@@ -253,6 +255,26 @@ if oc:
         ok("core tools + bash allow-everything (catastrophic denies kept)")
     if not oc.get("enabled_providers"):
         warn("opencode.json: enabled_providers not set — all providers with credentials will load.")
+    elif oc.get("enabled_providers") != ["openrouter", "venice"]:
+        err("opencode.json: enabled_providers must be ['openrouter', 'venice']")
+    else:
+        ok("enabled_providers = openrouter + venice")
+    vmodels = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
+    if "deepseek-v4-pro-0813" not in vmodels:
+        err("venice must expose deepseek-v4-pro-0813 (content-aware DeepSeek primary)")
+    else:
+        ok("venice exposes deepseek-v4-pro-0813 for content-aware")
+    vwl = ((((oc.get("provider") or {}).get("venice") or {}).get("whitelist")) or [])
+    if set(vwl) != vmodels:
+        err("venice whitelist must match venice.models (keeps T3 Variant/Agent on curated slugs)")
+    else:
+        ok("venice whitelist matches curated models")
+    for vm in vmodels:
+        vars_ = ((((oc.get("provider") or {}).get("venice") or {}).get("models") or {}).get(vm) or {}).get("variants") or {}
+        if set(vars_) != {"low", "medium", "high", "max"}:
+            err(f"venice/{vm} must define variants low/medium/high/max")
+        else:
+            ok(f"venice/{vm} variants low/medium/high/max")
     plug = oc.get("plugin", [])
     if not any("oh-my-opencode" in p or "oh-my-openagent" in p for p in plug):
         warn("opencode.json: oh-my-openagent plugin not pinned in the plugin array.")
@@ -630,11 +652,11 @@ if omo:
         err(f"GPT models in active routes (OpenRouter-only stack): {gpt_routes[:5]} — run: oc fix")
     else:
         ok("no GPT models in agent/category routes")
-    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 200:
-        err(f"background_task.maxToolCalls must be ≤200 (got {bt.get('maxToolCalls')!r})")
+    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 80:
+        err(f"background_task.maxToolCalls must be ≤80 (got {bt.get('maxToolCalls')!r})")
     circuit = bt.get("circuitBreaker") or {}
-    if not isinstance(circuit.get("maxToolCalls"), int) or circuit.get("maxToolCalls") > 160:
-        err(f"background_task.circuitBreaker.maxToolCalls must be ≤160 (got {circuit.get('maxToolCalls')!r})")
+    if not isinstance(circuit.get("maxToolCalls"), int) or circuit.get("maxToolCalls") > 80:
+        err(f"background_task.circuitBreaker.maxToolCalls must be ≤80 (got {circuit.get('maxToolCalls')!r})")
     mp = tm.get("max_parallel_members")
     if isinstance(mp, int) and (mp < 1 or mp > 4):
         err(f"team_mode.max_parallel_members={mp} — want 1–4")
@@ -648,7 +670,7 @@ if omo:
     ):
         if k not in tm:
             err(f"team_mode.{k} missing — run: oc fix")
-    for key, expected in (("max_messages_per_run", 2000), ("max_wall_clock_minutes", 45), ("max_member_turns", 150)):
+    for key, expected in (("max_messages_per_run", 600), ("max_wall_clock_minutes", 45), ("max_member_turns", 80)):
         if tm.get(key) != expected:
             err(f"team_mode.{key} must be {expected} (got {tm.get(key)!r})")
     if tm.get("enabled") is not True:
@@ -1108,6 +1130,18 @@ else:
             ok("profiles/content-aware.json → content-aware-research (edit deny)")
     except Exception as e:
         err(f"profiles/content-aware.json: invalid JSON ({e})")
+if omo:
+    for ca_name in ("content-aware-research", "content-aware-fast", "content-aware-deep"):
+        sec = "agents" if ca_name == "content-aware-research" else "categories"
+        ca = ((omo.get(sec) or {}).get(ca_name) or {})
+        cm = str(ca.get("model") or "")
+        if not cm.startswith("venice/"):
+            err(f"oh-my-openagent.json[{sec}.{ca_name}] must be venice/<model> (got {cm!r})")
+        else:
+            ok(f"{ca_name} → {cm}")
+        for fb in (ca.get("fallback_models") or []):
+            if not str(fb).startswith("venice/"):
+                err(f"{ca_name} fallback {fb!r} must be venice/<model>")
 
 # ---- 4c2. projects.json (oc new home) ----
 projects_cfg = os.path.join(repo, "projects.json")
@@ -1219,7 +1253,7 @@ else:
 # ---- 4c6. OpenConfig CLI surface + required scripts ----
 required_scripts = [
     "oc", "install.sh", "setup.sh", "doctor.sh", "validate.sh", "fix.sh",
-    "cleanup.sh", "run.sh", "opencode.sh", "openrouter-admin.sh",
+    "cleanup.sh", "run.sh", "opencode.sh", "openrouter-admin.sh", "cursor.sh",
     "diagnose.sh", "maintain.sh", "models.sh", "versions.sh", "locate.sh", "signature.sh",
     "deploy-guard.sh", "lib/common.sh",
 ]
@@ -1239,6 +1273,57 @@ if nonexec:
     err(f"scripts not executable: {nonexec}")
 elif not missing_scripts:
     ok("required scripts are executable")
+
+cursor_spec_path = os.path.join(repo, "cursor-openrouter.json")
+if not os.path.isfile(cursor_spec_path):
+    err("cursor-openrouter.json missing")
+else:
+    try:
+        cur = json.load(open(cursor_spec_path, encoding="utf-8"))
+        want_ep = "https://openrouter.ai/api/v1/cursor"
+        if cur.get("endpoint") != want_ep:
+            err(f"cursor-openrouter.json endpoint must be {want_ep}")
+        wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
+        models = cur.get("models") or []
+        extra = [m for m in models if m not in wl]
+        if extra:
+            err(f"cursor-openrouter.json models not on OpenRouter whitelist: {extra}")
+        elif cur.get("default_model") not in models or cur.get("small_model") not in models:
+            err("cursor-openrouter.json default/small model must be in models[]")
+        else:
+            ok(f"cursor-openrouter.json ({len(models)} models → {want_ep})")
+    except json.JSONDecodeError as e:
+        err(f"cursor-openrouter.json invalid JSON: {e}")
+
+t3_spec_path = os.path.join(repo, "t3-opencode.json")
+if not os.path.isfile(t3_spec_path):
+    err("t3-opencode.json missing")
+else:
+    try:
+        t3 = json.load(open(t3_spec_path, encoding="utf-8"))
+        if t3.get("serverUrl") != "http://127.0.0.1:4097":
+            err("t3-opencode.json serverUrl must be http://127.0.0.1:4097")
+        blob = json.dumps(t3)
+        if "sk-" in blob or "VENICE_" in blob or "apiKey" in blob:
+            err("t3-opencode.json must not contain keys or apiKey fields")
+        or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
+        venice_models = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
+        extras = []
+        for m in t3.get("customModels") or []:
+            if m.startswith("openrouter/"):
+                if m.split("/", 1)[1] not in or_wl:
+                    extras.append(m)
+            elif m.startswith("venice/"):
+                if m.split("/", 1)[1] not in venice_models:
+                    extras.append(m)
+            else:
+                extras.append(m)
+        if extras:
+            err(f"t3-opencode.json customModels not on curated providers: {extras}")
+        else:
+            ok(f"t3-opencode.json ({len(t3.get('customModels') or [])} models → 4097)")
+    except json.JSONDecodeError as e:
+        err(f"t3-opencode.json invalid JSON: {e}")
 
 common_sh = open(os.path.join(repo, "lib/common.sh"), encoding="utf-8").read()
 missing_helpers = [fn for fn in (

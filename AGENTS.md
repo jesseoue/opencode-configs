@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.59** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.65** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -32,14 +32,14 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 
 ### Routing logic (short)
 
-- **Orchestration / tool loops** → GLM 5.3 (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — tool-call quality on OpenRouter.
-- **Fast parallel recon** → DeepSeek Flash (sisyphus-junior, quick) — throughput. **Smart recon (GA)** → DeepSeek Pro 0813 (explore, librarian, deep) — unmoderated, first-party only. **Content-aware research** → Nous Hermes 4 405B (content-aware-research) — no tool calls, edit denied.
+- **Orchestration / tool loops** → GLM 5.3 (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Auto Exacto on tool requests; no `:exacto` catalog slug.
+- **Fast parallel / small_model** → GLM 5.3 Flash (title, summary, compaction, sisyphus-junior, quick). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-flash-0731`). Never OpenRouter→Venice. Edit denied.
 - **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep, content-aware-* — DeepSeek / GLM / MiniMax / Gemini; never Claude/GPT primaries on recon chains.
 - **Deep implement / critique** → GLM 5.3 (Hephaestus, Oracle, Momus, ultrabrain, unspecified-high) and DeepSeek Pro 0813 (deep) — all via OpenRouter; no GPT models. Fallback: Qwen 3.8 Max · Kimi K2.7 Code for coding tasks.
-- **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.7 Flash).
+- **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.8 Flash). Auto Exacto is a host sort, not a catalog slug — do not pin `:exacto`.
 - **Hard ceiling** → GLM 5.3 max for `ultrawork` / unspecified-high (DeepSeek Pro 0813 fallbacks).
 - **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k2.7-code` as a coding fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider). Prefer DeepSeek / GLM for routine coding.
-- **Content-aware research** → Nous Hermes 4 405B + `content-aware-*` agent/categories when providers refuse or soften. Edit denied, unmoderated, no tool calls.
+- **Content-aware research** → `venice/deepseek-v4-pro-0813` (direct Venice API) + `content-aware-*`. Never `openrouter/…` on this lane. Edit denied.
 
 ### Team eligibility (why)
 
@@ -76,7 +76,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.59**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.65**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.

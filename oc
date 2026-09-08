@@ -17,6 +17,7 @@
 #   test [smoke|idempotency|runtime]      Self-test suite
 #   models [--probe|--moderation|…]       OpenRouter catalog + live probes
 #   admin [status|health|…]               OpenRouter account admin (gateway only)
+#   cursor [setup|apply|status|usage|probe]  Cursor IDE → OpenRouter /api/v1/cursor
 #   launch | run | new | projects         Run / scaffold
 #   locate | signature | versions | plugin | env | maintain | diagnose
 #   help | version
@@ -95,6 +96,7 @@ ${c_bold}Models & Admin:${c_0}
                                          Package pins vs npm + GitHub (+ other repos)
   ${c_g}plugin${c_0}    [doctor|cache|--fix]         OmO plugin doctor / pin cache
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter account admin
+  ${c_g}cursor${c_0}    [setup|apply|usage|probe]     Cursor IDE → OpenRouter /api/v1/cursor
 
 ${c_bold}Run & Launch:${c_0}
   ${c_g}run${c_0}       "<msg>" [-a agent] [-d dir]    Headless runner (run to completion)
@@ -123,6 +125,7 @@ ${c_bold}Admin subcommands:${c_0}
   ratelimit    Check rate limit headers
   credits      Credit balance + usage
   keys         List API keys with usage
+  cursor       Last-30-day activity by model (Cursor BYOK)
   models       Show configured models with routing
   whoami       Account identity + plan
   alert [N]    Check if credits below \$N (default 50)
@@ -149,6 +152,7 @@ ${c_bold}Examples:${c_0}
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
   oc admin health                Live OpenRouter model probes + rate limits
+  oc cursor apply                Point Cursor at OpenRouter /api/v1/cursor
   oc deploy check                Pre-deployment gate (credits, models, rate limits, git, signature)
   oc deploy quarantine           Enter cost-saving quarantine (swap to cheaper models)
   oc launch                      Launch OpenCode (cwd, or ~/Projects if config repo)
@@ -1137,6 +1141,9 @@ case "$cmd" in
   admin)
     # Default to 'status' if no subcommand given
     dispatch openrouter-admin.sh "${@:-status}"
+    ;;
+  cursor)
+    dispatch cursor.sh "${@:-setup}"
     ;;
 
   new)        do_new "$@" ;;

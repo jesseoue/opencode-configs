@@ -251,10 +251,10 @@ if exp.get("mcp_timeout") != 30000:
     exp["mcp_timeout"] = 30000; changes.append("experimental.mcp_timeout -> 30000")
 tool_output = oc.setdefault("tool_output", {})
 if isinstance(tool_output, dict):
-    if tool_output.get("max_lines") != 300:
-        tool_output["max_lines"] = 300; changes.append("tool_output.max_lines -> 300")
-    if tool_output.get("max_bytes") != 12000:
-        tool_output["max_bytes"] = 12000; changes.append("tool_output.max_bytes -> 12000")
+    if tool_output.get("max_lines") != 200:
+        tool_output["max_lines"] = 200; changes.append("tool_output.max_lines -> 200")
+    if tool_output.get("max_bytes") != 8000:
+        tool_output["max_bytes"] = 8000; changes.append("tool_output.max_bytes -> 8000")
 srv = oc.get("server")
 if isinstance(srv, dict):
     if srv.get("mdns") is not False:
@@ -304,8 +304,9 @@ if isinstance(or_models, dict):
         # skip first-party + moderated proxies that add runtime blocks, and skip
         # every fp4 endpoint (fp4 quant degrades tool-calling). Plain provider
         # slugs only — each listed host serves the family at fp8/full precision.
-        # glm has NO pin: glm-5.3 is z-ai-exclusive today, so any pin list would
-        # match zero endpoints and 404 every request ("All providers ignored").
+        # glm has NO pin: glm-5.3 now has many hosts; Auto Exacto (on by default
+        # for tool requests) + require_parameters is the quality pin. A static
+        # provider.only roster would fight that and can 404 if hosts churn.
         want_only = {
             "minimax": ["gmicloud", "novita", "deepinfra", "together"],
             "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
@@ -324,8 +325,9 @@ if isinstance(or_models, dict):
         if "order" in provider_cfg:
             del provider_cfg["order"]
             changes.append(f"{model_id}.provider.order removed (restore adaptive provider routing)")
-        # :exacto/:nitro/:floor routing suffixes are retired from the live catalog;
-        # any sort/ignore/preferred_*/quantizations keys now fight OpenRouter auto-rank.
+        # :exacto/:nitro/:floor are virtual request suffixes, not catalog slugs.
+        # Do not persist them as whitelist ids. sort/ignore/preferred_* fight
+        # Auto Exacto / adaptive ranking.
         if "sort" in provider_cfg:
             del provider_cfg["sort"]
             changes.append(f"{model_id}.provider.sort removed (OpenRouter auto-rank)")
@@ -337,10 +339,11 @@ if isinstance(or_models, dict):
                 del provider_cfg[routing_key]
                 changes.append(f"{model_id}.provider.{routing_key} removed (OpenRouter auto-rank)")
 
-# OpenRouter-only: lock enabled_providers and drop direct OpenAI provider block.
-if oc.get("enabled_providers") != ["openrouter"]:
-    oc["enabled_providers"] = ["openrouter"]
-    changes.append("enabled_providers -> ['openrouter'] (OpenRouter-only)")
+# Gateways: OpenRouter (all routine models) + Venice (E2EE context-aware only).
+want_enabled = ["openrouter", "venice"]
+if oc.get("enabled_providers") != want_enabled:
+    oc["enabled_providers"] = want_enabled
+    changes.append("enabled_providers -> ['openrouter', 'venice']")
 prov_root = oc.setdefault("provider", {})
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
@@ -459,19 +462,23 @@ RECON_PRIMARY = {
     "multimodal-looker": "openrouter/google/gemini-3.1-pro-preview",
     "deep": "openrouter/deepseek/deepseek-v4-pro-0813",
     "arch-review": "openrouter/z-ai/glm-5.3",
-    "content-aware-research": "openrouter/nousresearch/hermes-4-405b",
-    "content-aware-deep": "openrouter/deepseek/deepseek-v4-pro-0813",
-    "content-aware-fast": "openrouter/deepseek/deepseek-v4-flash-0731",
+    "content-aware-research": "venice/deepseek-v4-pro-0813",
+    "content-aware-deep": "venice/deepseek-v4-pro-0813",
+    "content-aware-fast": "venice/deepseek-v4-flash-0731",
 }
-# hermes-4-405b is NOT here: it cannot tool-call, so it may only ever be the
-# content-aware-research primary — never a fallback for tool-using recon agents.
+# content-aware-research is Venice-only (never OpenRouter / Hermes).
+# hermes-4-405b is NOT in RECON_FALLBACKS: it cannot tool-call.
+CONTENT_AWARE_FALLBACKS = [
+    "venice/deepseek-v4-pro",
+    "venice/deepseek-v4-flash-0731",
+]
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/z-ai/glm-5.3",
     "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
-FAST_PRIMARY = "openrouter/poolside/laguna-s-2.1"
+FAST_PRIMARY = "openrouter/z-ai/glm-5.3-flash"
 RECON_ROUTES = {
     "explore", "librarian", "sisyphus-junior", "quick", "unspecified-low",
     "content-aware-fast", "content-aware-deep", "content-aware-research",
@@ -482,21 +489,31 @@ for section in ("agents", "categories"):
         if n not in RECON_ROUTES or not isinstance(a, dict):
             continue
         want_primary = RECON_PRIMARY.get(n, FAST_PRIMARY)
-        if a.get("model") and any(m in str(a["model"]).lower() for m in MODERATED_FB):
+        cur = str(a.get("model") or "")
+        # Never remap an existing Venice primary onto OpenRouter.
+        if n.startswith("content-aware") and cur.startswith("venice/"):
+            pass
+        elif cur != want_primary:
             a["model"] = want_primary
-            changes.append(f"{section} {n}: model -> {want_primary} (unmoderated recon)")
+            changes.append(f"{section} {n}: model -> {want_primary} (recon primary)")
         fbs = a.get("fallback_models")
         if not isinstance(fbs, list):
             continue
         cleaned = []
         for fb in fbs:
             fb = _norm_or_model(fb)
+            if n.startswith("content-aware") and not str(fb).startswith("venice/"):
+                changes.append(f"{section} {n}: dropped non-Venice fallback {fb}")
+                continue
             if any(m in str(fb).lower() for m in MODERATED_FB):
                 changes.append(f"{section} {n}: dropped moderated fallback {fb}")
                 continue
             cleaned.append(fb)
         if not cleaned:
-            cleaned = [x for x in RECON_FALLBACKS if x != a.get("model")][:3]
+            if n.startswith("content-aware"):
+                cleaned = [x for x in CONTENT_AWARE_FALLBACKS if x != a.get("model")][:3]
+            else:
+                cleaned = [x for x in RECON_FALLBACKS if x != a.get("model")][:3]
             changes.append(f"{section} {n}: rebuilt unmoderated fallbacks")
         if cleaned != fbs:
             a["fallback_models"] = cleaned[:3]
@@ -512,13 +529,13 @@ for section in ("agents", "categories"):
 GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
 DEEP_PRIMARY = "openrouter/z-ai/glm-5.3"
 DEEP_FALLBACKS = [
-    "openrouter/qwen/qwen3.8-max",
+    "openrouter/qwen/qwen3.8-max-0902",
     "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
 MAX_PRIMARY = "openrouter/z-ai/glm-5.3"
 MAX_FALLBACKS = [
-    "openrouter/qwen/qwen3.8-max",
+    "openrouter/qwen/qwen3.8-max-0902",
     "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
@@ -548,12 +565,14 @@ for section in ("agents", "categories"):
                 changes.append(f"{section} {n}: dropped GPT fallback {fb}")
                 continue
             cleaned.append(fb)
-        fill = want_f or DEEP_FALLBACKS
-        for x in fill:
-            if x != a.get("model") and x not in cleaned:
-                cleaned.append(x)
-            if len(cleaned) >= 3:
-                break
+        # Venice-only content-aware routes: never backfill OpenRouter fallbacks.
+        if not n.startswith("content-aware"):
+            fill = want_f or DEEP_FALLBACKS
+            for x in fill:
+                if x != a.get("model") and x not in cleaned:
+                    cleaned.append(x)
+                if len(cleaned) >= 3:
+                    break
         if cleaned != fbs:
             a["fallback_models"] = cleaned[:3]
 
@@ -594,14 +613,14 @@ if isinstance(tm, dict):
     elif tm.get("max_members") > 6:
         tm["max_members"] = 6; changes.append("team_mode.max_members capped -> 6")
     for key, desired in (
-        ("max_messages_per_run", 2000),
+        ("max_messages_per_run", 600),
         ("max_wall_clock_minutes", 45),
-        ("max_member_turns", 150),
+        ("max_member_turns", 80),
     ):
         if tm.get(key) != desired:
             tm[key] = desired; changes.append(f"team_mode.{key} -> {desired}")
     for key, default in (
-        ("message_payload_max_bytes", 32768),
+        ("message_payload_max_bytes", 16384),
         ("recipient_unread_max_bytes", 262144),
         ("mailbox_poll_interval_ms", 1000),
     ):
@@ -651,7 +670,7 @@ if isinstance(bt, dict):
                 changes.append(f"modelConcurrency removed direct alias {mk}")
         def _mc_cap(model_key):
             low = str(model_key).lower()
-            if any(x in low for x in ("flash", "luna", "qwen3.7", "gemini-3.7-flash", "gemini-3-flash", "gemini-3.5-flash-lite", "laguna")):
+            if any(x in low for x in ("flash", "luna", "qwen3.7", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3-flash", "gemini-3.5-flash-lite", "laguna")):
                 return 10
             if any(x in low for x in ("minimax", "glm", "mimo", "longcat")):
                 return 8
@@ -660,18 +679,25 @@ if isinstance(bt, dict):
             return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
         want_mc = {f"openrouter/{w}": _mc_cap(w) for w in wl if isinstance(w, str)}
+        venice_models = ((oc.get("provider") or {}).get("venice") or {}).get("models") or {}
+        if isinstance(venice_models, dict):
+            for vm in venice_models:
+                want_mc[f"venice/{vm}"] = 5
+        for mk, mv in list(mc.items()):
+            if isinstance(mk, str) and mk.startswith("venice/") and mk not in want_mc:
+                want_mc[mk] = mv
         if want_mc != mc:
             bt["modelConcurrency"] = want_mc
-            changes.append(f"modelConcurrency synced to {len(want_mc)} whitelist models")
-    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 200:
-        bt["maxToolCalls"] = 200; changes.append("background_task.maxToolCalls capped -> 200")
+            changes.append(f"modelConcurrency synced to {len(want_mc)} whitelist+venice models")
+    if not isinstance(bt.get("maxToolCalls"), int) or bt.get("maxToolCalls") > 80:
+        bt["maxToolCalls"] = 80; changes.append("background_task.maxToolCalls capped -> 80")
     if not isinstance(bt.get("syncPollTimeoutMs"), int) or bt.get("syncPollTimeoutMs") < 60000:
         bt["syncPollTimeoutMs"] = 60000; changes.append("background_task.syncPollTimeoutMs -> 60000 (OmO floor)")
     cb = bt.setdefault("circuitBreaker", {})
     if isinstance(cb, dict):
         cb["enabled"] = True
-        if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 160:
-            cb["maxToolCalls"] = 160; changes.append("circuitBreaker.maxToolCalls capped -> 160")
+        if not isinstance(cb.get("maxToolCalls"), int) or cb.get("maxToolCalls") > 80:
+            cb["maxToolCalls"] = 80; changes.append("circuitBreaker.maxToolCalls capped -> 80")
         if not isinstance(cb.get("consecutiveThreshold"), int) or cb.get("consecutiveThreshold") < 1:
             cb["consecutiveThreshold"] = 8; changes.append("circuitBreaker.consecutiveThreshold -> 8")
         # OmO 4.19.4 Zod only allows enabled/maxToolCalls/consecutiveThreshold.
@@ -704,6 +730,8 @@ if isinstance(omoexp, dict):
         omoexp["aggressive_truncation"] = False; changes.append("experimental.aggressive_truncation -> false")
     if omoexp.get("truncate_all_tool_outputs") is not False:
         omoexp["truncate_all_tool_outputs"] = False; changes.append("experimental.truncate_all_tool_outputs -> false")
+    if not isinstance(omoexp.get("max_tools"), int) or omoexp.get("max_tools") > 32:
+        omoexp["max_tools"] = 32; changes.append("experimental.max_tools capped -> 32")
 # OmO 4.19: Goals replace Ralph — drop legacy ralph_loop (ignored when goal is explicit)
 if "ralph_loop" in omo:
     del omo["ralph_loop"]; changes.append("removed deprecated ralph_loop (OmO 4.19 Goals replace Ralph)")

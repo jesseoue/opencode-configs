@@ -1,0 +1,32 @@
+{
+  "docs": "T3 Code → Settings → Providers → OpenCode. Keys stay in ~/.config/opencode/.env + `opencode auth` — never in this file or T3 settings.",
+  "provider": "opencode",
+  "enabled": true,
+  "binaryPath": "~/.local/bin/opencode",
+  "serverUrl": "http://127.0.0.1:4097",
+  "serverPassword": "",
+  "default_model": "openrouter/z-ai/glm-5.3",
+  "small_model": "openrouter/z-ai/glm-5.3-flash",
+  "customModels": [
+    "openrouter/z-ai/glm-5.3",
+    "openrouter/z-ai/glm-5.3-flash",
+    "openrouter/poolside/laguna-s-2.1",
+    "openrouter/meituan/longcat-2.0",
+    "openrouter/minimax/minimax-m3",
+    "openrouter/google/gemini-3.1-pro-preview",
+    "openrouter/google/gemini-3.8-flash",
+    "openrouter/qwen/qwen3.8-max-0902",
+    "openrouter/moonshotai/kimi-k2.7-code",
+    "openrouter/deepseek/deepseek-v4-pro-0813",
+    "openrouter/deepseek/deepseek-v4-flash-0731",
+    "openrouter/nousresearch/hermes-4-405b",
+    "venice/deepseek-v4-pro-0813",
+    "venice/deepseek-v4-pro",
+    "venice/deepseek-v4-flash-0731"
+  ],
+  "notes": [
+    "T3 talks to the local OpenCode serve from serve-desktop.sh (port 4097).",
+    "OpenRouter + Venice credentials: `opencode auth` and/or launch-desktop.sh → launchd. No keys in JSON.",
+    "Qwen flagship catalog id is qwen/qwen3.8-max-0902 (bare qwen/qwen3.8-max is gone)."
+  ]
+}

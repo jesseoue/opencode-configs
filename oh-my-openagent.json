@@ -30,22 +30,23 @@
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "hephaestus": {
       "mode": "primary",
+      "name": "Hephaestus - Implementer",
       "temperature": 0.2,
       "permission": {
         "teammate": "allow"
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/hephaestus.md",
       "color": "#FF5C00",
-      "maxTokens": 32768,
+      "maxTokens": 16384,
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/qwen/qwen3.8-max",
+        "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/meituan/longcat-2.0"
       ]
@@ -61,7 +62,7 @@
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "atlas": {
@@ -75,7 +76,7 @@
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "oracle": {
@@ -83,11 +84,11 @@
       "temperature": 0.2,
       "prompt_append": "file://~/.config/opencode/prompts/agents/oracle.md",
       "color": "#6C63FF",
-      "maxTokens": 32768,
+      "maxTokens": 16384,
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/qwen/qwen3.8-max",
+        "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/meituan/longcat-2.0"
       ]
@@ -98,12 +99,12 @@
       "prompt_append": "file://~/.config/opencode/prompts/agents/librarian.md",
       "color": "#00FFD1",
       "maxTokens": 8192,
-      "model": "openrouter/z-ai/glm-5.3",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "reasoning": "low",
       "fallback_models": [
+        "openrouter/z-ai/glm-5.3",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "explore": {
@@ -118,24 +119,24 @@
       "prompt_append": "file://~/.config/opencode/prompts/agents/explore.md",
       "color": "#FFD400",
       "maxTokens": 8192,
-      "model": "openrouter/z-ai/glm-5.3",
-      "reasoning": "high",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "reasoning": "low",
       "fallback_models": [
+        "openrouter/z-ai/glm-5.3",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "multimodal-looker": {
       "mode": "subagent",
       "prompt_append": "file://~/.config/opencode/prompts/agents/multimodal-looker.md",
       "color": "#FF2D95",
-      "maxTokens": 24576,
+      "maxTokens": 12288,
       "model": "openrouter/google/gemini-3.1-pro-preview",
       "fallback_models": [
-        "openrouter/google/gemini-3.7-flash",
+        "openrouter/google/gemini-3.8-flash",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "metis": {
@@ -148,7 +149,7 @@
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "momus": {
@@ -156,12 +157,12 @@
       "temperature": 0.2,
       "prompt_append": "file://~/.config/opencode/prompts/agents/momus.md",
       "color": "#FF8A3D",
-      "maxTokens": 32768,
+      "maxTokens": 16384,
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "xhigh",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max",
+        "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
     },
@@ -171,16 +172,17 @@
       "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-junior.md",
       "color": "#7A8BFF",
       "maxTokens": 8192,
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "content-aware-research": {
       "mode": "primary",
+      "name": "Content-aware research",
       "temperature": 0.2,
       "permission": {
         "edit": "deny",
@@ -191,13 +193,12 @@
       "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-research.md",
       "color": "#FF1744",
       "description": "Content-aware research \u2014 full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills.",
-      "maxTokens": 32768,
-      "model": "openrouter/nousresearch/hermes-4-405b",
+      "maxTokens": 16384,
+      "model": "venice/deepseek-v4-pro-0813",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/z-ai/glm-5.3",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max"
+        "venice/deepseek-v4-pro",
+        "venice/deepseek-v4-flash-0731"
       ]
     }
   },
@@ -209,9 +210,9 @@
       "model": "openrouter/google/gemini-3.1-pro-preview",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/google/gemini-3.7-flash",
+        "openrouter/google/gemini-3.8-flash",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "ultrabrain": {
@@ -221,19 +222,19 @@
       "reasoning": "xhigh",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max",
+        "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
     },
     "deep": {
       "prompt_append": "file://~/.config/opencode/prompts/categories/deep.md",
       "maxTokens": 32768,
-      "model": "openrouter/z-ai/glm-5.3",
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/qwen/qwen3.8-max",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/meituan/longcat-2.0"
+        "openrouter/z-ai/glm-5.3",
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/poolside/laguna-s-2.1"
       ]
     },
     "artistry": {
@@ -243,31 +244,31 @@
       "model": "openrouter/google/gemini-3.1-pro-preview",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/google/gemini-3.7-flash",
+        "openrouter/google/gemini-3.8-flash",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "quick": {
       "prompt_append": "file://~/.config/opencode/prompts/categories/quick.md",
       "maxTokens": 8192,
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "unspecified-low": {
       "prompt_append": "file://~/.config/opencode/prompts/categories/unspecified-low.md",
       "maxTokens": 8192,
-      "model": "openrouter/poolside/laguna-s-2.1",
+      "model": "openrouter/z-ai/glm-5.3-flash",
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "unspecified-high": {
@@ -277,19 +278,19 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max",
+        "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
     },
     "writing": {
       "prompt_append": "file://~/.config/opencode/prompts/categories/writing.md",
       "maxTokens": 16384,
-      "model": "openrouter/google/gemini-3.7-flash",
+      "model": "openrouter/google/gemini-3.8-flash",
       "reasoning": "medium",
       "fallback_models": [
         "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "bug-hunt": {
@@ -301,7 +302,7 @@
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "refactor-safe": {
@@ -313,7 +314,7 @@
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "arch-review": {
@@ -325,31 +326,29 @@
       "fallback_models": [
         "openrouter/minimax/minimax-m3",
         "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max"
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "content-aware-fast": {
       "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-fast.md",
       "maxTokens": 8192,
-      "model": "openrouter/deepseek/deepseek-v4-flash-0731",
+      "model": "venice/deepseek-v4-flash-0731",
       "reasoning": "low",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-pro-0813",
-        "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "venice/deepseek-v4-pro-0813",
+        "venice/deepseek-v4-pro"
       ]
     },
     "content-aware-deep": {
       "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-deep.md",
       "maxTokens": 32768,
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "model": "venice/deepseek-v4-pro-0813",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/deepseek/deepseek-v4-flash-0731",
-        "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max"
+        "venice/deepseek-v4-pro",
+        "venice/deepseek-v4-flash-0731"
       ]
     }
   },
@@ -360,26 +359,30 @@
     },
     "modelConcurrency": {
       "openrouter/z-ai/glm-5.3": 8,
+      "openrouter/z-ai/glm-5.3-flash": 10,
       "openrouter/poolside/laguna-s-2.1": 10,
       "openrouter/meituan/longcat-2.0": 8,
       "openrouter/minimax/minimax-m3": 8,
       "openrouter/google/gemini-3.1-pro-preview": 5,
-      "openrouter/google/gemini-3.7-flash": 10,
-      "openrouter/qwen/qwen3.8-max": 5,
+      "openrouter/google/gemini-3.8-flash": 10,
+      "openrouter/qwen/qwen3.8-max-0902": 5,
       "openrouter/moonshotai/kimi-k2.7-code": 5,
-      "openrouter/deepseek/deepseek-v4-pro-0813": 5,
+      "openrouter/deepseek/deepseek-v4-pro-0813": 8,
       "openrouter/deepseek/deepseek-v4-flash-0731": 10,
-      "openrouter/nousresearch/hermes-4-405b": 2
+      "openrouter/nousresearch/hermes-4-405b": 2,
+      "venice/deepseek-v4-pro-0813": 5,
+      "venice/deepseek-v4-pro": 5,
+      "venice/deepseek-v4-flash-0731": 5
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,
     "sessionGoneTimeoutMs": 30000,
     "taskCleanupDelayMs": 60000,
     "syncPollTimeoutMs": 60000,
-    "maxToolCalls": 200,
+    "maxToolCalls": 80,
     "circuitBreaker": {
       "enabled": true,
-      "maxToolCalls": 160,
+      "maxToolCalls": 80,
       "consecutiveThreshold": 8
     },
     "messageStalenessTimeoutMs": 180000,
@@ -390,11 +393,11 @@
     "tmux_visualization": false,
     "max_parallel_members": 4,
     "max_members": 5,
-    "max_messages_per_run": 2000,
+    "max_messages_per_run": 600,
     "max_wall_clock_minutes": 45,
-    "max_member_turns": 150,
+    "max_member_turns": 80,
     "base_dir": "~/.omo",
-    "message_payload_max_bytes": 32768,
+    "message_payload_max_bytes": 16384,
     "recipient_unread_max_bytes": 262144,
     "mailbox_poll_interval_ms": 1000
   },
@@ -476,7 +479,7 @@
     "preemptive_compaction": true,
     "model_fallback_title": true,
     "disable_omo_env": true,
-    "max_tools": 48,
+    "max_tools": 32,
     "dynamic_context_pruning": {
       "enabled": true,
       "notification": "minimal",
