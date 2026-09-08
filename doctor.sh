@@ -420,7 +420,7 @@ if [[ -f "$ENV_FILE" ]]; then
       tip "https://openrouter.ai/keys  ·  then: oc secrets sync"
     fi
   done
-  for k in CONTEXT7_API_KEY EXA_API_KEY; do
+  for k in CONTEXT7_API_KEY EXA_API_KEY VENICE_API_KEY; do
     if [[ -n "$(getkey $k)" ]]; then ok "$k set"
     else
       case "$k" in
@@ -431,6 +431,14 @@ if [[ -f "$ENV_FILE" ]]; then
         EXA_API_KEY)
           opt "$k unset (Exa web search unavailable)"
           tip "https://exa.ai  ·  oc secrets sync"
+          ;;
+        VENICE_API_KEY)
+          if [[ $IS_LIVE -eq 1 ]]; then
+            opt "$k unset (content-aware Venice lane unavailable)"
+          else
+            opt "$k unset (content-aware lane; optional on clone)"
+          fi
+          tip "https://venice.ai  ·  oc secrets sync"
           ;;
       esac
     fi

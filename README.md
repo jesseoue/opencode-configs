@@ -8,31 +8,31 @@
 
 > **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter general gateway, Venice content-aware lane, 12 curated OpenRouter models + 3 Venice DeepSeek slugs, deployment guards, cost-aware fallbacks — one install, zero drift.
 
-**v1.5.69** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.70** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · Venice · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
 ```bash
-# Clone (after forking, refresh signature.json → github_b64 to your repo URL)
-git clone <your-repo-url> opencode-configs
+# Clone
+git clone https://github.com/jesseoue/opencode-configs
 cd opencode-configs
 ./install.sh --yes          # or: oc install --quick
 
-# Fresh machine — bootstrap URL is base64 in install.sh (no plaintext host in source)
-curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
+# Fresh machine
+curl -fsSL https://github.com/jesseoue/opencode-configs/raw/main/install.sh | bash
 source ~/.zshrc && oc doctor && oc launch
 ```
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.69` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
+| **Pins** | OpenConfig `1.5.70` · OpenCode `1.18.17+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.15` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
 | **Health** | `oc doctor` · `oc versions` · `oc test` · `oc models --probe` |
 
 > Plugin name must stay **`oh-my-openagent@…`** (not legacy `oh-my-opencode`).  
-> Schema URL basename stays `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s).
+> Schema URL basename stays `omo.schema.json` (legacy `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` 404 — `oc validate` rejects both).
 
 Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompts/core.md) · Changelog: [`CHANGELOG.md`](./CHANGELOG.md)
 
@@ -53,7 +53,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
 | **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (105 checks), `oc fix` self-repair, 35 smoke checks |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (112 checks), `oc fix` self-repair, 50 smoke checks |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
@@ -128,7 +128,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.69` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.70` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.17+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -449,6 +449,7 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 ## Anti-patterns
 
 - Don’t rename the plugin away from `oh-my-openagent`
+- Don’t pin `$schema` to `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` — runtime + `oc validate` require `omo.schema.json`
 - Don’t add Cloudflare / AI Gateway / OpenAI-compatible shims
 - Don’t put `plan` in `disabled_agents` (breaks hyperplan)
 - Don’t commit `.env`, `vault.local.json`, `package.json`, `node_modules`, `.omo`, `.sisyphus`, or `plugins/` here

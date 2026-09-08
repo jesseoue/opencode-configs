@@ -100,8 +100,9 @@ opencode() {
       [[ "$_oc_line" == export\ * ]] && _oc_line="${_oc_line#export }"
       [[ "$_oc_line" == *=* ]] || continue
       _oc_key="${_oc_line%%=*}"
+      # Keep in sync with OC_ENV_ALLOWLIST in lib/common.sh (no OPENAI_API_KEY).
       case "$_oc_key" in
-        OPENROUTER_API_KEY|OPENAI_API_KEY|VENICE_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|OC_DEFAULT_WORKSPACE|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
+        OPENROUTER_API_KEY|VENICE_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|OC_DEFAULT_WORKSPACE|OC_DEFAULT_PROFILE|INFISICAL_DIR|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
         *) continue ;;
       esac
       _oc_val="${_oc_line#*=}"
@@ -206,5 +207,15 @@ if [[ -f "$HOME/.config/opencode/.env" ]]; then
     _oc_ws="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_DEFAULT_WORKSPACE=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
     [[ -n "$_oc_ws" ]] && export OC_DEFAULT_WORKSPACE="$_oc_ws"
     unset _oc_ws
+  fi
+  if [[ -z "${OC_DEFAULT_PROFILE:-}" ]]; then
+    _oc_pf="$(grep -E '^[[:space:]]*(export[[:space:]]+)?OC_DEFAULT_PROFILE=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
+    [[ -n "$_oc_pf" ]] && export OC_DEFAULT_PROFILE="$_oc_pf"
+    unset _oc_pf
+  fi
+  if [[ -z "${INFISICAL_DIR:-}" ]]; then
+    _oc_id="$(grep -E '^[[:space:]]*(export[[:space:]]+)?INFISICAL_DIR=' "$HOME/.config/opencode/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d \"\' || true)"
+    [[ -n "$_oc_id" ]] && export INFISICAL_DIR="$_oc_id"
+    unset _oc_id
   fi
 fi

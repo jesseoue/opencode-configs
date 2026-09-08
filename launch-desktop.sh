@@ -9,6 +9,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 
+oc_telemetry_off
 oc_export_env_file "$REPO/.env"
 oc_export_vault_allowlist
 

@@ -8,6 +8,8 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 
+oc_telemetry_off
+
 PORT=4097
 HOST=127.0.0.1
 LOG_DIR="${HOME}/.t3/userdata/logs"

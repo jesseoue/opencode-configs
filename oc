@@ -462,7 +462,13 @@ except Exception:
   fi
 
   if [[ "$mode" == "check" ]]; then
-    [[ "$resolved" -gt 0 && "$backend" != "none" ]] || return 1
+    if oc_openrouter_key_configured "$envf"; then
+      ok "OPENROUTER_API_KEY present (.env or vault overlay)"
+      return 0
+    fi
+    bad "OPENROUTER_API_KEY missing from .env and vault overlay"
+    tip "add OPENROUTER_API_KEY to .env  ·  or: oc secrets sync"
+    return 1
   fi
   return 0
 }

@@ -223,6 +223,7 @@ OC_ENV_ALLOWLIST=(
   OC_PROJECTS_DIR
   OC_DEFAULT_WORKSPACE
   OC_DEFAULT_PROFILE
+  INFISICAL_DIR
   DO_NOT_TRACK
   OMO_DISABLE_POSTHOG
   OMO_SEND_ANONYMOUS_TELEMETRY
@@ -1262,18 +1263,76 @@ oc_secrets_1password_ready() {
   op account get >/dev/null 2>&1
 }
 
-oc_secrets_infisical_ready() {
-  local dir
-  command -v infisical >/dev/null 2>&1 || return 1
-  dir="${INFISICAL_DIR:-}"
+# vault.json infisical.dir_env is the env var name (default INFISICAL_DIR). Path only.
+oc_infisical_dir_env_name() {
+  oc_vault_merged_json | python3 -c '
+import json, sys, re
+try:
+    name = ((json.load(sys.stdin).get("infisical") or {}).get("dir_env") or "INFISICAL_DIR").strip()
+except Exception:
+    name = "INFISICAL_DIR"
+if not re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
+    name = "INFISICAL_DIR"
+print(name)
+'
+}
+
+# Resolve Infisical project dir: $dir_env → repo/.env → live .env → vault infisical.dir.
+# Never dumps vault secrets.
+oc_infisical_dir() {
+  local name dir live
+  name="$(oc_infisical_dir_env_name)"
+  dir=""
+  if [[ -n "$name" ]]; then
+    dir="${!name:-}"
+  fi
+  if [[ -z "$dir" && -n "${REPO:-}" && -f "${REPO}/.env" ]]; then
+    dir="$(oc_get_env_key "${REPO}/.env" "$name" 2>/dev/null || true)"
+  fi
   if [[ -z "$dir" ]]; then
-    dir="$(oc_vault_merged_json | python3 -c 'import json,sys
+    live="$(oc_live_config_root 2>/dev/null || true)"
+    if [[ -n "$live" && -f "$live/.env" ]]; then
+      if [[ -z "${REPO:-}" ]] || ! oc_same_path "${REPO}/.env" "$live/.env"; then
+        dir="$(oc_get_env_key "$live/.env" "$name" 2>/dev/null || true)"
+      fi
+    fi
+  fi
+  if [[ -z "$dir" ]]; then
+    dir="$(oc_vault_merged_json | python3 -c '
+import json, sys
 try:
     print(((json.load(sys.stdin).get("infisical") or {}).get("dir") or "").strip())
 except Exception:
     print("")
 ')"
   fi
+  [[ "$dir" == ~* ]] && dir="${dir/#\~/$HOME}"
+  printf '%s' "$dir"
+}
+
+# True if OPENROUTER_API_KEY is in dest .env, live install .env, or a live vault overlay ref.
+# Never prints the value. Example op://Vault/… placeholders do not count.
+oc_openrouter_key_configured() {
+  local dest="${1:-${REPO:-}/.env}" live val key _ref
+  val="$(oc_get_env_key "$dest" OPENROUTER_API_KEY 2>/dev/null || true)"
+  [[ -n "$val" ]] && return 0
+  live="$(oc_live_config_root 2>/dev/null || true)"
+  if [[ -n "$live" && -f "$live/.env" ]]; then
+    if [[ ! -f "$dest" ]] || ! oc_same_path "$dest" "$live/.env"; then
+      val="$(oc_get_env_key "$live/.env" OPENROUTER_API_KEY 2>/dev/null || true)"
+      [[ -n "$val" ]] && return 0
+    fi
+  fi
+  while IFS=$'\t' read -r key _ref; do
+    [[ "$key" == "OPENROUTER_API_KEY" ]] && return 0
+  done < <(oc_vault_op_refs)
+  return 1
+}
+
+oc_secrets_infisical_ready() {
+  local dir
+  command -v infisical >/dev/null 2>&1 || return 1
+  dir="$(oc_infisical_dir)"
   [[ -n "$dir" && -d "$dir" ]]
 }
 
@@ -1365,25 +1424,15 @@ except Exception:
 
 oc_secrets_export_infisical() {
   local dest="${1:?}" dir env_name
-  dir="${INFISICAL_DIR:-}"
+  dir="$(oc_infisical_dir)"
   env_name="${INFISICAL_ENV:-}"
-  if [[ -z "$dir" || -z "$env_name" ]]; then
-    if [[ -z "$dir" ]]; then
-      dir="$(oc_vault_merged_json | python3 -c 'import json,sys
-try:
-    print(((json.load(sys.stdin).get("infisical") or {}).get("dir") or "").strip())
-except Exception:
-    print("")
-')"
-    fi
-    if [[ -z "$env_name" ]]; then
-      env_name="$(oc_vault_merged_json | python3 -c 'import json,sys
+  if [[ -z "$env_name" ]]; then
+    env_name="$(oc_vault_merged_json | python3 -c 'import json,sys
 try:
     print(((json.load(sys.stdin).get("infisical") or {}).get("env") or "dev").strip())
 except Exception:
     print("dev")
 ')"
-    fi
   fi
   env_name="${env_name:-dev}"
   [[ -n "$dir" && -d "$dir" ]] || return 1

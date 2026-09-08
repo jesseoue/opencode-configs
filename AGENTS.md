@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.69** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.70** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -77,7 +77,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.69**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.70**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.
@@ -91,7 +91,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 
 ## Commands
 
-`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc launch` · `oc run` · `oc new` · `oc secrets` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
+`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc models` · `oc test` · `oc env` · `oc secrets` · `oc setup` · `oc cleanup` · `oc cursor` · `oc new` · `oc projects` · `oc launch` · `oc run` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
 
 ## Projects & scaffolding
 
@@ -115,7 +115,7 @@ Do not scaffold into the config repo. Prefer `oc new`; use `--here` / `--dir` on
 ## What not to do
 
 - Pin plugin name **`oh-my-openagent`** (legacy `oh-my-opencode` auto-migrates and churns).
-- Keep `$schema` on working asset basename `oh-my-opencode.schema.json` (the `oh-my-openagent.schema.json` path 404s on current tags).
+- Keep `$schema` on working asset basename `omo.schema.json` (legacy `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` 404 — `oc validate` rejects both).
 - No Cloudflare AI Gateway / OpenAI-compatible env hacks.
 - No `\033[?1049l` in teardown.
 - No `package.json` / `node_modules` / `.omo` / `.sisyphus` / `command/` / `plugins/` in this config repo — scrub with `./cleanup.sh`.

@@ -2,7 +2,21 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.69):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.70):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.70] — 2026-09-08
+
+### Audit close (install URL, secrets, schema, doctor)
+
+- README install/clone URLs are `https://github.com/jesseoue/opencode-configs` (not `github.com/openconfig/opencode-configs`). `install.sh` comments match.
+- Runtime schema truth is `omo.schema.json` — `versions.json` `schema_asset`, AGENTS.md / README, and `oc validate` all agree. Legacy `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` stay rejected.
+- `oc secrets check` exits 1 only when `OPENROUTER_API_KEY` is missing from `.env` **and** vault overlay (live install `.env` counts). Infisical-only / example `op://Vault/…` refs no longer fail a healthy `.env`.
+- Infisical honors vault.json `dir_env` (`INFISICAL_DIR`). Path-only allowlist — never a company vault dump.
+- Doctor reports `VENICE_API_KEY` as optional (stronger wording on the live tree; never fails `core_ready`).
+- `zshrc.snippet` dropped `OPENAI_API_KEY`; loads `OC_DEFAULT_PROFILE` + `INFISICAL_DIR` on the same allowlist as `oc_export_env_file`.
+- `launch-desktop.sh` / `serve-desktop.sh` call `oc_telemetry_off`. `.env.example` documents `OC_PROJECTS_DIR` / `OC_DEFAULT_WORKSPACE` / `OC_DEFAULT_PROFILE`.
+- AGENTS.md command list: test, models, env, secrets, setup, cleanup, cursor, new, projects. docs-team “Gemini Nitro” → Gemini 3.8 Flash.
+- Smoke: `signature.version` == `versions.json`; `.env.example` names vs `OC_ENV_ALLOWLIST`. 1.5.69 badge/section chrome kept.
 
 ## [1.5.69] — 2026-09-08
 

@@ -142,7 +142,7 @@ else
 fi
 
 # Helpers exist
-for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok oc_banner oc_section; do
+for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok oc_banner oc_section oc_infisical_dir oc_openrouter_key_configured oc_telemetry_off; do
   if grep -q "${fn}()" "$REPO/lib/common.sh"; then
     ok "helper $fn"
   else
@@ -238,6 +238,57 @@ then
   ok "team mode schema + ~/.omo/teams → live config"
 else
   bad "team mode incomplete — run: oc setup from the live install"
+fi
+
+# signature.version must match versions.json (heal/test identity)
+if python3 - "$REPO" <<'PY'
+import json, sys
+repo = sys.argv[1]
+sig = json.load(open(f"{repo}/signature.json", encoding="utf-8"))
+ver = json.load(open(f"{repo}/versions.json", encoding="utf-8"))
+s, v = str(sig.get("version") or "").strip(), str(ver.get("opencode_configs") or "").strip()
+if not s or s != v:
+    raise SystemExit(f"{s!r} != {v!r}")
+asset = ((ver.get("oh_my_openagent") or {}).get("schema_asset") or "")
+if asset != "omo.schema.json":
+    raise SystemExit(f"schema_asset={asset!r}")
+PY
+then
+  ok "signature.version == versions.json + schema_asset=omo.schema.json"
+else
+  bad "signature.version / schema_asset drift — run: oc signature --refresh"
+fi
+
+# .env.example assignment names ⊆ OC_ENV_ALLOWLIST; allowlist names documented
+if python3 - "$REPO" <<'PY'
+import re, sys
+repo = sys.argv[1]
+common = open(f"{repo}/lib/common.sh", encoding="utf-8").read()
+m = re.search(r"OC_ENV_ALLOWLIST=\((.*?)\)", common, re.S)
+if not m:
+    raise SystemExit("allowlist missing")
+allow = set(re.findall(r"\b[A-Z][A-Z0-9_]+\b", m.group(1)))
+ex = open(f"{repo}/.env.example", encoding="utf-8").read()
+assigned = set()
+for raw in ex.splitlines():
+    line = raw.strip()
+    if not line or line.startswith("#"):
+        continue
+    if line.startswith("export "):
+        line = line[7:].lstrip()
+    if "=" in line:
+        assigned.add(line.split("=", 1)[0].strip())
+unknown = sorted(assigned - allow)
+if unknown:
+    raise SystemExit("example keys not in allowlist: " + ",".join(unknown))
+missing = sorted(k for k in allow if k not in ex)
+if missing:
+    raise SystemExit("allowlist names missing from .env.example: " + ",".join(missing))
+PY
+then
+  ok ".env.example names match OC_ENV_ALLOWLIST"
+else
+  bad ".env.example / allowlist mismatch"
 fi
 
 # Public vault.json must stay generic; personal refs live in vault.local.json

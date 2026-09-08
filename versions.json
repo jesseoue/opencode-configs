@@ -1,7 +1,7 @@
 {
   "product": "OpenConfig",
   "cli": "oc",
-  "opencode_configs": "1.5.69",
+  "opencode_configs": "1.5.70",
   "tagline": "Pinned stack for OpenCode · OpenRouter · oh-my-openagent",
   "opencode": {
     "min": "1.18.17",
@@ -9,7 +9,7 @@
   },
   "oh_my_openagent": {
     "pin": "4.19.4",
-    "schema_asset": "oh-my-opencode.schema.json"
+    "schema_asset": "omo.schema.json"
   },
   "codegraph": {
     "pin": "1.4.1",

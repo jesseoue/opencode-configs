@@ -1,4 +1,4 @@
-# Core stance (all sessions) — OpenConfig 1.5.69
+# Core stance (all sessions) — OpenConfig 1.5.70
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 

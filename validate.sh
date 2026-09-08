@@ -1245,6 +1245,14 @@ else:
                 pin = p.split("@", 1)[1]
                 break
         want = ((vdata.get("oh_my_openagent") or {}).get("pin") or "")
+        asset = ((vdata.get("oh_my_openagent") or {}).get("schema_asset") or "")
+        if asset != "omo.schema.json":
+            err(
+                f"versions.json oh_my_openagent.schema_asset={asset!r} — "
+                "expected omo.schema.json (validate rejects legacy basenames)"
+            )
+        else:
+            ok("versions.json schema_asset=omo.schema.json")
         if pin and want and pin != want:
             err(f"oh-my-openagent pin {pin!r} ≠ versions.json {want!r}")
         elif pin and want:
@@ -1479,10 +1487,11 @@ for rel, label in (
         ok(f"{label} present")
 
 env_ex = open(os.path.join(repo, ".env.example"), encoding="utf-8").read()
-for key in ("OPENROUTER_API_KEY", "EXA_API_KEY", "CONTEXT7_API_KEY", "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE"):
+for key in ("OPENROUTER_API_KEY", "EXA_API_KEY", "CONTEXT7_API_KEY", "VENICE_API_KEY",
+            "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE", "OC_DEFAULT_PROFILE"):
     if key not in env_ex:
         err(f".env.example missing {key}")
-if "OPENROUTER_API_KEY" in env_ex and "OC_PROJECTS_DIR" in env_ex and "OC_DEFAULT_WORKSPACE" in env_ex:
+if "OPENROUTER_API_KEY" in env_ex and "OC_PROJECTS_DIR" in env_ex and "OC_DEFAULT_PROFILE" in env_ex:
     ok(".env.example has required/optional key placeholders")
 
 readme = open(os.path.join(repo, "README.md"), encoding="utf-8").read()
@@ -1490,6 +1499,44 @@ if "# OpenConfig" not in readme and "OpenConfig" not in readme[:500]:
     warn("README.md should lead with OpenConfig branding")
 else:
     ok("README.md branded OpenConfig")
+if "github.com/openconfig/opencode-configs" in readme or "githubusercontent.com/openconfig/opencode-configs" in readme:
+    err("README install URL uses wrong org openconfig — must be jesseoue/opencode-configs")
+elif "https://github.com/jesseoue/opencode-configs" not in readme:
+    err("README must include https://github.com/jesseoue/opencode-configs")
+else:
+    ok("README install/clone URL is jesseoue/opencode-configs")
+if "oh-my-opencode.schema.json" in readme and "omo.schema.json" not in readme:
+    err("README schema basename must be omo.schema.json (validate rejects oh-my-opencode.schema.json)")
+elif "omo.schema.json" in readme:
+    ok("README schema basename is omo.schema.json")
+
+install_sh = open(os.path.join(repo, "install.sh"), encoding="utf-8").read()
+if "githubusercontent.com/openconfig/opencode-configs" in install_sh or "github.com/openconfig/opencode-configs" in install_sh:
+    err("install.sh still points at github.com/openconfig/opencode-configs")
+else:
+    ok("install.sh distribution URL is jesseoue/opencode-configs")
+
+zshrc = open(os.path.join(repo, "zshrc.snippet"), encoding="utf-8").read()
+if re.search(r"export OPENAI_API_KEY|OPENAI_API_KEY\|", zshrc):
+    err("zshrc.snippet must not export OPENAI_API_KEY")
+elif "OC_DEFAULT_PROFILE" not in zshrc:
+    err("zshrc.snippet missing OC_DEFAULT_PROFILE")
+else:
+    ok("zshrc.snippet allowlist matches OpenRouter-only + OC_DEFAULT_PROFILE")
+
+docs_team = os.path.join(repo, "teams/docs-team/config.json")
+if os.path.isfile(docs_team):
+    try:
+        dt = json.load(open(docs_team, encoding="utf-8"))
+        desc = str(dt.get("description") or "")
+        if "Nitro" in desc:
+            err("teams/docs-team still says Gemini Nitro — use current writing model")
+        elif "Gemini 3.8 Flash" in desc:
+            ok("docs-team writing model is Gemini 3.8 Flash")
+        else:
+            warn(f"teams/docs-team description has no Gemini 3.8 Flash: {desc}")
+    except Exception as e:
+        err(f"teams/docs-team/config.json: {e}")
 
 # ---- 4c8. teams + profiles completeness ----
 teams_dir = os.path.join(repo, "teams")
@@ -1567,6 +1614,10 @@ for key in ("DO_NOT_TRACK=1", "OMO_DISABLE_POSTHOG=1", "OMO_SEND_ANONYMOUS_TELEM
 common_body = open(os.path.join(repo, "lib/common.sh"), encoding="utf-8").read()
 if "oc_telemetry_off()" not in common_body or "OTEL_SDK_DISABLED" not in common_body:
     tel_issues.append("lib/common.sh oc_telemetry_off incomplete")
+for rel in ("opencode.sh", "run.sh", "launch-desktop.sh", "serve-desktop.sh"):
+    body = open(os.path.join(repo, rel), encoding="utf-8").read()
+    if "oc_telemetry_off" not in body:
+        tel_issues.append(f"{rel} missing oc_telemetry_off")
 if tel_issues:
     err("telemetry not fully disabled: " + "; ".join(tel_issues))
 else:
@@ -1586,6 +1637,11 @@ if os.path.isfile(versions_cfg):
         pass
 
 # ---- 4c10. Project identity signature ----
+v_ver = ""
+try:
+    v_ver = str((json.load(open(os.path.join(repo, "versions.json"), encoding="utf-8")).get("opencode_configs") or "")).strip()
+except Exception:
+    v_ver = ""
 sig_path = os.path.join(repo, "signature.json")
 sig_sh = os.path.join(repo, "signature.sh")
 if not os.path.isfile(sig_path):
@@ -1601,6 +1657,8 @@ else:
             err(f"signature.json id={sig.get('id')!r} — expected jesseoue/opencode-configs")
         elif not (sig.get("fingerprint") or "").strip():
             err("signature.json fingerprint empty — run: oc signature --refresh")
+        elif v_ver and str(sig.get("version") or "").strip() != v_ver:
+            err(f"signature.json version={sig.get('version')!r} ≠ versions.json {v_ver!r}")
         else:
             import subprocess
             r = subprocess.run(

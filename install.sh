@@ -6,8 +6,8 @@
 # Preferred (already cloned):
 #   ./install.sh [--dir PATH] [--skip-cli] [--yes] [--lazy|--full]
 #
-# Fresh machine (distribution URL is base64 — keeps tree free of host-owner literals):
-#   curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
+# Fresh machine:
+#   curl -fsSL https://github.com/jesseoue/opencode-configs/raw/main/install.sh | bash
 #
 # Safety:
 #   • Refuses root; umask 077 for secret files
@@ -58,8 +58,8 @@ install.sh — OpenConfig (oc) installer
 
   ./install.sh [--dir PATH] [--log PATH] [--skip-cli] [--yes] [--lazy|--full]
 
-  # Fresh machine (decode distribution raw URL, then pipe):
-  curl -fsSL "$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL29wZW5jb25maWcvb3BlbmNvZGUtY29uZmlncy9tYWluL2luc3RhbGwuc2g=' | base64 -d)" | bash
+  # Fresh machine:
+  curl -fsSL https://github.com/jesseoue/opencode-configs/raw/main/install.sh | bash
 
 Flags:
   --dir PATH   install/clone location (default: repo dir if local, else ~/opencode-configs)
