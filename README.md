@@ -53,7 +53,7 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
 | **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (112 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (113 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
