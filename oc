@@ -47,8 +47,8 @@ bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
 tip(){  printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
 
 header() {
-  oc_banner "$OC_VERSION" "Pinned stack for OpenCode · OpenRouter · OmO"
-  printf "  ${c_dim}%s${c_0}\n\n" "$REPO"
+  oc_banner "$OC_VERSION"
+  printf '%b%s%b\n\n' "${c_dim}" "              ${REPO}" "${c_0}"
 }
 
 # ── Require a script exists before dispatching ──
@@ -65,11 +65,10 @@ dispatch() {
 # ── Help text ──
 show_help() {
   cat <<HELP
-${c_bold}OpenConfig${c_0} (${c_p}oc${c_0}) — pinned stack for OpenCode · OpenRouter · OmO
+${c_b}${c_bold}── Usage ──${c_0}
+  oc <command> [args...]
 
-${c_bold}Usage:${c_0}  oc <command> [args...]
-
-${c_bold}Install & self-heal (start here):${c_0}
+${c_b}${c_bold}── Install & self-heal ──${c_0}
   ${c_g}install${c_0}   [--quick|--yes|--full]       Full-stack install / refresh
   ${c_g}check${c_0}     [--fix]                      validate + doctor --quick
   ${c_g}heal${c_0}      [--ai|--no-ai]                 Unattended self-repair (AI when needed)
@@ -77,19 +76,19 @@ ${c_bold}Install & self-heal (start here):${c_0}
   ${c_g}signature${c_0} [--refresh|--json]           Prove this is the OpenConfig repo
   ${c_g}test${c_0}      [smoke|idempotency|runtime]   Self-test suite (safe)
 
-${c_bold}Setup & Health:${c_0}
+${c_b}${c_bold}── Setup & health ──${c_0}
   ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams → live config, LSP, projects)
   ${c_g}doctor${c_0}    [--quick|--json|--fix|--harden|--ai-fix]
                                          Full readiness. Keys via oc secrets. Teams follow ~/.config/opencode.
   ${c_g}validate${c_0}  [--quiet]                      Config validator + footgun detector
   ${c_g}diagnose${c_0}  [--no-ai|--fix|--agent-fix]    AI-assisted deep diagnostics
 
-${c_bold}Repair & Clean:${c_0}
+${c_b}${c_bold}── Repair & clean ──${c_0}
   ${c_g}fix${c_0}       [--dry-run|--set k=v]          Auto-repair configs (incl. agent/category colors)
   ${c_g}cleanup${c_0}   [--dry-run|--yes]              Reconcile to known-good state
   ${c_g}maintain${c_0}  [--check|--clean|--plans]      Clean sessions, caches, logs
 
-${c_bold}Models & Admin:${c_0}
+${c_b}${c_bold}── Models & admin ──${c_0}
   ${c_g}models${c_0}    [--probe|--moderation|--providers|--catalog|--json|--upgrade]
                                          Fast parallel probes · moderation catalog · routing
   ${c_g}versions${c_0}  [--check|--local|--fix|--json]
@@ -98,29 +97,29 @@ ${c_bold}Models & Admin:${c_0}
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter account admin
   ${c_g}cursor${c_0}    [setup|apply|usage|probe]     Cursor IDE → OpenRouter /api/v1/cursor
 
-${c_bold}Run & Launch:${c_0}
+${c_b}${c_bold}── Run & launch ──${c_0}
   ${c_g}run${c_0}       "<msg>" [-a agent] [-d dir]    Headless runner (run to completion)
   ${c_g}launch${c_0}    [dir] [--here]                 Launch OpenCode (never config repo)
   ${c_g}opencode${c_0}  [dir]                          Same as oc launch (opencode.sh)
   ${c_g}env${c_0}       [--check|--scrub]               .env allowlist hygiene (never prints values)
   ${c_g}secrets${c_0}   [status|sync|check]             1Password / Infisical → allowlisted .env
 
-${c_bold}Deployment Protection:${c_0}
+${c_b}${c_bold}── Deployment ──${c_0}
   ${c_g}deploy${c_0}    [check|lock|unlock|status|quarantine|health]
                                          Pre-deploy gate · credit/rate-limit guards · quarantine mode
 
-${c_bold}Scaffold:${c_0}
+${c_b}${c_bold}── Scaffold ──${c_0}
   ${c_g}new${c_0}       <name> [--profile|--dir|--here|--launch]
                                          Scaffold under projects home (~/Projects)
   ${c_g}projects${c_0}  [--list|--ensure]               Show / ensure projects directory
 
-${c_bold}Aliases (same as above):${c_0}
+${c_b}${c_bold}── Aliases ──${c_0}
   ${c_dim}health, ready${c_0}  → check          ${c_dim}repair${c_0} → heal
   ${c_dim}verify${c_0}          → validate       ${c_dim}where, discover${c_0} → locate
   ${c_dim}sig${c_0}             → signature      ${c_dim}pins${c_0} → versions
   ${c_dim}omo${c_0}             → plugin         ${c_dim}opencode${c_0} → launch
 
-${c_bold}Admin subcommands:${c_0}
+${c_b}${c_bold}── Admin subcommands ──${c_0}
   status       Account overview (credits, keys, spend)
   health       Live probe all models + rate limits
   ratelimit    Check rate limit headers
@@ -131,7 +130,7 @@ ${c_bold}Admin subcommands:${c_0}
   whoami       Account identity + plan
   alert [N]    Check if credits below \$N (default 50)
 
-${c_bold}Examples:${c_0}
+${c_b}${c_bold}── Examples ──${c_0}
   oc install --quick             Full stack, non-interactive, then validate + doctor
   oc install                     Interactive lazy install (Enter = defaults)
   oc install --full              Wizard (dir, keys, terminals, projects)
@@ -160,11 +159,11 @@ ${c_bold}Examples:${c_0}
   oc new myapp                   Scaffold → ~/Projects/myapp
   oc projects --list             List projects home
 
-${c_bold}One-liner (fresh machine):${c_0}
+${c_b}${c_bold}── One-liner ──${c_0}
   curl -fsSL "\$(printf %s 'aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3MvbWFpbi9pbnN0YWxsLnNo' | base64 -d)" | bash
   # Prefer after clone:  oc install --quick
 
-${c_bold}Auto/non-interactive:${c_0}
+${c_b}${c_bold}── Auto ──${c_0}
   oc install --quick · oc heal · oc locate · oc test · oc check --fix
 
 HELP
@@ -198,7 +197,7 @@ PLUGINHELP
     cache|status)
       pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
       cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
-      printf "\n${c_b}${c_bold}== OmO plugin cache ==${c_0}\n"
+      oc_section "OmO plugin cache"
       info "pin: ${pin:-none}"
       info "path: ${cdir:-?}"
       if [[ -n "$cdir" && -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
@@ -997,7 +996,7 @@ HEALHELP
 
   _heal_run() {
     local title="$1"; shift
-    printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$title" | tee -a "$log"
+    { oc_section "$title"; } | tee -a "$log"
     set +e
     "$@" 2>&1 | tee -a "$log"
     local step_rc=${PIPESTATUS[0]}

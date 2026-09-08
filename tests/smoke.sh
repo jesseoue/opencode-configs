@@ -12,16 +12,17 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 source "$REPO/lib/common.sh"
 
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-  c_g=$'\033[32m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
+  c_g=$'\033[32m'; c_r=$'\033[31m'; c_b=$'\033[36m'; c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
 else
-  c_g=""; c_r=""; c_b=""; c_bold=""; c_0=""
+  c_g=""; c_r=""; c_b=""; c_dim=""; c_bold=""; c_0=""
 fi
 
 pass=0; fail=0
 ok(){ printf "  ${c_g}✓${c_0} %s\n" "$*"; pass=$((pass+1)); }
 bad(){ printf "  ${c_r}✗${c_0} %s\n" "$*"; fail=$((fail+1)); }
 
-printf "\n${c_bold}${c_b}OpenConfig smoke tests${c_0} (read-mostly)\n\n"
+oc_section "oc test"
+printf "  ${c_dim}smoke (read-mostly)${c_0}\n\n"
 
 run_step() {
   local name="$1"; shift
@@ -61,6 +62,32 @@ if "$REPO/oc" help 2>&1 | grep -q 'health, ready'; then
 else
   bad "oc help missing aliases section"
 fi
+if NO_COLOR=1 "$REPO/oc" help 2>&1 | grep -q $'\033'; then
+  bad "oc help leaks ANSI under NO_COLOR"
+else
+  ok "oc help respects NO_COLOR"
+fi
+if python3 - "$REPO" <<'PY'
+import os, subprocess, sys
+repo = sys.argv[1]
+env = {**os.environ, "NO_COLOR": "1"}
+help_out = subprocess.check_output([os.path.join(repo, "oc"), "help"], env=env, text=True)
+mark = [l for l in help_out.splitlines() if l.startswith("    ╭") or l.startswith("    │oc") or l.startswith("    ╰")]
+if len(mark) != 3:
+    raise SystemExit("mark lines != 3")
+if any(len(l) > 72 for l in mark):
+    raise SystemExit("mark wider than 72")
+if mark[1].find("OpenConfig") != 14 or mark[2].find("Pinned") != 14:
+    raise SystemExit("wordmark misaligned")
+readme = open(os.path.join(repo, "README.md"), encoding="utf-8").read()
+if "    │oc │──── OpenConfig\n    ╰───╯     Pinned stack for OpenCode · OpenRouter · OmO" not in readme:
+    raise SystemExit("README mark != CLI")
+PY
+then
+  ok "brand mark aligned · ≤72 cols · README match"
+else
+  bad "brand mark width/align/README"
+fi
 
 run_step "bash -n doctor.sh" bash -n "$REPO/doctor.sh"
 run_step "bash -n locate.sh" bash -n "$REPO/locate.sh"
@@ -82,7 +109,9 @@ run_step "models --moderation" "$REPO/models.sh" --moderation >/dev/null
 # doctor --json schema (machine summary for heal/check tooling)
 if "$REPO/doctor.sh" --quick --json 2>/dev/null | python3 -c '
 import json,sys
-d=json.load(sys.stdin)
+raw=sys.stdin.read()
+if "──" in raw: raise SystemExit(4)
+d=json.loads(raw)
 need=("ok","ready","critical","optional","soft","verdict","version","repo")
 missing=[k for k in need if k not in d]
 if missing: raise SystemExit(1)
@@ -92,6 +121,11 @@ if d.get("verdict") not in ("ready", "core_ready"): raise SystemExit(3)
   ok "doctor --json schema"
 else
   bad "doctor --json schema"
+fi
+if ! "$REPO/validate.sh" --quiet 2>/dev/null | grep -q '──'; then
+  ok "validate --quiet no chrome"
+else
+  bad "validate --quiet leaked section chrome"
 fi
 
 # locate JSON schema basics
@@ -108,7 +142,7 @@ else
 fi
 
 # Helpers exist
-for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok; do
+for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok oc_banner oc_section; do
   if grep -q "${fn}()" "$REPO/lib/common.sh"; then
     ok "helper $fn"
   else

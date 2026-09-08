@@ -58,7 +58,7 @@ if ! $IS_LIVE && [[ -n "$LIVE_ROOT" ]]; then
   TEAM_ROOT="$LIVE_ROOT"
 fi
 
-oc_banner "$OC_VERSION" "OpenConfig setup — OpenCode · OpenRouter · OmO"
+oc_banner "$OC_VERSION"
 
 # ─── 1. OpenCode CLI ──────────────────────────────────────────────
 echo "Step 1: OpenCode CLI"

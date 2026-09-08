@@ -31,6 +31,10 @@ done
 OC_LIVE_CONFIG="$(oc_live_config_root 2>/dev/null || true)"
 export OC_LIVE_CONFIG
 
+if [[ -z "${VALIDATE_QUIET:-}" ]]; then
+  oc_section "oc validate"
+fi
+
 python3 - "$REPO" <<'PY'
 import json, sys, os, re, glob, subprocess
 
@@ -1369,7 +1373,7 @@ else:
 
 common_sh = open(os.path.join(repo, "lib/common.sh"), encoding="utf-8").read()
 missing_helpers = [fn for fn in (
-    "oc_banner", "oc_projects_dir", "oc_ensure_launch_workspace", "oc_resolve_launch_dir",
+    "oc_banner", "oc_section", "oc_projects_dir", "oc_ensure_launch_workspace", "oc_resolve_launch_dir",
     "oc_prune_stale_omo_plugin_caches", "oc_ensure_omo_plugin_cache",
     "oc_agent_visibility_report", "oc_log_misuse_report",
     "oc_version_ge", "oc_write_project_opencode_json", "oc_expand_path",
@@ -1653,13 +1657,16 @@ for md in sorted(glob.glob(os.path.join(repo, "agents", "*.md"))):
 # ---- report ----
 color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
 G = "\033[32m" if color else ""; Y = "\033[33m" if color else ""
-R = "\033[31m" if color else ""; Z = "\033[0m" if color else ""
+R = "\033[31m" if color else ""; C = "\033[36m" if color else ""
+B = "\033[1m" if color else ""; Z = "\033[0m" if color else ""
 q = os.environ.get("VALIDATE_QUIET") == "1"
 if not q:
     for m in oks: print(f"  {G}✓{Z} {m}")
 for m in warns: print(f"  {Y}⚠{Z} {m}")
 for m in errors: print(f"  {R}✗{Z} {m}")
 print()
+if not q:
+    print(f"  {C}{B}── summary ──{Z}")
 print(f"  {len(oks)} ok · {len(warns)} warnings · {len(errors)} errors")
 sys.exit(1 if errors else 0)
 PY

@@ -55,7 +55,7 @@ else
 fi
 crit=0; miss=0; softn=0
 # soft = advisory (latency blip, known npm lag) — does NOT count as "optional missing"
-sec(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$*"; }
+sec(){ [[ $DO_JSON -eq 1 ]] && return 0; oc_section "$*"; }
 ok(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 info(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_dim}•${c_0} %s\n" "$*"; }
 tip(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
@@ -67,12 +67,11 @@ OC_DOCTOR_VER="$(oc_versions_get opencode_configs 2>/dev/null || echo "?")"
 if [[ $DO_JSON -eq 0 ]]; then
   _flags=""
   [[ $DO_QUICK -eq 1 ]] && _flags="${_flags} · --quick"
+  oc_section "oc doctor"
   if [[ $IS_LIVE -eq 1 ]]; then
-    printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · live %s%s${c_0}\n" \
-      "$OC_DOCTOR_VER" "$REPO" "$_flags"
+    printf "  ${c_dim}v%s · live %s%s${c_0}\n" "$OC_DOCTOR_VER" "$REPO" "$_flags"
   else
-    printf "\n${c_b}${c_bold}OpenConfig doctor${c_0} ${c_dim}v%s · %s%s${c_0}\n" \
-      "$OC_DOCTOR_VER" "$REPO" "$_flags"
+    printf "  ${c_dim}v%s · %s%s${c_0}\n" "$OC_DOCTOR_VER" "$REPO" "$_flags"
     [[ -n "$LIVE_ROOT" ]] && info "live install: $LIVE_ROOT"
   fi
   unset _flags

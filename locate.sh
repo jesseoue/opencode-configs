@@ -48,7 +48,7 @@ ok(){   printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 info(){ printf "  ${c_b}•${c_0} %s\n" "$*"; }
 warn(){ printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){  printf "  ${c_r}✗${c_0} %s\n" "$*"; }
-sec(){  printf "\n${c_b}== %s ==${c_0}\n" "$*"; }
+sec(){  oc_section "$*"; }
 
 # ── Resolve CLI ──
 OPENCODE_BIN=""

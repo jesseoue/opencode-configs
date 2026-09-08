@@ -251,37 +251,50 @@ OC_CONFIG_STRAYS=(
 )
 
 # ── Branding (OpenConfig — `oc`) ─────────────────────────────────────
-# Shared banner for install / setup / oc help. Product name is OpenConfig;
+# Shared chrome for install / setup / oc help. Product name is OpenConfig;
 # repo folder remains opencode-configs.
+# Glyphs: Unicode box drawing only (╭ ╮ ╰ ╯ │ ─). Width ~60. No emoji.
+# Respects NO_COLOR and non-tty (same shapes, no escapes).
+
+# Soft ANSI when the caller has not already set the palette.
+# Honors a caller-set empty c_b (NO_COLOR / --json) — do not re-enable color.
+oc_ui_colors() {
+  if [[ ${c_b+x} == x ]]; then
+    return 0
+  fi
+  if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    c_b=$'\033[36m'; c_p=$'\033[35m'; c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
+  else
+    c_b=""; c_p=""; c_dim=""; c_bold=""; c_0=""
+  fi
+}
+
+# Compact oc badge + wordmark. Do not call twice in one command path.
+# 3 lines, aligned at col 15, width ~58 (fits 80-col Ghostty). Keep README in sync.
+# Usage: oc_banner [version] [tagline]
 oc_banner() {
   local version="${1:-}"
   local tagline="${2:-}"
-  local c_b="${c_b:-}" c_p="${c_p:-}" c_dim="${c_dim:-}" c_bold="${c_bold:-}" c_0="${c_0:-}"
-  # Soft colors when caller hasn't defined them yet
-  if [[ -z "$c_b" && -t 1 && -z "${NO_COLOR:-}" ]]; then
-    c_b=$'\033[36m'; c_p=$'\033[35m'; c_dim=$'\033[2m'; c_bold=$'\033[1m'; c_0=$'\033[0m'
-  fi
-  printf '%b\n' "${c_b}${c_bold}"
-  cat <<'ASCII'
-   ___                   ____             __ _
-  / _ \ _ __  ___ _ __  / ___|___  _ __  / _(_) __ _
- | | | | '_ \/ _ \ '_ \ | |   / _ \| '_ \| |_| |/ _` |
- | |_| | |_) |  __/ | | | |__| (_) | | | |  _| | (_| |
-  \___/| .__/ \___|_| |_|\____\___/|_| |_|_| |_|\__, |
-       |_|                                      |___/
-ASCII
-  printf '%b' "${c_0}"
-  if [[ -n "$version" ]]; then
-    printf '  %bOpenConfig%b  %boc%b v%s\n' "${c_p}" "${c_0}" "${c_bold}" "${c_0}" "$version"
-  else
-    printf '  %bOpenConfig%b  %boc%b\n' "${c_p}" "${c_0}" "${c_bold}" "${c_0}"
-  fi
-  if [[ -n "$tagline" ]]; then
-    printf '  %b%s%b\n' "${c_dim}" "$tagline" "${c_0}"
-  else
-    printf '  %bPinned stack for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
-  fi
-  printf '\n'
+  local ver_s=""
+  oc_ui_colors
+  [[ -n "$tagline" ]] || tagline="Pinned stack for OpenCode · OpenRouter · OmO"
+  [[ -n "$version" ]] && ver_s="  v${version}"
+  printf '%b\n' "${c_b:-}${c_bold:-}    ╭───╮${c_0:-}"
+  printf '%b%s%b%s%b%s%b\n' \
+    "${c_b:-}${c_bold:-}    │oc │──── ${c_0:-}" \
+    "${c_p:-}${c_bold:-}" "OpenConfig" "${c_0:-}" \
+    "${c_dim:-}" "${ver_s}" "${c_0:-}"
+  printf '%b%s%b\n' \
+    "${c_b:-}${c_bold:-}    ╰───╯     ${c_0:-}" \
+    "${c_dim:-}${tagline}${c_0:-}"
+}
+
+# Thin section rule. Callers that must stay silent (--json / --quiet) return first.
+# Usage: oc_section "CLI"
+oc_section() {
+  local title="${1:-}"
+  oc_ui_colors
+  printf '\n%b── %s ──%b\n' "${c_b:-}${c_bold:-}" "$title" "${c_0:-}"
 }
 
 # Read one KEY from a dotenv file without shell-eval. Prints value only.

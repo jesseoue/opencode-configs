@@ -48,9 +48,9 @@ ask(){ [[ $YES -eq 1 ]] && return 0; tty || return 1; local r; read -r -p "  ${M
 askval(){ tty || { echo ""; return; }; local r; read -r -p "  ${M}? $1 ${Z}" r; echo "$r"; }
 getkey(){ oc_get_env_key "${ENV_FILE:-$REPO/.env}" "$1"; }
 
-printf "\n${B}${BD}┌─ OpenConfig deep diagnostics ───────────────────────┐${Z}\n"
-printf "${B}${BD}│${Z} %-51s ${B}${BD}│${Z}\n" "$REPO"
-printf "${B}${BD}└─────────────────────────────────────────────────────┘${Z}\n"
+c_b="$B"; c_bold="$BD"; c_0="$Z"
+oc_section "oc diagnose"
+printf "  ${D}%s${Z}\n" "$REPO"
 
 ORKEY="$(getkey OPENROUTER_API_KEY)"; [[ -z "$ORKEY" ]] && ORKEY="${OPENROUTER_API_KEY:-}"
 OAIKEY="$(getkey OPENAI_API_KEY)"; [[ -z "$OAIKEY" ]] && OAIKEY="${OPENAI_API_KEY:-}"

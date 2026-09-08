@@ -188,21 +188,16 @@ die(){
   exit 1
 }
 
-# OpenConfig banner (common.sh not sourced yet for curl|bash bootstrap)
+# OpenConfig banner (common.sh not sourced yet for curl|bash bootstrap).
+# Keep in sync with oc_banner in lib/common.sh (3-line oc badge, ~58 cols).
 _install_banner() {
-  printf '%b\n' "${c_b}${c_bold}"
-  cat <<'ASCII'
-   ___                   ____             __ _
-  / _ \ _ __  ___ _ __  / ___|___  _ __  / _(_) __ _
- | | | | '_ \/ _ \ '_ \ | |   / _ \| '_ \| |_| |/ _` |
- | |_| | |_) |  __/ | | | |__| (_) | | | |  _| | (_| |
-  \___/| .__/ \___|_| |_|\____\___/|_| |_|_| |_|\__, |
-       |_|                                      |___/
-ASCII
-  printf '%b' "${c_0}"
-  printf '  %bOpenConfig%b  %boc%b\n' "${c_p}" "${c_0}" "${c_bold}" "${c_0}"
-  printf '  %bPinned stack for OpenCode · OpenRouter · OmO%b\n' "${c_dim}" "${c_0}"
-  printf '  %bSources:%b OpenCode ← opencode.ai/install · OmO ← npm oh-my-openagent · config ← OpenConfig (identity jesseoue/opencode-configs)\n\n' "${c_dim}" "${c_0}"
+  printf '%b\n' "${c_b}${c_bold}    ╭───╮${c_0}"
+  printf '%b%s%b\n' \
+    "${c_b}${c_bold}    │oc │──── ${c_0}" \
+    "${c_p}${c_bold}OpenConfig${c_0}"
+  printf '%b%s%b\n\n' \
+    "${c_b}${c_bold}    ╰───╯     ${c_0}" \
+    "${c_dim}Pinned stack for OpenCode · OpenRouter · OmO${c_0}"
 }
 
 # ── Interactive prompts (prefer /dev/tty so curl|bash still works) ─

@@ -43,7 +43,7 @@ ok(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_g}✓${c_0} %s\n" "$*"; }
 info(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_dim}•${c_0} %s\n" "$*"; }
 warn(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_y}⚠${c_0} %s\n" "$*"; }
 bad(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "  ${c_r}✗${c_0} %s\n" "$*"; }
-sec(){ [[ $DO_JSON -eq 1 ]] && return 0; printf "\n${c_b}${c_bold}== %s ==${c_0}\n" "$*"; }
+sec(){ [[ $DO_JSON -eq 1 ]] && return 0; oc_section "$*"; }
 
 OC_BIN="$(command -v opencode 2>/dev/null || echo "${OC_CLI_BIN:-}")"
 CLI_VER=""
