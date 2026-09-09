@@ -1390,7 +1390,7 @@ else:
         or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
         venice_models = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
         extras = []
-        for m in t3.get("customModels") or []:
+        for m in (t3.get("catalogModels") or []) + (t3.get("customModels") or []):
             if m.startswith("openrouter/"):
                 if m.split("/", 1)[1] not in or_wl:
                     extras.append(m)

@@ -13,8 +13,10 @@ settings = json.loads(path.read_text()) if path.exists() else {}
 instance = settings.setdefault("providerInstances", {}).setdefault("opencode", {})
 instance.update(driver="opencode", enabled=True)
 config = instance.setdefault("config", {})
+catalog = spec.get("catalogModels", spec["customModels"])
+custom = [model for model in config.get("customModels", []) if model not in catalog]
 config.update(binaryPath=str(Path(spec["binaryPath"]).expanduser()),
-              serverUrl=spec["serverUrl"], customModels=spec["customModels"])
+              serverUrl=spec["serverUrl"], customModels=custom)
 settings.setdefault("providers", {}).setdefault("opencode", {})["enabled"] = True
 payload = json.dumps(settings, indent=2) + "\n"
 if path.exists() and json.loads(path.read_text()) == settings:
