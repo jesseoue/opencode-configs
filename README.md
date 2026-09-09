@@ -484,3 +484,18 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 - Cloudflare AI Gateway / Claude Code bridge imports
 - Packaging as npm / shipping `node_modules` into the config dir
 - Turning this repo into an application
+
+### T3 local and Railway synchronization
+
+OpenCode 1.18.29 is the verified compatibility floor for this shared setup.
+Local T3 uses `serve-desktop.sh` on `127.0.0.1:4097`; run
+`python3 sync-t3.py` to synchronize its OpenCode instance and curated models.
+This operation preserves other providers and backs up settings before changes.
+
+For Railway T3, run `python3 export-t3.py /path/to/buzz-relay/t3/openconfig`.
+The export carries the full agents, model catalog, prompts, skills, and teams,
+with Linux shell and absolute instruction paths. It includes no credentials.
+Railway's managed installer and private OpenCode launcher consume this snapshot;
+provider and research-tool credentials stay in the private persistent volume.
+Run `oc validate` after changes and verify real OpenRouter and Venice agent
+requests before calling the integration complete.

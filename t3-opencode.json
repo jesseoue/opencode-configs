@@ -1,5 +1,5 @@
 {
-  "docs": "T3 Code → Settings → Providers → OpenCode. Keys stay in ~/.config/opencode/.env + `opencode auth` — never in this file or T3 settings.",
+  "docs": "T3 Code \u2192 Settings \u2192 Providers \u2192 OpenCode. Keys stay in ~/.config/opencode/.env + `opencode auth` \u2014 never in this file or T3 settings.",
   "provider": "opencode",
   "enabled": true,
   "binaryPath": "~/.local/bin/opencode",
@@ -26,7 +26,8 @@
   ],
   "notes": [
     "T3 talks to the local OpenCode serve from serve-desktop.sh (port 4097).",
-    "OpenRouter + Venice credentials: `opencode auth` and/or launch-desktop.sh → launchd. No keys in JSON.",
-    "Qwen flagship catalog id is qwen/qwen3.8-max-0902 (bare qwen/qwen3.8-max is gone)."
+    "OpenRouter + Venice credentials: `opencode auth` and/or launch-desktop.sh \u2192 launchd. No keys in JSON.",
+    "Qwen flagship catalog id is qwen/qwen3.8-max-0902 (bare qwen/qwen3.8-max is gone).",
+    "Run python3 sync-t3.py for local T3; export-t3.py generates the portable Railway runtime without credentials."
   ]
 }

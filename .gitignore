@@ -30,6 +30,8 @@
 
 # ── Allowlist: scripts ──────────────────────────────────────────────
 !*.sh
+!export-t3.py
+!sync-t3.py
 
 # ── Allowlist: trees (dir + contents) ───────────────────────────────
 !agents/
