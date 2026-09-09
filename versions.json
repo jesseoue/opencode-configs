@@ -4,8 +4,8 @@
   "opencode_configs": "1.5.71",
   "tagline": "Pinned stack for OpenCode \u00b7 OpenRouter \u00b7 oh-my-openagent",
   "opencode": {
-    "min": "1.18.29",
-    "pin_note": "OpenCode 1.18.29 verified with local and Railway T3; runtime export records this compatibility floor."
+    "min": "1.18.30",
+    "pin_note": "GitHub release v1.18.30 (npm latest can lag); verified with local and Railway T3. Runtime export records this compatibility floor."
   },
   "oh_my_openagent": {
     "pin": "4.19.4",

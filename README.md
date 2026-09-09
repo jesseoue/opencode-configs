@@ -487,7 +487,7 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 
 ### T3 local and Railway synchronization
 
-OpenCode 1.18.29 is the verified compatibility floor for this shared setup.
+OpenCode 1.18.30 is the verified compatibility floor for this shared setup.
 Local T3 uses `serve-desktop.sh` on `127.0.0.1:4097`; run
 `python3 sync-t3.py` to synchronize its OpenCode instance and curated models.
 This operation preserves other providers and backs up settings before changes.
