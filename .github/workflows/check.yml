@@ -38,6 +38,12 @@ jobs:
           done < <(find . -name '*.sh' -not -path './.git/*' | sort)
 
       - name: validate
+        run: python3 tests/prepare-ci-runtime.py
+
+      - name: Export portable T3 runtime
+        run: python3 export-t3.py "$RUNNER_TEMP/t3-openconfig"
+
+      - name: Validate installed configuration
         run: ./validate.sh --quiet
 
       - name: signature
@@ -59,4 +65,7 @@ jobs:
         run: chmod +x oc validate.sh signature.sh tests/smoke.sh
 
       - name: smoke
+        run: python3 tests/prepare-ci-runtime.py
+
+      - name: Smoke installed configuration
         run: ./tests/smoke.sh
