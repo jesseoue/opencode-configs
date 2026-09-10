@@ -26,10 +26,12 @@
     "openrouter/qwen/qwen3.8-max-0902",
     "openrouter/moonshotai/kimi-k2.7-code",
     "openrouter/deepseek/deepseek-v4-pro-0813",
+    "openrouter/deepseek/deepseek-v4.1-flash",
     "openrouter/deepseek/deepseek-v4-flash-0731",
     "openrouter/nousresearch/hermes-4-405b",
     "venice/deepseek-v4-pro-0813",
     "venice/deepseek-v4-pro",
+    "venice/deepseek-v4-1-flash",
     "venice/deepseek-v4-flash-0731"
   ]
 }

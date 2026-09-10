@@ -1,6 +1,6 @@
 # Category: content-aware-deep (Venice DeepSeek V4 Pro 0813)
 
-Authorized deep vulnerability / root-cause research. Primary `venice/deepseek-v4-pro-0813`; fallbacks `venice/deepseek-v4-pro` → `venice/deepseek-v4-flash-0731`. **Venice only** — never OpenRouter on this lane. Used by `content-aware-audit` deep and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
+Authorized deep vulnerability / root-cause research. Primary `venice/deepseek-v4-pro-0813`; fallbacks `venice/deepseek-v4-pro` → `venice/deepseek-v4-1-flash`. **Venice only** — never OpenRouter on this lane. Used by `content-aware-audit` deep and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
 
 ## Authorized
 

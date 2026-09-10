@@ -11,6 +11,7 @@
     "z-ai/glm-5.3",
     "z-ai/glm-5.3-flash",
     "deepseek/deepseek-v4-pro-0813",
+    "deepseek/deepseek-v4.1-flash",
     "deepseek/deepseek-v4-flash-0731",
     "moonshotai/kimi-k2.7-code",
     "poolside/laguna-s-2.1",

@@ -198,10 +198,14 @@ if oc:
         # fp4, no first-party. glm deliberately unpinned: Auto Exacto +
         # require_parameters pick tool-capable hosts; a static only-roster can
         # blackhole on churn. MiniMax includes parasail (fp8 + tools).
-        want_only = {
-            "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
-            "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
-        }.get(fam)
+        mid_l = str(mid).lower()
+        if "v4.1-flash" in mid_l or "v4-1-flash" in mid_l:
+            want_only = ["deepseek", "novita", "deepinfra"]
+        else:
+            want_only = {
+                "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
+                "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
+            }.get(fam)
         if want_only is not None:
             if pv.get("only") != want_only:
                 err(f"opencode.json[{mid}]: {fam} must pin provider.only={want_only} (live-verified unmoderated hosts, no fp4). Run: oc fix")
@@ -287,6 +291,10 @@ if oc:
         err("venice must expose deepseek-v4-pro-0813 (content-aware DeepSeek primary)")
     else:
         ok("venice exposes deepseek-v4-pro-0813 for content-aware")
+    if "deepseek-v4-1-flash" not in vmodels:
+        err("venice must expose deepseek-v4-1-flash (content-aware-fast / V4.1 Flash)")
+    else:
+        ok("venice exposes deepseek-v4-1-flash for content-aware-fast")
     vwl = ((((oc.get("provider") or {}).get("venice") or {}).get("whitelist")) or [])
     if set(vwl) != vmodels:
         err("venice whitelist must match venice.models (keeps T3 Variant/Agent on curated slugs)")
@@ -519,7 +527,8 @@ if omo:
             low = str(fb).lower()
             if any(s in low for s in SLOW_IN_FAST):
                 slow_fb_ok = False
-                err(f"oh-my-openagent.json: slow model {fb!r} in fast route '{n}' fallbacks — use GLM Flash / MiniMax / Qwen")
+                hint = "use Venice DeepSeek" if n.startswith("content-aware") else "use GLM Flash / MiniMax / Qwen"
+                err(f"oh-my-openagent.json: slow model {fb!r} in fast route '{n}' fallbacks — {hint}")
     for n in RECON_ROUTES:
         cfg = (agents or {}).get(n) or (omo.get("categories") or {}).get(n)
         if not isinstance(cfg, dict):
@@ -1190,6 +1199,25 @@ else:
         err("agents/content-aware-research.md: permission.edit must be deny")
     else:
         ok("agents/content-aware-research.md present (edit deny)")
+    md_model = re.search(r"(?m)^model:\s*(\S+)", body)
+    if not md_model or not md_model.group(1).startswith("venice/"):
+        err("agents/content-aware-research.md model must be venice/<model>")
+    else:
+        ok(f"agents/content-aware-research.md model={md_model.group(1)}")
+ca_fast_md = os.path.join(repo, "agents", "content-aware-fast.md")
+if not os.path.isfile(ca_fast_md):
+    err("agents/content-aware-fast.md missing (OpenCode-native Venice flash agent)")
+else:
+    body = open(ca_fast_md, encoding="utf-8").read()
+    if re.search(r"(?m)^\s*edit:\s*deny\s*$", body) is None:
+        err("agents/content-aware-fast.md: permission.edit must be deny")
+    else:
+        ok("agents/content-aware-fast.md present (edit deny)")
+    md_model = re.search(r"(?m)^model:\s*(\S+)", body)
+    if not md_model or md_model.group(1) != "venice/deepseek-v4-1-flash":
+        err("agents/content-aware-fast.md model must be venice/deepseek-v4-1-flash")
+    else:
+        ok(f"agents/content-aware-fast.md model={md_model.group(1)}")
 if not os.path.isfile(ca_prof):
     err("profiles/content-aware.json missing")
 else:
@@ -1201,20 +1229,42 @@ else:
             err("profiles/content-aware.json permission.edit must be deny")
         else:
             ok("profiles/content-aware.json → content-aware-research (edit deny)")
+        for key in ("model", "small_model"):
+            ref = str(gp.get(key) or "")
+            if not ref.startswith("venice/"):
+                err(f"profiles/content-aware.json {key} must be venice/<model> (got {ref!r})")
+            else:
+                ok(f"profiles/content-aware.json {key}={ref}")
     except Exception as e:
         err(f"profiles/content-aware.json: invalid JSON ({e})")
 if omo:
-    for ca_name in ("content-aware-research", "content-aware-fast", "content-aware-deep"):
-        sec = "agents" if ca_name == "content-aware-research" else "categories"
+    ca_want = {
+        ("agents", "content-aware-research"): "venice/deepseek-v4-pro-0813",
+        ("agents", "content-aware-fast"): "venice/deepseek-v4-1-flash",
+        ("categories", "content-aware-fast"): "venice/deepseek-v4-1-flash",
+        ("categories", "content-aware-deep"): "venice/deepseek-v4-pro-0813",
+    }
+    for (sec, ca_name), want in ca_want.items():
         ca = ((omo.get(sec) or {}).get(ca_name) or {})
         cm = str(ca.get("model") or "")
         if not cm.startswith("venice/"):
             err(f"oh-my-openagent.json[{sec}.{ca_name}] must be venice/<model> (got {cm!r})")
+        elif want and cm != want:
+            err(f"{sec}.{ca_name} must be {want} (got {cm!r})")
         else:
-            ok(f"{ca_name} → {cm}")
+            ok(f"{sec}.{ca_name} → {cm}")
         for fb in (ca.get("fallback_models") or []):
-            if not str(fb).startswith("venice/"):
-                err(f"{ca_name} fallback {fb!r} must be venice/<model>")
+            if "openrouter/" in str(fb).lower() or not str(fb).startswith("venice/"):
+                err(f"{sec}.{ca_name} fallback {fb!r} must be venice/<model> (never OpenRouter)")
+        if "openrouter/" in cm.lower():
+            err(f"{sec}.{ca_name} primary {cm!r} must never be OpenRouter — Venice only")
+    for sec, items in (("agents", omo.get("agents") or {}), ("categories", omo.get("categories") or {})):
+        for ca_name, ca in items.items():
+            if not str(ca_name).startswith("content-aware") or not isinstance(ca, dict):
+                continue
+            for slot, ref in [("model", ca.get("model"))] + [("fallback", fb) for fb in (ca.get("fallback_models") or [])]:
+                if "openrouter/" in str(ref or "").lower():
+                    err(f"{sec}.{ca_name} {slot} {ref!r} must never be OpenRouter — Venice only")
 
 # ---- 4c2. projects.json (oc new home) ----
 projects_cfg = os.path.join(repo, "projects.json")

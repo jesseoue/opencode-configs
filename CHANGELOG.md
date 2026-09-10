@@ -2,7 +2,37 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.71):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), `venice/deepseek-v4-flash-0731` (fast), `venice/deepseek-v4-pro` fallback. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.74):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / V4.1 Flash / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`, fallbacks `-pro` / `-flash-0731`. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.74] — 2026-09-10
+
+### Content-aware is Venice always
+
+- **`oc deploy` quarantine** no longer rewrites `venice/*` (or any `content-aware-*` route) onto `openrouter/deepseek/deepseek-v4-pro-0813`. That leak would yank the lane off Venice on a credit trip.
+- **`oc fix`** always pins content-aware primaries to Venice slugs. GPT-strip / empty-fallback rebuild stays `venice/*` — never GLM / OpenRouter.
+- **`oc validate` + smoke** require profile `model` / `small_model`, `agents/content-aware-research.md`, and every OmO content-aware primary + fallback to start with `venice/`. `openrouter/` on this lane is an error.
+- Docs: recon/consult OpenRouter roster no longer lists `content-aware-*`.
+- **`content-aware-fast` is a primary agent** (Venice V4.1 Flash, edit denied) so `oc run -a content-aware-fast` works. The team category of the same name stays for mailbox members.
+
+## [1.5.73] — 2026-09-10
+
+### DeepSeek V4.1 Flash (flash agent + catalog)
+
+- **New slug (shipped today):** OpenRouter `deepseek/deepseek-v4.1-flash` (1M ctx, tools, multimodal; first-party + Novita + DeepInfra). Venice id is `deepseek-v4-1-flash`.
+- **Flash agent** `content-aware-fast` → `venice/deepseek-v4-1-flash` (was `-flash-0731`). Fallbacks `-flash-0731` → Pro 0813. Research / deep keep Pro 0813; their flash fallback is now V4.1.
+- Keep Flash 0731 on both gateways as the mature-roster fallback. Do not drop it until V4.1 host density matches.
+- OpenRouter V4.1 `provider.only` is **`deepseek` + `novita` + `deepinfra`** (live day-one hosts). `oc fix` must not stamp the Pro/0731 8-host roster onto V4.1 — that 404s.
+- Profile `content-aware` `small_model` → V4.1 Flash. Cursor / T3 pins + `oc fix` / `oc validate` / smoke track the new slugs (OpenRouter V4.1 cap **5**).
+- Skipped: moving explore / librarian / deep off Pro 0813 (V4.1 Pro does not exist; V4.1 Flash roster is day-one thin). OmO stays 4.19.4.
+
+## [1.5.72] — 2026-09-10
+
+### OpenCode CLI floor 1.18.17 → 1.18.30
+
+- Installed CLI and npm `@opencode-ai/plugin` are both **1.18.30** (GitHub latest, 2026-09-09). Floor + README pins catch up from 1.18.17 / stale plugin `1.18.15`.
+- `oc versions --fix` aligns `~/.opencode` `@opencode-ai/plugin` **1.18.18 → 1.18.30**.
+- OmO stays **4.19.4** (npm `latest`). GitHub / npm `beta` is `5.0.0-beta.52` — still skipped (breaking beta).
+- OpenRouter catalog: all 12 pinned slugs are newest in-family (`oc models --upgrade` clean). Routing unchanged.
 
 ## [1.5.71] — 2026-09-08
 

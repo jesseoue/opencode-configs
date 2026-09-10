@@ -12,7 +12,8 @@
     "hephaestus",
     "prometheus",
     "atlas",
-    "content-aware-research"
+    "content-aware-research",
+    "content-aware-fast"
   ],
   "agents": {
     "sisyphus": {
@@ -198,7 +199,28 @@
       "reasoning": "high",
       "fallback_models": [
         "venice/deepseek-v4-pro",
-        "venice/deepseek-v4-flash-0731"
+        "venice/deepseek-v4-1-flash"
+      ]
+    },
+    "content-aware-fast": {
+      "mode": "primary",
+      "name": "Content-aware flash",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "question": "allow",
+        "task": "allow"
+      },
+      "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-fast.md",
+      "color": "#FF9100",
+      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash (edit denied). Venice only.",
+      "maxTokens": 8192,
+      "model": "venice/deepseek-v4-1-flash",
+      "reasoning": "low",
+      "fallback_models": [
+        "venice/deepseek-v4-flash-0731",
+        "venice/deepseek-v4-pro-0813"
       ]
     }
   },
@@ -330,14 +352,14 @@
       ]
     },
     "content-aware-fast": {
-      "description": "Fast attack-surface recon: endpoints, misconfigs, deps.",
+      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash: endpoints, misconfigs, deps.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-fast.md",
       "maxTokens": 8192,
-      "model": "venice/deepseek-v4-flash-0731",
+      "model": "venice/deepseek-v4-1-flash",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-pro-0813",
-        "venice/deepseek-v4-pro"
+        "venice/deepseek-v4-flash-0731",
+        "venice/deepseek-v4-pro-0813"
       ]
     },
     "content-aware-deep": {
@@ -348,7 +370,7 @@
       "reasoning": "high",
       "fallback_models": [
         "venice/deepseek-v4-pro",
-        "venice/deepseek-v4-flash-0731"
+        "venice/deepseek-v4-1-flash"
       ]
     }
   },
@@ -368,10 +390,12 @@
       "openrouter/qwen/qwen3.8-max-0902": 5,
       "openrouter/moonshotai/kimi-k2.7-code": 5,
       "openrouter/deepseek/deepseek-v4-pro-0813": 8,
+      "openrouter/deepseek/deepseek-v4.1-flash": 5,
       "openrouter/deepseek/deepseek-v4-flash-0731": 10,
       "openrouter/nousresearch/hermes-4-405b": 2,
       "venice/deepseek-v4-pro-0813": 5,
       "venice/deepseek-v4-pro": 5,
+      "venice/deepseek-v4-1-flash": 5,
       "venice/deepseek-v4-flash-0731": 5
     },
     "maxDepth": 2,
