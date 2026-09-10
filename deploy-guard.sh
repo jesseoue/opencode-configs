@@ -200,6 +200,9 @@ for section in ('agents', 'categories'):
     for name, cfg in (omo.get(section, {}) or {}).items():
         if not isinstance(cfg, dict): continue
         model = cfg.get('model', '')
+        # Content-aware is Venice-only. Never rewrite venice/* onto OpenRouter.
+        if str(name).startswith('content-aware') or str(model).startswith('venice/'):
+            continue
         if 'deepseek-v4-pro' in str(model) and '0813' not in str(model):
             cfg['model'] = 'openrouter/deepseek/deepseek-v4-pro-0813'
             changes += 1

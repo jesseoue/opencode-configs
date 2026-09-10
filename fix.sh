@@ -308,10 +308,16 @@ if isinstance(or_models, dict):
         # for tool requests) + require_parameters is the quality pin. A static
         # provider.only roster would fight that and can 404 if hosts churn.
         # MiniMax: parasail added 2026-09-08 (fp8 + tools; already on DeepSeek roster).
-        want_only = {
-            "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
-            "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
-        }.get(family)
+        # V4.1 Flash (2026-09-10): day-one hosts are first-party DeepSeek + novita +
+        # deepinfra only. Do NOT stamp the V4 Pro/0731 8-host roster — those 404.
+        mid_l = str(model_id).lower()
+        if "v4.1-flash" in mid_l or "v4-1-flash" in mid_l:
+            want_only = ["deepseek", "novita", "deepinfra"]
+        else:
+            want_only = {
+                "minimax": ["gmicloud", "novita", "deepinfra", "together", "parasail"],
+                "deepseek": ["gmicloud", "novita", "siliconflow", "parasail", "deepinfra", "baidu", "fireworks", "digitalocean"],
+            }.get(family)
         if want_only is not None:
             if provider_cfg.get("only") != want_only:
                 provider_cfg["only"] = want_only
@@ -465,12 +471,13 @@ RECON_PRIMARY = {
     "arch-review": "openrouter/z-ai/glm-5.3",
     "content-aware-research": "venice/deepseek-v4-pro-0813",
     "content-aware-deep": "venice/deepseek-v4-pro-0813",
-    "content-aware-fast": "venice/deepseek-v4-flash-0731",
+    "content-aware-fast": "venice/deepseek-v4-1-flash",
 }
 # content-aware-research is Venice-only (never OpenRouter / Hermes).
 # hermes-4-405b is NOT in RECON_FALLBACKS: it cannot tool-call.
 CONTENT_AWARE_FALLBACKS = [
     "venice/deepseek-v4-pro",
+    "venice/deepseek-v4-1-flash",
     "venice/deepseek-v4-flash-0731",
 ]
 RECON_FALLBACKS = [
@@ -491,9 +498,11 @@ for section in ("agents", "categories"):
             continue
         want_primary = RECON_PRIMARY.get(n, FAST_PRIMARY)
         cur = str(a.get("model") or "")
-        # Never remap an existing Venice primary onto OpenRouter.
-        if n.startswith("content-aware") and cur.startswith("venice/"):
-            pass
+        # Content-aware is Venice-only. Always pin the Venice primary.
+        if n.startswith("content-aware"):
+            if cur != want_primary:
+                a["model"] = want_primary
+                changes.append(f"{section} {n}: model -> {want_primary} (Venice content-aware)")
         elif cur != want_primary:
             a["model"] = want_primary
             changes.append(f"{section} {n}: model -> {want_primary} (recon primary)")
@@ -553,21 +562,33 @@ for section in ("agents", "categories"):
         want_p = MAX_PRIMARY if n in MAX_ROUTES else None
         want_f = MAX_FALLBACKS if n in MAX_ROUTES else None
         if _is_gpt(a.get("model")):
-            repl = want_p or DEEP_PRIMARY
+            if n.startswith("content-aware"):
+                repl = RECON_PRIMARY.get(n, "venice/deepseek-v4-pro-0813")
+                note = "Venice content-aware, no GPT"
+            else:
+                repl = want_p or DEEP_PRIMARY
+                note = "OpenRouter-only, no GPT"
             a["model"] = repl
-            changes.append(f"{section} {n}: model -> {repl} (OpenRouter-only, no GPT)")
+            changes.append(f"{section} {n}: model -> {repl} ({note})")
         fbs = a.get("fallback_models")
         if not isinstance(fbs, list):
             continue
         cleaned = []
         for fb in fbs:
             fb = _norm_or_model(fb)
+            if n.startswith("content-aware") and not str(fb).startswith("venice/"):
+                changes.append(f"{section} {n}: dropped non-Venice fallback {fb}")
+                continue
             if _is_gpt(fb):
                 changes.append(f"{section} {n}: dropped GPT fallback {fb}")
                 continue
             cleaned.append(fb)
         # Venice-only content-aware routes: never backfill OpenRouter fallbacks.
-        if not n.startswith("content-aware"):
+        if n.startswith("content-aware"):
+            if not cleaned:
+                cleaned = [x for x in CONTENT_AWARE_FALLBACKS if x != a.get("model")][:3]
+                changes.append(f"{section} {n}: rebuilt Venice fallbacks")
+        else:
             fill = want_f or DEEP_FALLBACKS
             for x in fill:
                 if x != a.get("model") and x not in cleaned:
@@ -671,6 +692,9 @@ if isinstance(bt, dict):
                 changes.append(f"modelConcurrency removed direct alias {mk}")
         def _mc_cap(model_key):
             low = str(model_key).lower()
+            # V4.1 Flash: day-one roster is 3 healthy hosts — keep the cap tight.
+            if "v4.1-flash" in low or "v4-1-flash" in low:
+                return 5
             if any(x in low for x in ("flash", "luna", "qwen3.7", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3-flash", "gemini-3.5-flash-lite", "laguna")):
                 return 10
             # OpenRouter DeepSeek Pro 0813 is shared by explore+librarian+deep — keep 8.
@@ -813,6 +837,7 @@ AGENT_COLORS = {
     "momus": "#FF8A3D",
     "sisyphus-junior": "#7A8BFF",
     "content-aware-research": "#FF1744",
+    "content-aware-fast": "#FF9100",
 }
 # NOTE: categories do NOT get colors. The OmO 4.19.4 schema allows `color` on
 # agents only (properties.agents.*.color); categories have no color property,

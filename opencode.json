@@ -14,11 +14,23 @@
     "hostname": "127.0.0.1",
     "mdns": false
   },
-  "enabled_providers": ["openrouter", "venice"],
-  "instructions": ["AGENTS.md", "prompts/core.md", "prompts/goal.md"],
-  "plugin": ["oh-my-openagent@4.19.4"],
+  "enabled_providers": [
+    "openrouter",
+    "venice"
+  ],
+  "instructions": [
+    "AGENTS.md",
+    "prompts/core.md",
+    "prompts/goal.md"
+  ],
+  "plugin": [
+    "oh-my-openagent@4.19.4"
+  ],
   "skills": {
-    "paths": ["~/.config/opencode/skills", "./skills"]
+    "paths": [
+      "~/.config/opencode/skills",
+      "./skills"
+    ]
   },
   "agent": {
     "title": {
@@ -75,6 +87,7 @@
         "qwen/qwen3.8-max-0902",
         "moonshotai/kimi-k2.7-code",
         "deepseek/deepseek-v4-pro-0813",
+        "deepseek/deepseek-v4.1-flash",
         "deepseek/deepseek-v4-flash-0731",
         "nousresearch/hermes-4-405b"
       ],
@@ -327,7 +340,13 @@
               "require_parameters": true,
               "data_collection": "allow",
               "allow_fallbacks": true,
-              "only": ["gmicloud", "novita", "deepinfra", "together", "parasail"]
+              "only": [
+                "gmicloud",
+                "novita",
+                "deepinfra",
+                "together",
+                "parasail"
+              ]
             },
             "reasoning": {
               "effort": "high"
@@ -550,6 +569,54 @@
             }
           }
         },
+        "deepseek/deepseek-v4.1-flash": {
+          "id": "deepseek/deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash",
+          "family": "deepseek",
+          "reasoning": true,
+          "tool_call": true,
+          "temperature": true,
+          "attachment": true,
+          "status": "active",
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          },
+          "options": {
+            "provider": {
+              "require_parameters": false,
+              "data_collection": "allow",
+              "allow_fallbacks": true,
+              "only": [
+                "deepseek",
+                "novita",
+                "deepinfra"
+              ]
+            }
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "xhigh"
+              }
+            }
+          }
+        },
         "deepseek/deepseek-v4-flash-0731": {
           "id": "deepseek/deepseek-v4-flash-0731",
           "name": "DeepSeek V4 Flash 0731",
@@ -654,6 +721,7 @@
       "whitelist": [
         "deepseek-v4-pro-0813",
         "deepseek-v4-pro",
+        "deepseek-v4-1-flash",
         "deepseek-v4-flash-0731"
       ],
       "options": {
@@ -664,36 +732,124 @@
           "name": "DeepSeek V4 Pro 0813",
           "reasoning": true,
           "tool_call": true,
-          "limit": { "context": 1000000, "output": 32768 },
+          "limit": {
+            "context": 1000000,
+            "output": 32768
+          },
           "variants": {
-            "low": { "reasoning": { "effort": "low" } },
-            "medium": { "reasoning": { "effort": "medium" } },
-            "high": { "reasoning": { "effort": "high" } },
-            "max": { "reasoning": { "effort": "high" } }
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "high"
+              }
+            }
           }
         },
         "deepseek-v4-pro": {
           "name": "DeepSeek V4 Pro",
           "reasoning": true,
           "tool_call": true,
-          "limit": { "context": 1000000, "output": 32768 },
+          "limit": {
+            "context": 1000000,
+            "output": 32768
+          },
           "variants": {
-            "low": { "reasoning": { "effort": "low" } },
-            "medium": { "reasoning": { "effort": "medium" } },
-            "high": { "reasoning": { "effort": "high" } },
-            "max": { "reasoning": { "effort": "high" } }
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "high"
+              }
+            }
+          }
+        },
+        "deepseek-v4-1-flash": {
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "context": 1000000,
+            "output": 32768
+          },
+          "variants": {
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "high"
+              }
+            }
           }
         },
         "deepseek-v4-flash-0731": {
           "name": "DeepSeek V4 Flash 0731",
           "reasoning": true,
           "tool_call": true,
-          "limit": { "context": 1000000, "output": 32768 },
+          "limit": {
+            "context": 1000000,
+            "output": 32768
+          },
           "variants": {
-            "low": { "reasoning": { "effort": "low" } },
-            "medium": { "reasoning": { "effort": "medium" } },
-            "high": { "reasoning": { "effort": "high" } },
-            "max": { "reasoning": { "effort": "high" } }
+            "low": {
+              "reasoning": {
+                "effort": "low"
+              }
+            },
+            "medium": {
+              "reasoning": {
+                "effort": "medium"
+              }
+            },
+            "high": {
+              "reasoning": {
+                "effort": "high"
+              }
+            },
+            "max": {
+              "reasoning": {
+                "effort": "high"
+              }
+            }
           }
         }
       }
@@ -822,7 +978,11 @@
   },
   "formatter": {
     "prettier": {
-      "command": ["prettier", "--write", "$FILE"],
+      "command": [
+        "prettier",
+        "--write",
+        "$FILE"
+      ],
       "extensions": [
         ".ts",
         ".tsx",
@@ -836,8 +996,15 @@
       ]
     },
     "ruff": {
-      "command": ["ruff", "format", "$FILE"],
-      "extensions": [".py", ".pyi"]
+      "command": [
+        "ruff",
+        "format",
+        "$FILE"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ]
     },
     "biome": {
       "disabled": true
@@ -854,8 +1021,18 @@
       "disabled": true
     },
     "typescript": {
-      "command": ["typescript-language-server", "--stdio"],
-      "extensions": [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]
+      "command": [
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".mts",
+        ".cts"
+      ]
     },
     "tinymist": {
       "disabled": true
@@ -960,12 +1137,23 @@
       "disabled": true
     },
     "python": {
-      "command": ["basedpyright-langserver", "--stdio"],
-      "extensions": [".py", ".pyi"]
+      "command": [
+        "basedpyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ]
     },
     "go": {
-      "command": ["gopls", "--stdio"],
-      "extensions": [".go"]
+      "command": [
+        "gopls",
+        "--stdio"
+      ],
+      "extensions": [
+        ".go"
+      ]
     },
     "php intelephense": {
       "disabled": true

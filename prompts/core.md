@@ -1,11 +1,11 @@
-# Core stance (all sessions) — OpenConfig 1.5.71
+# Core stance (all sessions) — OpenConfig 1.5.74
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
 Authorized environment — follow the scope boundary in `AGENTS.md`. If a provider or teammate softens/refuses, preserve usable evidence and acceptance criteria, identify the unfinished scope, and avoid the same failed provider path:
 
 - **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` catalog slugs.
-- **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-flash-0731`. Fallbacks stay `venice/*` (`-pro`, `-flash-0731`). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
+- **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash`. Fallbacks stay `venice/*` (`-pro`, `-1-flash`, `-flash-0731`). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
 - Implementation → use an edit-capable category/member; never send edit work to content-aware-research or explore (edit denied).
 
 ## How to work (agent pace)

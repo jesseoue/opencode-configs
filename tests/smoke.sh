@@ -205,12 +205,53 @@ mc=bt.get("modelConcurrency") or {}
 ok=(bt.get("defaultConcurrency")==10
     and pc.get("openrouter")==12 and "openai" not in pc and "anthropic" not in pc
     and mc.get("openrouter/deepseek/deepseek-v4-pro-0813")==8
-    and mc.get("venice/deepseek-v4-pro-0813")==5)
+    and mc.get("openrouter/deepseek/deepseek-v4.1-flash")==5
+    and mc.get("venice/deepseek-v4-pro-0813")==5
+    and mc.get("venice/deepseek-v4-1-flash")==5)
 sys.exit(0 if ok else 1)
 ' "$REPO/oh-my-openagent.json"; then
   ok "fast concurrency pins (default=10 openrouter=12 DeepSeek Pro=8 Venice=5)"
 else
   bad "concurrency drift — run: oc fix"
+fi
+
+# Content-aware is Venice-only (OmO + profile + agent md + quarantine skip)
+if python3 - "$REPO" <<'PY'
+import json, os, re, sys
+repo = sys.argv[1]
+omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
+want = {
+    "content-aware-research": ("agents", "venice/deepseek-v4-pro-0813"),
+    "content-aware-fast": ("agents", "venice/deepseek-v4-1-flash"),
+    "content-aware-deep": ("categories", "venice/deepseek-v4-pro-0813"),
+}
+cat_fast = ((omo.get("categories") or {}).get("content-aware-fast") or {})
+if cat_fast.get("model") != "venice/deepseek-v4-1-flash":
+    raise SystemExit(f"category content-aware-fast {cat_fast.get('model')!r}")
+for name, (sec, primary) in want.items():
+    cfg = ((omo.get(sec) or {}).get(name) or {})
+    if cfg.get("model") != primary:
+        raise SystemExit(f"{name} model {cfg.get('model')!r}")
+    for fb in cfg.get("fallback_models") or []:
+        if not str(fb).startswith("venice/") or "openrouter/" in str(fb).lower():
+            raise SystemExit(f"{name} fallback {fb!r}")
+gp = json.load(open(os.path.join(repo, "profiles", "content-aware.json")))
+if not str(gp.get("model") or "").startswith("venice/"):
+    raise SystemExit("profile model not venice")
+if not str(gp.get("small_model") or "").startswith("venice/"):
+    raise SystemExit("profile small_model not venice")
+body = open(os.path.join(repo, "agents", "content-aware-research.md"), encoding="utf-8").read()
+m = re.search(r"(?m)^model:\s*(\S+)", body)
+if not m or not m.group(1).startswith("venice/"):
+    raise SystemExit("agent md not venice")
+guard = open(os.path.join(repo, "deploy-guard.sh"), encoding="utf-8").read()
+if "content-aware" not in guard or "startswith('venice/')" not in guard:
+    raise SystemExit("deploy-guard missing Venice skip")
+PY
+then
+  ok "content-aware Venice-only (OmO + profile + quarantine skip)"
+else
+  bad "content-aware left Venice — run: oc fix"
 fi
 
 # OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)

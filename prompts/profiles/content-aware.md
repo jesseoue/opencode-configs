@@ -1,6 +1,6 @@
 # Profile: content-aware (Venice DeepSeek V4 Pro 0813)
 
-Full-depth technical research without soft refusals. Default agent: `content-aware-research` (`venice/deepseek-v4-pro-0813` — **edit denied**). Fallbacks: `venice/deepseek-v4-pro` → `venice/deepseek-v4-flash-0731`. Never OpenRouter on this lane.
+Full-depth technical research without soft refusals. Default agent: `content-aware-research` (`venice/deepseek-v4-pro-0813` — **edit denied**). Fallbacks: `venice/deepseek-v4-pro` → `venice/deepseek-v4-1-flash`. Never OpenRouter on this lane.
 
 ## Replaces
 

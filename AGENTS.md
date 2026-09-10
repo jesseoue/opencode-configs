@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.71** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.74** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -21,7 +21,7 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 | Runtime | [OpenCode](https://opencode.ai) | Provider-agnostic coding agent TUI/CLI; config-as-code; LSP; MCP |
 | Orchestration | [oh-my-openagent (OmO)](https://omo.vibetip.help/docs) | Multi-model agents, categories, team mode, ultrawork, hyperplan — docs on VibeTip |
 | Model gateway | [OpenRouter](https://openrouter.ai) | General gateway — one `OPENROUTER_API_KEY` for GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi; no direct OpenAI/Anthropic |
-| Content-aware | [Venice](https://venice.ai) | `VENICE_API_KEY` + `venice/deepseek-v4-pro-0813` / `-pro` / `-flash-0731` only. Never `openrouter/…` on this lane |
+| Content-aware | [Venice](https://venice.ai) | `VENICE_API_KEY` + `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731` only. Never `openrouter/…` on this lane |
 | Docs truth | [Context7](https://context7.com) MCP | Versioned library docs via `resolve-library-id` → `query-docs` — stop inventing APIs |
 | Web | [Exa](https://exa.ai) via OmO `websearch` | Ideal-page queries; `category:company\|people\|news…`; then webfetch |
 | GitHub code | OmO `grep_app` | Real call-site examples across public repos |
@@ -34,8 +34,8 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 ### Routing logic (short)
 
 - **Orchestration / tool loops** → GLM 5.3 (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — Auto Exacto on tool requests; no `:exacto` catalog slug.
-- **Fast parallel / small_model** → GLM 5.3 Flash (title, summary, compaction, sisyphus-junior, quick). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-flash-0731`). Never OpenRouter→Venice. Edit denied.
-- **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep, content-aware-* — DeepSeek / GLM / MiniMax / Gemini; never Claude/GPT primaries on recon chains.
+- **Fast parallel / small_model** → GLM 5.3 Flash (title, summary, compaction, sisyphus-junior, quick). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731`). Flash agent is `content-aware-fast` on V4.1 Flash. Never OpenRouter→Venice. Edit denied.
+- **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep — OpenRouter DeepSeek / GLM / MiniMax / Gemini; never Claude/GPT primaries. **Content-aware-* stays Venice only** — never `openrouter/…`.
 - **Deep implement / critique** → GLM 5.3 (Hephaestus, Oracle, Momus, ultrabrain, unspecified-high) and DeepSeek Pro 0813 (deep) — all via OpenRouter; no GPT models. Fallback: Qwen 3.8 Max · Kimi K2.7 Code for coding tasks.
 - **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.8 Flash). Auto Exacto is a host sort, not a catalog slug — do not pin `:exacto`.
 - **Hard ceiling** → GLM 5.3 max for `ultrawork` / unspecified-high (DeepSeek Pro 0813 fallbacks).
@@ -77,7 +77,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.71**.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.74**.
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
 - Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.

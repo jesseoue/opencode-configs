@@ -1326,6 +1326,21 @@ else:
         print("BAD|content-aware-research.permission.edit must be deny")
     else:
         print("OK|OmO agent edit=deny")
+    if not str(ca.get("model") or "").startswith("venice/"):
+        print("BAD|content-aware-research model must be venice/<model>")
+    else:
+        print("OK|content-aware-research model=%s" % ca.get("model"))
+fast = agents.get("content-aware-fast")
+if not isinstance(fast, dict):
+    print("BAD|agents.content-aware-fast missing (oc run -a content-aware-fast)")
+else:
+    print("OK|agent content-aware-fast defined")
+    if fast.get("model") != "venice/deepseek-v4-1-flash":
+        print("BAD|content-aware-fast model must be venice/deepseek-v4-1-flash")
+    else:
+        print("OK|content-aware-fast model=venice/deepseek-v4-1-flash")
+    if (fast.get("permission") or {}).get("edit") != "deny":
+        print("BAD|content-aware-fast.permission.edit must be deny")
 md = os.path.join(repo, "agents", "content-aware-research.md")
 if not os.path.isfile(md):
     print("BAD|agents/content-aware-research.md missing")
@@ -1335,6 +1350,11 @@ else:
         print("OK|OpenCode-native agent MD (edit deny)")
     else:
         print("BAD|agents/content-aware-research.md must set edit: deny")
+fast_md = os.path.join(repo, "agents", "content-aware-fast.md")
+if not os.path.isfile(fast_md):
+    print("BAD|agents/content-aware-fast.md missing")
+else:
+    print("OK|OpenCode-native flash agent MD")
 for name in ("content-aware-fast", "content-aware-deep"):
     if name in cats:
         print("OK|category %s" % name)
