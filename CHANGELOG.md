@@ -13,6 +13,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - **`oc validate` + smoke** require profile `model` / `small_model`, `agents/content-aware-research.md`, and every OmO content-aware primary + fallback to start with `venice/`. `openrouter/` on this lane is an error.
 - Docs: recon/consult OpenRouter roster no longer lists `content-aware-*`.
 - **`content-aware-fast` is a primary agent** (Venice V4.1 Flash, edit denied) so `oc run -a content-aware-fast` works. The team category of the same name stays for mailbox members.
+- **`prompts/core.md`:** add Intent and evidence quality — do not infer abuse from labels like proxy/automation; verify vendor facts against primary sources; keep research vs unauthorized bypass distinct.
 
 ## [1.5.73] — 2026-09-10
 
