@@ -245,6 +245,7 @@ OC_CONFIG_STRAYS=(
   bun.lock
   bun.lockb
   .omo
+  .runtime
   .sisyphus
   .codegraph
   command
@@ -738,37 +739,63 @@ oc_is_live_config() {
   oc_same_path "$repo" "$live"
 }
 
-# OmO 4.19.4 always reads ~/.omo/omo.jsonc. Keep that path as a symlink into
-# $REPO/.runtime so the only real tree is /Users/Shared/opencode-configs.
+# OmO 4.19.4 always reads ~/.omo/omo.jsonc. Keep that as a symlink to a
+# sibling runtime dir — never inside the git worktree — so the clone stays
+# config-only. Live box: /Users/Shared/opencode-runtime next to opencode-configs.
 oc_omo_runtime_dir() {
-  local repo="${1:-${REPO:-}}"
+  local repo="${1:-${REPO:-}}" parent
   [[ -n "$repo" ]] || return 1
-  printf '%s/.runtime\n' "${repo%/}"
+  repo="${repo%/}"
+  parent="$(dirname "$repo")"
+  if [[ "$(basename "$repo")" == "opencode-configs" && -n "$parent" && "$parent" != "/" ]]; then
+    printf '%s/opencode-runtime\n' "$parent"
+    return 0
+  fi
+  printf '%s/opencode-runtime\n' "${XDG_STATE_HOME:-$HOME/.local/state}"
 }
 
-# Collapse ~/.omo (and leftover /Users/Shared/.omo) into $REPO/.runtime.
+# Collapse ~/.omo and leftover in-repo .runtime into the sibling runtime dir.
 oc_ensure_omo_runtime() {
-  local repo="${1:-${REPO:-}}" runtime home_omo shared_omo
+  local repo="${1:-${REPO:-}}" runtime home_omo shared_omo in_repo
   repo="$(cd "$repo" && pwd -P)" || return 1
   runtime="$(oc_omo_runtime_dir "$repo")"
   home_omo="${HOME}/.omo"
   shared_omo="/Users/Shared/.omo"
+  in_repo="$repo/.runtime"
   mkdir -p "$runtime/tasks" "$runtime/teams"
   if [[ ! -f "$runtime/DO-NOT-EDIT.txt" ]]; then
     cat > "$runtime/DO-NOT-EDIT.txt" <<'EOF'
-Generated OmO runtime. Edit oh-my-openagent.json in this OpenConfig repo.
+Generated OmO runtime. Edit oh-my-openagent.json in the OpenConfig repo.
 ~/.omo is a symlink here. Do not treat omo.jsonc as source of truth.
+This directory is not the git clone — keep opencode-configs config-only.
 EOF
+  fi
+  # Rescue files if we previously stored runtime inside the clone.
+  if [[ -d "$in_repo" && ! -L "$in_repo" ]]; then
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --exclude '.DS_Store' "$in_repo/" "$runtime/"
+    else
+      cp -Rp "$in_repo/." "$runtime/"
+    fi
+    rm -rf "$in_repo"
+  elif [[ -L "$in_repo" ]]; then
+    rm -f "$in_repo"
   fi
   if [[ -L "$home_omo" ]]; then
     local got
     got="$(oc_readlink_abs "$home_omo" 2>/dev/null || true)"
     if ! oc_same_path "$got" "$runtime"; then
+      if [[ -n "$got" && -d "$got" && "$got" != "$runtime" ]]; then
+        if command -v rsync >/dev/null 2>&1; then
+          rsync -a --exclude '.DS_Store' "$got/" "$runtime/"
+        else
+          cp -Rp "$got/." "$runtime/"
+        fi
+      fi
       rm -f "$home_omo"
       ln -sfn "$runtime" "$home_omo"
     fi
   elif [[ -d "$home_omo" ]]; then
-    # Preserve existing runtime files, then replace the home dir with a symlink.
     if command -v rsync >/dev/null 2>&1; then
       rsync -a --exclude '.DS_Store' "$home_omo/" "$runtime/"
     else
@@ -779,11 +806,9 @@ EOF
   else
     ln -sfn "$runtime" "$home_omo"
   fi
-  # Leftover Shared/.omo is never the live runtime.
   if [[ -e "$shared_omo" || -L "$shared_omo" ]]; then
     rm -rf "$shared_omo"
   fi
-  # Drop generated OmO config backups that used to pile up in ~/.omo
   find "$runtime" -maxdepth 1 -type f \( -name 'omo.jsonc.bak' -o -name 'omo.jsonc.bak.*' \) -delete 2>/dev/null || true
   return 0
 }

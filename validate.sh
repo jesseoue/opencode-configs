@@ -1155,19 +1155,19 @@ if omo:
 # ---- 4. config-only purity (install artifacts must stay gitignored + absent) ----
 STRAYS = (
     "node_modules", "package.json", "package-lock.json", "npm-shrinkwrap.json",
-    "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", ".omo", ".sisyphus",
+    "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", ".omo", ".runtime", ".sisyphus",
     ".codegraph", "command", ".opencode", "plugins",
 )
 present = [s for s in STRAYS if os.path.lexists(os.path.join(repo, s))]
 if present:
     err(f"config-only violation — remove install/runtime strays: {present} (run ./cleanup.sh or ./fix.sh)")
 else:
-    ok("config dir clean (no node_modules/package.json/.omo/.sisyphus/command/plugins)")
+    ok("config dir clean (no node_modules/package.json/.omo/.runtime/.sisyphus/command/plugins)")
 
 # git must ignore the common install paths (even when absent)
 ignore_targets = [
     "node_modules", "node_modules/pkg", "package.json", "package-lock.json",
-    "bun.lock", ".omo", ".sisyphus", ".codegraph", "command", ".opencode",
+    "bun.lock", ".omo", ".runtime", ".sisyphus", ".codegraph", "command", ".opencode",
     ".cursor", "plugins", "stray-not-in-allowlist.txt", "opencode.log", "logs/x.log",
     "vault.local.json",
 ]
@@ -1178,7 +1178,7 @@ try:
     )
     ignored = {line.split("\t")[-1] for line in r.stdout.splitlines() if "\t" in line}
     required = {
-        "node_modules", "package.json", ".omo", ".sisyphus", ".codegraph",
+        "node_modules", "package.json", ".omo", ".runtime", ".sisyphus", ".codegraph",
         "command", ".opencode", ".cursor", "plugins",
         "stray-not-in-allowlist.txt", "opencode.log",
         "vault.local.json",

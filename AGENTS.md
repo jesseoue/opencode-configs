@@ -1,6 +1,6 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.79** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig v1.5.80** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
 
 This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
@@ -79,8 +79,8 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
 - tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.79**.
-- Single tree: `/Users/Shared/opencode-configs`. `~/.config/opencode` and `~/.omo` are symlinks (`~/.omo` → `.runtime`). Never edit `omo.jsonc`.
+- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.80**.
+- Config-only clone: `/Users/Shared/opencode-configs`. `~/.config/opencode` → this repo. `~/.omo` → `/Users/Shared/opencode-runtime` (not inside git). Never edit `omo.jsonc`.
 - OmO consult lanes (oracle / librarian / explore / multimodal-looker) deny edit + nested `task` — [OmO agents](https://omo.vibetip.help/docs/agents).
 - OpenCode tunings follow [config](https://opencode.ai/docs/config) / [permissions](https://opencode.ai/docs/permissions) / [agents](https://opencode.ai/docs/agents): `subagent_depth` 1, compaction `auto`+`prune`, `chunkTimeout` 180s, `.env` read deny. Do not `disable` built-in `plan` (hyperplan).
 - Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).

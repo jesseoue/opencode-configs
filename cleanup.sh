@@ -120,19 +120,28 @@ else
 fi
 
 # ─── 2b. OmO home is a symlink into this repo (.runtime) ─────────────
-sec "OmO runtime (one tree)"
+sec "OmO runtime (sibling, not in git)"
+want_runtime="$(oc_omo_runtime_dir "$REPO")"
 if [[ $DRY -eq 1 ]]; then
-  if [[ -L "${HOME}/.omo" ]] && oc_same_path "$(oc_readlink_abs "${HOME}/.omo" 2>/dev/null || true)" "$REPO/.runtime"; then
-    ok "~/.omo -> $REPO/.runtime"
+  if [[ -L "${HOME}/.omo" ]] && oc_same_path "$(oc_readlink_abs "${HOME}/.omo" 2>/dev/null || true)" "$want_runtime"; then
+    ok "~/.omo -> $want_runtime"
   else
-    warn "[dry-run] would collapse ~/.omo into $REPO/.runtime"
+    warn "[dry-run] would pin ~/.omo -> $want_runtime (outside the clone)"
     drift=$((drift+1))
   fi
 else
   if oc_ensure_omo_runtime "$REPO"; then
-    ok "~/.omo -> $REPO/.runtime (edit oh-my-openagent.json only)"
+    ok "~/.omo -> $want_runtime (clone stays config-only)"
   else
-    bad "failed to pin ~/.omo -> $REPO/.runtime"; drift=$((drift+1))
+    bad "failed to pin ~/.omo -> $want_runtime"; drift=$((drift+1))
+  fi
+fi
+if [[ -e "$REPO/.runtime" || -L "$REPO/.runtime" ]]; then
+  drift=$((drift+1))
+  if [[ $DRY -eq 1 ]]; then
+    warn "[dry-run] would remove in-repo .runtime"
+  else
+    act "rm -rf \"$REPO/.runtime\""; fix "removed in-repo .runtime (runtime is sibling)"
   fi
 fi
 # Stale second checkout under /Users/Shared/configs
@@ -239,7 +248,7 @@ cruft=0
 while IFS= read -r junk; do
   [[ -z "$junk" ]] && continue
   act "rm -rf \"$junk\""; fix "removed $(echo "$junk" | sed "s#$REPO/##")"; cruft=$((cruft+1))
-done < <(find "$REPO" \( -path "$REPO/.git" -prune -o -path "$REPO/.runtime" -prune -o \( -name '.DS_Store' -o -name '*.bak' -o -name '*.bak.*' -o -name '*.log' \) -print \) 2>/dev/null)
+done < <(find "$REPO" \( -path "$REPO/.git" -prune -o \( -name '.DS_Store' -o -name '*.bak' -o -name '*.bak.*' -o -name '*.log' \) -print \) 2>/dev/null)
 # stray install/runtime artifacts (opencode may drop these into the config dir; keep repo config-only)
 if [[ $DRY -eq 1 ]]; then
   for stray in "${OC_CONFIG_STRAYS[@]}"; do

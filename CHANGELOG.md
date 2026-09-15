@@ -2,7 +2,14 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.79):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.80):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.80] — 2026-09-15
+
+### Clone stays config-only
+
+- OmO runtime moved **out of the git worktree** to sibling `/Users/Shared/opencode-runtime`. `~/.omo` points there. `opencode-configs/.runtime` is a purity violation (`oc validate` / `oc fix` / `oc cleanup` remove it).
+- Ship tree is deny-all allowlist only. `.env` stays local + gitignored.
 
 ## [1.5.79] — 2026-09-15
 
