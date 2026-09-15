@@ -1205,6 +1205,53 @@ elif checked:
 else:
     warn("no file:// prompt_append entries found")
 
+# ---- 4b1. OmO agents/categories 1:1 with prompts/ and agents/*.md ----
+if omo:
+    omo_agents = sorted((omo.get("agents") or {}).keys())
+    omo_cats = sorted((omo.get("categories") or {}).keys())
+    prompt_agents = sorted(
+        os.path.splitext(os.path.basename(p))[0]
+        for p in glob.glob(os.path.join(repo, "prompts", "agents", "*.md"))
+    )
+    prompt_cats = sorted(
+        os.path.splitext(os.path.basename(p))[0]
+        for p in glob.glob(os.path.join(repo, "prompts", "categories", "*.md"))
+    )
+    oc_agents = sorted(
+        os.path.splitext(os.path.basename(p))[0]
+        for p in glob.glob(os.path.join(repo, "agents", "*.md"))
+    )
+    if prompt_agents != omo_agents:
+        err(
+            "prompts/agents vs oh-my-openagent.json agents mismatch: "
+            f"only-in-prompts={sorted(set(prompt_agents) - set(omo_agents))} "
+            f"only-in-omo={sorted(set(omo_agents) - set(prompt_agents))}"
+        )
+    else:
+        ok(f"{len(omo_agents)} OmO agents 1:1 with prompts/agents/*.md")
+    if oc_agents != omo_agents:
+        err(
+            "agents/*.md vs oh-my-openagent.json agents mismatch: "
+            f"only-in-agents={sorted(set(oc_agents) - set(omo_agents))} "
+            f"only-in-omo={sorted(set(omo_agents) - set(oc_agents))}"
+        )
+    else:
+        ok(f"{len(omo_agents)} OmO agents 1:1 with agents/*.md")
+    if prompt_cats != omo_cats:
+        err(
+            "prompts/categories vs oh-my-openagent.json categories mismatch: "
+            f"only-in-prompts={sorted(set(prompt_cats) - set(omo_cats))} "
+            f"only-in-omo={sorted(set(omo_cats) - set(prompt_cats))}"
+        )
+    else:
+        ok(f"{len(omo_cats)} OmO categories 1:1 with prompts/categories/*.md")
+    for name in omo_agents:
+        cfg = (omo.get("agents") or {}).get(name) or {}
+        pa = str(cfg.get("prompt_append") or "")
+        want = f"prompts/agents/{name}.md"
+        if want not in pa.replace("\\", "/"):
+            err(f"agents.{name}.prompt_append must point at {want} (got {pa!r})")
+
 # ---- 4c. profile instructions[] must resolve (repo-relative from profiles/) ----
 prof_missing = []
 prof_checked = 0

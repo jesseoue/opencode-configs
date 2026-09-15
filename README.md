@@ -8,7 +8,7 @@
 
 > **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter general gateway, Venice content-aware lane, 13 curated OpenRouter models + 4 Venice DeepSeek slugs, deployment guards, cost-aware fallbacks — one install, zero drift.
 
-**v1.5.75** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.76** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · Venice · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -25,7 +25,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.75` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
+| **Pins** | OpenConfig `1.5.76` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -48,13 +48,13 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | **13 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash / Flash 0731 · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (catalog-only) · Laguna S 2.1 · LongCat 2.0 |
 | **Venice content-aware lane** | `content-aware-research` / `-deep` on `venice/deepseek-v4-pro-0813`; flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`; fallbacks `-pro` / `-flash-0731`. Edit denied on research. Never `openrouter/…` here |
 | **Optional Sisyphus leads** | Native DeepSeek (`sisyphus-deepseek` / `-junior`) via `DEEPSEEK_API_KEY`; Venice DeepSeek (`sisyphus-venice-deepseek` / `-flash-junior`) via `VENICE_API_KEY`. Default lead stays GLM `sisyphus` |
-| **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
+| **Per-agent fallbacks** | `fallback_models` on every OmO agent/category. OmO `runtime_fallback` retry block is present (`max_fallback_attempts` 3) but **`enabled: false`** — 4.19.4 has no `cost_aware_routing` |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
 | **Deployment guards** | `oc deploy check` gates on credits, model health, rate limits, git cleanliness, and signature before you ship |
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
 | **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (137 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate`, `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
@@ -130,7 +130,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.75` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.76` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.30+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -363,7 +363,7 @@ oc deploy health 60            # Continuous credit heartbeat (every 60s)
 | Credit caution | `$100` | Informational |
 | Rate limit | <10% remaining | Warns during gate check |
 | Circuit breaker | 8 consecutive failures | Trips → cooldown 30s → half-open retries (3) → notify |
-| Budget pressure | 80% / 95% | Degrades to cheaper fallbacks via `runtime_fallback.cost_aware_routing` |
+| Credit pressure | `$10` / `$50` / `$100` | `oc deploy quarantine` swaps to cheaper models; restore with `oc deploy quarantine exit` |
 
 Override thresholds via env: `OC_CREDIT_CRITICAL`, `OC_CREDIT_WARN`, `OC_CREDIT_CAUTION`, `OC_MODEL_PROBE_TIMEOUT`, `OC_DEPLOY_LOCK_TTL`.
 
@@ -377,12 +377,10 @@ Every OmO agent/category loads a `prompt_append` from `prompts/`. Profiles under
 | --- | --- |
 | `prompts/core.md` | Session-wide stance, tool matrix, team eligibility |
 | `prompts/goal.md` | Why `/goal` is off; use `/start-work` → Atlas |
-| `prompts/agents/*.md` | Agent appends |
-| `prompts/categories/*.md` | Category appends |
+| `prompts/agents/*.md` | Agent appends — **1:1** with OmO `agents` and `agents/*.md` |
+| `prompts/categories/*.md` | Category appends — **1:1** with OmO `categories` |
 | `prompts/profiles/*.md` | Profile briefs |
-| `agents/content-aware-research.md` | OpenCode primary-agent def (synced with prompts) |
-| `agents/content-aware-fast.md` | OpenCode flash-agent def (Venice V4.1 Flash) |
-| `agents/sisyphus*.md` | OpenCode defs for GLM + optional native/Venice Sisyphus |
+| `agents/*.md` | OpenCode-native def for **every** OmO agent (frontmatter + pointer to `prompts/agents/<name>.md`) |
 
 ---
 
@@ -434,14 +432,14 @@ opencode-configs/
 ├── oc · install.sh · setup.sh · doctor.sh · validate.sh · fix.sh
 ├── models.sh · versions.sh · cleanup.sh · signature.sh · locate.sh
 ├── deploy-guard.sh · diagnose.sh · maintain.sh · run.sh · opencode.sh
-├── openrouter-admin.sh · cursor.sh · cursor-openrouter.json
+├── launch-desktop.sh · serve-desktop.sh · export-t3.py · sync-t3.py
+├── openrouter-admin.sh · cursor.sh · cursor-openrouter.json · t3-opencode.json
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · vault.json · AGENTS.md
-├── .github/workflows/check.yml
-├── agents/content-aware-research.md · content-aware-fast.md
-├── profiles/ · prompts/ · teams/ · skills/
+├── .github/workflows/check.yml · tests/
+├── agents/*.md (every OmO agent) · profiles/ · prompts/ · teams/ · skills/
 ├── .env.example  (vault.local.json is gitignored)
-└── zshrc.snippet · ghostty.conf · tmux.conf
+└── zshrc.snippet · ghostty.conf · tmux.conf · bunfig.toml
 
 ~/.config/opencode  →  this repo
 ~/Projects/         →  oc new home

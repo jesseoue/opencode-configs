@@ -2,7 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.75):** OpenRouter is the default gateway (GLM 5.3 / Flash + curated models). Tool loops use **Auto Exacto** (not `:exacto` / `:nitro` catalog slugs). Optional Sisyphus leads: native DeepSeek (`sisyphus-deepseek` / `sisyphus-deepseek-junior`) and Venice DeepSeek (`sisyphus-venice-deepseek` / `sisyphus-venice-deepseek-flash-junior`). Content-aware stays **Venice only**. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.76):** OpenRouter is the default gateway (GLM 5.3 / Flash + curated models). Tool loops use **Auto Exacto** (not `:exacto` / `:nitro` catalog slugs). Optional Sisyphus leads: native DeepSeek (`sisyphus-deepseek` / `sisyphus-deepseek-junior`) and Venice DeepSeek (`sisyphus-venice-deepseek` / `sisyphus-venice-deepseek-flash-junior`). Content-aware stays **Venice only**. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.76] — 2026-09-15
+
+### Docs/agent 1:1 + drop dead fallback claims
+
+- Every OmO agent now has a matching `prompts/agents/<name>.md` **and** OpenCode `agents/<name>.md`. `oc validate` enforces the pairing (plus categories ↔ `prompts/categories`).
+- README no longer documents OmO `runtime_fallback.cost_aware_routing` (stripped on 4.19.4). Credit saving stays `oc deploy quarantine`. `runtime_fallback` remains configured but **disabled**.
+- Layout/manifest lists live scripts (`launch-desktop.sh`, T3 export, tests, `vault.json`). AGENTS.md points at README **Upstream** (not a missing Sources heading).
 
 ## [1.5.75] — 2026-09-14
 

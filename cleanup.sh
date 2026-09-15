@@ -49,14 +49,18 @@ drift=0
 # ─── 1. Manifest: what MUST be here ──────────────────────────────────
 sec "Required files"
 REQUIRED=(
-  opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json cursor-openrouter.json
+  opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json cursor-openrouter.json t3-opencode.json vault.json
   .github/workflows/check.yml
   validate.sh doctor.sh cleanup.sh fix.sh models.sh versions.sh diagnose.sh setup.sh install.sh maintain.sh
-  opencode.sh run.sh openrouter-admin.sh cursor.sh oc locate.sh signature.sh
+  opencode.sh run.sh openrouter-admin.sh cursor.sh oc locate.sh signature.sh deploy-guard.sh
+  launch-desktop.sh serve-desktop.sh export-t3.py sync-t3.py
+  tests/smoke.sh tests/idempotency.sh tests/runtime-diagnostics.sh tests/prepare-ci-runtime.py
   lib/common.sh
+  agents/sisyphus.md agents/sisyphus-junior.md agents/hephaestus.md agents/prometheus.md agents/atlas.md
+  agents/oracle.md agents/librarian.md agents/explore.md agents/multimodal-looker.md agents/metis.md agents/momus.md
   agents/content-aware-research.md
   agents/content-aware-fast.md
-  prompts/agents/content-aware-fast.md
+  prompts/agents/content-aware-fast.md prompts/agents/content-aware-research.md
   prompts/core.md prompts/goal.md
   prompts/agents/sisyphus.md prompts/agents/hephaestus.md prompts/agents/prometheus.md prompts/agents/atlas.md
   prompts/agents/oracle.md prompts/agents/librarian.md prompts/agents/explore.md prompts/agents/multimodal-looker.md
@@ -65,6 +69,7 @@ REQUIRED=(
   prompts/agents/sisyphus-venice-deepseek.md prompts/agents/sisyphus-venice-deepseek-flash-junior.md
   agents/sisyphus-deepseek.md agents/sisyphus-deepseek-junior.md
   agents/sisyphus-venice-deepseek.md agents/sisyphus-venice-deepseek-flash-junior.md
+  skills/content-aware-recon/SKILL.md skills/content-aware-audit/SKILL.md
   prompts/categories/content-aware-fast.md prompts/categories/content-aware-deep.md prompts/categories/bug-hunt.md
   prompts/categories/refactor-safe.md prompts/categories/arch-review.md
   prompts/categories/visual-engineering.md prompts/categories/ultrabrain.md prompts/categories/deep.md
