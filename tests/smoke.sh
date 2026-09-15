@@ -250,6 +250,17 @@ if not m or not m.group(1).startswith("venice/"):
 guard = open(os.path.join(repo, "deploy-guard.sh"), encoding="utf-8").read()
 if "content-aware" not in guard or "startswith('venice/')" not in guard:
     raise SystemExit("deploy-guard missing Venice skip")
+hermes = ((omo.get("agents") or {}).get("context-aware-hermes") or {})
+if hermes.get("model") != "openrouter/nousresearch/hermes-4-405b":
+    raise SystemExit(f"context-aware-hermes {hermes.get('model')!r}")
+if (hermes.get("permission") or {}).get("edit") != "deny":
+    raise SystemExit("context-aware-hermes must deny edit")
+for fb in hermes.get("fallback_models") or []:
+    if "hermes" in str(fb).lower():
+        raise SystemExit(f"hermes fallback {fb!r}")
+hmd = open(os.path.join(repo, "agents", "context-aware-hermes.md"), encoding="utf-8").read()
+if "openrouter/nousresearch/hermes-4-405b" not in hmd:
+    raise SystemExit("hermes agent md missing model")
 PY
 then
   ok "content-aware Venice-only (OmO + profile + quarantine skip)"

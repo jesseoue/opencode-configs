@@ -534,6 +534,48 @@ for section in ("agents", "categories"):
                         perm[k] = v
                         changes.append(f"explore permission.{k} -> {v}")
 
+# Hermes consult lane — not Venice content-aware, not a recon/tool route.
+HERMES_PRIMARY = "openrouter/nousresearch/hermes-4-405b"
+HERMES_FALLBACKS = [
+    "openrouter/z-ai/glm-5.3",
+    "openrouter/poolside/laguna-s-2.1",
+    "openrouter/qwen/qwen3.8-max-0902",
+]
+hermes = (omo.get("agents") or {}).get("context-aware-hermes")
+if not isinstance(hermes, dict):
+    omo.setdefault("agents", {})["context-aware-hermes"] = {
+        "mode": "primary",
+        "name": "Context-aware Hermes",
+        "model": HERMES_PRIMARY,
+        "fallback_models": list(HERMES_FALLBACKS),
+        "permission": {"edit": "deny", "webfetch": "allow", "question": "allow", "task": "allow"},
+        "prompt_append": "file://~/.config/opencode/prompts/agents/context-aware-hermes.md",
+        "color": "#B388FF",
+        "maxTokens": 16384,
+        "reasoning": "high",
+    }
+    changes.append("agents context-aware-hermes: created Hermes 405B consult lane")
+    hermes = omo["agents"]["context-aware-hermes"]
+else:
+    if hermes.get("model") != HERMES_PRIMARY:
+        hermes["model"] = HERMES_PRIMARY
+        changes.append(f"agents context-aware-hermes: model -> {HERMES_PRIMARY}")
+    want_fb = [x for x in HERMES_FALLBACKS if x != HERMES_PRIMARY]
+    if hermes.get("fallback_models") != want_fb:
+        hermes["fallback_models"] = want_fb
+        changes.append("agents context-aware-hermes: fallbacks -> tool-capable GLM/Laguna/Qwen")
+    perm = hermes.setdefault("permission", {})
+    if isinstance(perm, dict) and perm.get("edit") != "deny":
+        perm["edit"] = "deny"
+        changes.append("agents context-aware-hermes: permission.edit -> deny")
+    if hermes.get("prompt_append") != "file://~/.config/opencode/prompts/agents/context-aware-hermes.md":
+        hermes["prompt_append"] = "file://~/.config/opencode/prompts/agents/context-aware-hermes.md"
+        changes.append("agents context-aware-hermes: prompt_append -> prompts/agents/context-aware-hermes.md")
+order = omo.setdefault("agent_order", [])
+if isinstance(order, list) and "context-aware-hermes" not in order:
+    order.append("context-aware-hermes")
+    changes.append("agent_order += context-aware-hermes")
+
 # OpenRouter-only gateway: strip GPT from all routes + whitelist (no openai/gpt-*)
 GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
 DEEP_PRIMARY = "openrouter/z-ai/glm-5.3"
@@ -849,6 +891,7 @@ AGENT_COLORS = {
     "sisyphus-junior": "#7A8BFF",
     "content-aware-research": "#FF1744",
     "content-aware-fast": "#FF9100",
+    "context-aware-hermes": "#B388FF",
 }
 # NOTE: categories do NOT get colors. The OmO 4.19.4 schema allows `color` on
 # agents only (properties.agents.*.color); categories have no color property,

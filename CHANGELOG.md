@@ -6,6 +6,12 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 ## [1.5.76] — 2026-09-15
 
+### context-aware-hermes (Hermes 4 405B)
+
+- New primary `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b`. Tool-less, edit denied — reasons over pasted context. Fallbacks GLM 5.3 · Laguna · Qwen (tool-capable).
+- Not the Venice `content-aware-*` lane. Not a team-mailbox member. `oc run -a context-aware-hermes` / `task` / `call_omo_agent`.
+- `oc validate` / `oc fix` / smoke / doctor / cleanup track the agent + prompt pair.
+
 ### Cheap flash is DeepSeek V4.1 Flash (0731 retired)
 
 - Dropped `deepseek/deepseek-v4-flash-0731` from the OpenRouter whitelist and `venice/deepseek-v4-flash-0731` from the Venice roster. V4.1 Flash is the only cheap DeepSeek flash.

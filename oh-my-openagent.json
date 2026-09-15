@@ -15,7 +15,8 @@
     "sisyphus-deepseek",
     "sisyphus-venice-deepseek",
     "content-aware-research",
-    "content-aware-fast"
+    "content-aware-fast",
+    "context-aware-hermes"
   ],
   "agents": {
     "sisyphus": {
@@ -295,6 +296,28 @@
       "fallback_models": [
         "venice/deepseek-v4-pro-0813",
         "venice/deepseek-v4-pro"
+      ]
+    },
+    "context-aware-hermes": {
+      "mode": "primary",
+      "name": "Context-aware Hermes",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "question": "allow",
+        "task": "allow"
+      },
+      "prompt_append": "file://~/.config/opencode/prompts/agents/context-aware-hermes.md",
+      "color": "#B388FF",
+      "description": "Uncensored Hermes 4 405B over pasted context (edit denied, no tools). Fallbacks are tool-capable.",
+      "maxTokens": 16384,
+      "model": "openrouter/nousresearch/hermes-4-405b",
+      "reasoning": "high",
+      "fallback_models": [
+        "openrouter/z-ai/glm-5.3",
+        "openrouter/poolside/laguna-s-2.1",
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     }
   },

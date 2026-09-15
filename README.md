@@ -45,8 +45,9 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter general gateway** | GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi via one `OPENROUTER_API_KEY` — no direct OpenAI/Anthropic/Google keys |
-| **12 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (catalog-only) · Laguna S 2.1 · LongCat 2.0 |
+| **12 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (`context-aware-hermes`) · Laguna S 2.1 · LongCat 2.0 |
 | **Venice content-aware lane** | `content-aware-research` / `-deep` on `venice/deepseek-v4-pro-0813`; flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`; fallbacks `-pro` / `-pro-0813`. Edit denied on research. Never `openrouter/…` here |
+| **Context-aware Hermes** | `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b` (tool-less, edit denied). Fallbacks GLM 5.3 · Laguna · Qwen. Consult only — not a team member |
 | **Optional Sisyphus leads** | Native DeepSeek (`sisyphus-deepseek` / `-junior`) via `DEEPSEEK_API_KEY`; Venice DeepSeek (`sisyphus-venice-deepseek` / `-flash-junior`) via `VENICE_API_KEY`. Default lead stays GLM `sisyphus` |
 | **Per-agent fallbacks** | `fallback_models` on every OmO agent/category. OmO `runtime_fallback` retry block is present (`max_fallback_attempts` 3) but **`enabled: false`** — 4.19.4 has no `cost_aware_routing` |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
@@ -202,6 +203,7 @@ oc cursor probe     # tiny live call through /api/v1/cursor
 | **atlas** | GLM 5.3 | Plan executor after `/start-work` |
 | **content-aware-research** | Venice DeepSeek V4 Pro 0813 | Full-depth research (edit denied) |
 | **content-aware-fast** | Venice DeepSeek V4.1 Flash | Flash recon (edit denied); same-name category for teams |
+| **context-aware-hermes** | Hermes 4 405B | Uncensored context analysis (edit denied, no tools) |
 
 ### Subagents (`task` / `call_omo_agent` — not team members)
 
@@ -284,6 +286,7 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | `sisyphus-venice-deepseek` | Optional lead | Venice `deepseek-v4-pro-0813` | `VENICE_API_KEY` |
 | `sisyphus-venice-deepseek-flash-junior` | Lane-only fast child | Venice `deepseek-v4-1-flash` | `VENICE_API_KEY` |
 | `content-aware-research` / `-fast` / `-deep` | Edit-denied research | Venice DeepSeek only | `VENICE_API_KEY` |
+| `context-aware-hermes` | Edit-denied context analysis | OpenRouter Hermes 4 405B | `OPENROUTER_API_KEY` |
 
 Hephaestus, Prometheus, Atlas, and the consult subagents stay on OpenRouter. Invoke optional Sisyphus leads explicitly — they do not replace GLM `sisyphus`.
 

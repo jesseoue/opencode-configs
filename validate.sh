@@ -388,6 +388,7 @@ if omo:
         "sisyphus-deepseek-junior": "deepseek/deepseek-flash",
         "sisyphus-venice-deepseek": "venice/deepseek-v4-pro-0813",
         "sisyphus-venice-deepseek-flash-junior": "venice/deepseek-v4-1-flash",
+        "context-aware-hermes": "openrouter/nousresearch/hermes-4-405b",
     }
     for name, mid in want_optional.items():
         cfg = agents.get(name) or {}
@@ -632,11 +633,20 @@ if omo:
                 else:
                     mid = ref.split("/", 1)[-1] if "/" in ref else ref
                     mdef = models.get(mid)
+                # Hermes 405B is consult-only on context-aware-hermes (primary).
+                # Fallbacks on that agent must still be tool-capable.
+                if (
+                    section == "agents"
+                    and name == "context-aware-hermes"
+                    and ref == spec.get("model")
+                    and ref == "openrouter/nousresearch/hermes-4-405b"
+                ):
+                    continue
                 if mdef is not None and mdef.get("tool_call") is not True:
                     tools_ok = False
                     err(f"oh-my-openagent.json[{section}.{name}]: {ref!r} cannot tool-call (tool_call != true)")
     if tools_ok:
-        ok("all agent/category chains route tool_call:true models (Venice DeepSeek included; no tool-less Hermes routes)")
+        ok("all agent/category chains route tool_call:true models (Hermes 405B only on context-aware-hermes primary)")
 
     kd = omo.get("keyword_detector", {})
     allowed = {"ultrawork", "team", "hyperplan", "hyperplan-ultrawork"}
@@ -866,6 +876,9 @@ if omo:
     TEAM_HARD_REJECT = {
         "oracle", "librarian", "explore", "multimodal-looker",
         "metis", "momus", "prometheus", "plan",
+        "context-aware-hermes",
+        "content-aware-research",
+        "content-aware-fast",
     }
     TEAM_KEYS = {"version", "name", "description", "lead", "members"}
     LEAD_KEYS = {"kind", "subagent_type", "category", "prompt"}
@@ -1356,6 +1369,31 @@ if omo:
                 err(f"{sec}.{ca_name} fallback {fb!r} must be venice/<model> (never OpenRouter)")
         if "openrouter/" in cm.lower():
             err(f"{sec}.{ca_name} primary {cm!r} must never be OpenRouter — Venice only")
+    hermes = ((omo.get("agents") or {}).get("context-aware-hermes") or {})
+    hm = str(hermes.get("model") or "")
+    if hm != "openrouter/nousresearch/hermes-4-405b":
+        err(f"agents.context-aware-hermes must be openrouter/nousresearch/hermes-4-405b (got {hm!r})")
+    else:
+        ok("agents.context-aware-hermes → openrouter/nousresearch/hermes-4-405b")
+    if (hermes.get("permission") or {}).get("edit") != "deny":
+        err("agents.context-aware-hermes.permission.edit must be deny")
+    else:
+        ok("agents.context-aware-hermes edit deny")
+    for fb in hermes.get("fallback_models") or []:
+        if "hermes" in str(fb).lower():
+            err(f"context-aware-hermes fallback {fb!r} must be tool-capable (not Hermes)")
+    hermes_md = os.path.join(repo, "agents", "context-aware-hermes.md")
+    if not os.path.isfile(hermes_md):
+        err("agents/context-aware-hermes.md missing")
+    else:
+        body = open(hermes_md, encoding="utf-8").read()
+        if re.search(r"(?m)^\s*edit:\s*deny\s*$", body) is None:
+            err("agents/context-aware-hermes.md: permission.edit must be deny")
+        md_model = re.search(r"(?m)^model:\s*(\S+)", body)
+        if not md_model or md_model.group(1) != "openrouter/nousresearch/hermes-4-405b":
+            err("agents/context-aware-hermes.md model must be openrouter/nousresearch/hermes-4-405b")
+        else:
+            ok("agents/context-aware-hermes.md present (edit deny, Hermes 405B)")
     for sec, items in (("agents", omo.get("agents") or {}), ("categories", omo.get("categories") or {})):
         for ca_name, ca in items.items():
             if not str(ca_name).startswith("content-aware") or not isinstance(ca, dict):

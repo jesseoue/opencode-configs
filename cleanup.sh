@@ -60,7 +60,9 @@ REQUIRED=(
   agents/oracle.md agents/librarian.md agents/explore.md agents/multimodal-looker.md agents/metis.md agents/momus.md
   agents/content-aware-research.md
   agents/content-aware-fast.md
+  agents/context-aware-hermes.md
   prompts/agents/content-aware-fast.md prompts/agents/content-aware-research.md
+  prompts/agents/context-aware-hermes.md
   prompts/core.md prompts/goal.md
   prompts/agents/sisyphus.md prompts/agents/hephaestus.md prompts/agents/prometheus.md prompts/agents/atlas.md
   prompts/agents/oracle.md prompts/agents/librarian.md prompts/agents/explore.md prompts/agents/multimodal-looker.md

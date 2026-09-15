@@ -1392,6 +1392,21 @@ else:
         print("OK|profile content-aware → content-aware-research")
 team = os.path.join(repo, "teams", "content-aware-audit", "config.json")
 print(("OK" if os.path.isfile(team) else "BAD") + "|team content-aware-audit " + ("present" if os.path.isfile(team) else "missing"))
+hermes = agents.get("context-aware-hermes")
+if not isinstance(hermes, dict):
+    print("BAD|agents.context-aware-hermes missing")
+else:
+    print("OK|agent context-aware-hermes defined")
+    if hermes.get("model") != "openrouter/nousresearch/hermes-4-405b":
+        print("BAD|context-aware-hermes model must be openrouter/nousresearch/hermes-4-405b")
+    else:
+        print("OK|context-aware-hermes model=openrouter/nousresearch/hermes-4-405b")
+    if (hermes.get("permission") or {}).get("edit") != "deny":
+        print("BAD|context-aware-hermes.permission.edit must be deny")
+    else:
+        print("OK|context-aware-hermes edit=deny")
+hermes_md = os.path.join(repo, "agents", "context-aware-hermes.md")
+print(("OK" if os.path.isfile(hermes_md) else "BAD") + "|agents/context-aware-hermes.md " + ("present" if os.path.isfile(hermes_md) else "missing"))
 for skill in ("content-aware-recon", "content-aware-audit"):
     sp = os.path.join(repo, "skills", skill, "SKILL.md")
     print(("OK" if os.path.isfile(sp) else "BAD") + "|local skill %s" % skill + (" present" if os.path.isfile(sp) else " missing"))

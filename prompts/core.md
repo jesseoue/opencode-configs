@@ -7,7 +7,8 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 - **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` / `:nitro` catalog slugs — tool requests already get [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto).
 - **Optional Sisyphus leads** → `sisyphus-deepseek` (native `DEEPSEEK_API_KEY`) · `sisyphus-venice-deepseek` (`VENICE_API_KEY`). Default lead stays GLM `sisyphus`.
 - **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash`. Fallbacks stay `venice/*` (`-pro`, `-1-flash`). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
-- Implementation → use an edit-capable category/member; never send edit work to content-aware-research or explore (edit denied).
+- **Context-aware Hermes** → `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b` (tool-less, edit denied). Fallbacks GLM 5.3 · Laguna · Qwen. Consult only — not a team-mailbox member. Venice `content-aware-*` stays the tool-using research lane.
+- Implementation → use an edit-capable category/member; never send edit work to content-aware-research, context-aware-hermes, or explore (edit denied).
 
 ## How to work (agent pace)
 
@@ -22,7 +23,7 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 - Deep implementation / adjudication → Hephaestus or Oracle. Max-effort reasoning → `ultrabrain` / ultrawork.
 - Team direct agents use `kind: subagent_type` + `subagent_type`: `sisyphus`, `atlas`, `sisyphus-junior`; `hephaestus` only with `permission.teammate: allow`.
 - Team categories use `kind: category` + `category` and require a prompt; OmO routes them through `sisyphus-junior`.
-- Hard-rejected direct teammates: `oracle`, `librarian`, `explore`, `multimodal-looker`, `metis`, `momus`, `prometheus`; invoke them through `task` / `call_omo_agent`, not `team_*`.
+- Hard-rejected direct teammates: `oracle`, `librarian`, `explore`, `multimodal-looker`, `metis`, `momus`, `prometheus`, `context-aware-hermes`, `content-aware-research`, `content-aware-fast`; invoke them through `task` / `call_omo_agent`, not `team_*`.
 - Keep bash output small. No speculative fallbacks, empty catches, or `as any` / `@ts-ignore`.
 - Stop when done. No filler. One short phase line before long stretches — don't narrate every tool.
 - **`question` tool** — always allowed. Ask the user whenever scope, constraints, or acceptance criteria are unclear; never guess or refuse to clarify.
