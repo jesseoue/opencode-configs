@@ -119,6 +119,33 @@ else
   fix "symlink -> $REPO"
 fi
 
+# ─── 2b. OmO home is a symlink into this repo (.runtime) ─────────────
+sec "OmO runtime (one tree)"
+if [[ $DRY -eq 1 ]]; then
+  if [[ -L "${HOME}/.omo" ]] && oc_same_path "$(oc_readlink_abs "${HOME}/.omo" 2>/dev/null || true)" "$REPO/.runtime"; then
+    ok "~/.omo -> $REPO/.runtime"
+  else
+    warn "[dry-run] would collapse ~/.omo into $REPO/.runtime"
+    drift=$((drift+1))
+  fi
+else
+  if oc_ensure_omo_runtime "$REPO"; then
+    ok "~/.omo -> $REPO/.runtime (edit oh-my-openagent.json only)"
+  else
+    bad "failed to pin ~/.omo -> $REPO/.runtime"; drift=$((drift+1))
+  fi
+fi
+# Stale second checkout under /Users/Shared/configs
+for stale in /Users/Shared/configs/opencode-configs.stale-*; do
+  [[ -e "$stale" ]] || continue
+  drift=$((drift+1))
+  if [[ $DRY -eq 1 ]]; then
+    warn "[dry-run] would remove stale copy $stale"
+  else
+    act "rm -rf \"$stale\""; fix "removed stale copy $stale"
+  fi
+done
+
 # ─── 3. Plugin pin sanity (must load, not just parse) ────────────────
 sec "Plugin pin"
 PIN="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null)"
@@ -212,7 +239,7 @@ cruft=0
 while IFS= read -r junk; do
   [[ -z "$junk" ]] && continue
   act "rm -rf \"$junk\""; fix "removed $(echo "$junk" | sed "s#$REPO/##")"; cruft=$((cruft+1))
-done < <(find "$REPO" \( -name '.DS_Store' -o -name '*.bak' -o -name '*.bak.*' -o -name '*.log' \) 2>/dev/null)
+done < <(find "$REPO" \( -path "$REPO/.git" -prune -o -path "$REPO/.runtime" -prune -o \( -name '.DS_Store' -o -name '*.bak' -o -name '*.bak.*' -o -name '*.log' \) -print \) 2>/dev/null)
 # stray install/runtime artifacts (opencode may drop these into the config dir; keep repo config-only)
 if [[ $DRY -eq 1 ]]; then
   for stray in "${OC_CONFIG_STRAYS[@]}"; do

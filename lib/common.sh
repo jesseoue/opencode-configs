@@ -738,6 +738,56 @@ oc_is_live_config() {
   oc_same_path "$repo" "$live"
 }
 
+# OmO 4.19.4 always reads ~/.omo/omo.jsonc. Keep that path as a symlink into
+# $REPO/.runtime so the only real tree is /Users/Shared/opencode-configs.
+oc_omo_runtime_dir() {
+  local repo="${1:-${REPO:-}}"
+  [[ -n "$repo" ]] || return 1
+  printf '%s/.runtime\n' "${repo%/}"
+}
+
+# Collapse ~/.omo (and leftover /Users/Shared/.omo) into $REPO/.runtime.
+oc_ensure_omo_runtime() {
+  local repo="${1:-${REPO:-}}" runtime home_omo shared_omo
+  repo="$(cd "$repo" && pwd -P)" || return 1
+  runtime="$(oc_omo_runtime_dir "$repo")"
+  home_omo="${HOME}/.omo"
+  shared_omo="/Users/Shared/.omo"
+  mkdir -p "$runtime/tasks" "$runtime/teams"
+  if [[ ! -f "$runtime/DO-NOT-EDIT.txt" ]]; then
+    cat > "$runtime/DO-NOT-EDIT.txt" <<'EOF'
+Generated OmO runtime. Edit oh-my-openagent.json in this OpenConfig repo.
+~/.omo is a symlink here. Do not treat omo.jsonc as source of truth.
+EOF
+  fi
+  if [[ -L "$home_omo" ]]; then
+    local got
+    got="$(oc_readlink_abs "$home_omo" 2>/dev/null || true)"
+    if ! oc_same_path "$got" "$runtime"; then
+      rm -f "$home_omo"
+      ln -sfn "$runtime" "$home_omo"
+    fi
+  elif [[ -d "$home_omo" ]]; then
+    # Preserve existing runtime files, then replace the home dir with a symlink.
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --exclude '.DS_Store' "$home_omo/" "$runtime/"
+    else
+      cp -Rp "$home_omo/." "$runtime/"
+    fi
+    rm -rf "$home_omo"
+    ln -sfn "$runtime" "$home_omo"
+  else
+    ln -sfn "$runtime" "$home_omo"
+  fi
+  # Leftover Shared/.omo is never the live runtime.
+  if [[ -e "$shared_omo" || -L "$shared_omo" ]]; then
+    rm -rf "$shared_omo"
+  fi
+  # Drop generated OmO config backups that used to pile up in ~/.omo
+  find "$runtime" -maxdepth 1 -type f \( -name 'omo.jsonc.bak' -o -name 'omo.jsonc.bak.*' \) -delete 2>/dev/null || true
+  return 0
+}
+
 # Canonical tree for ~/.omo/teams: live config if OpenConfig, else $1/REPO.
 oc_omo_teams_canonical() {
   local repo="${1:-${REPO:-}}" live

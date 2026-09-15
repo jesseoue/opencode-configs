@@ -34,6 +34,9 @@ for arg in "$@"; do
 done
 
 SYNC_ENV="${SYNC_ENV:-false}"
+if ! $CHECK_ONLY; then
+  oc_ensure_omo_runtime "$REPO" || true
+fi
 
 fix(){ $CHECK_ONLY && return 0; "$@"; }
 

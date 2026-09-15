@@ -2,7 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.78):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.79):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.79] — 2026-09-15
+
+### One tree: `/Users/Shared/opencode-configs`
+
+- OmO runtime no longer lives as a second editable home dir. `~/.omo` is a symlink to `<repo>/.runtime`. Edit `oh-my-openagent.json` only; `omo.jsonc` is generated.
+- `oc cleanup` / `oc setup` collapse a real `~/.omo` into `.runtime`, drop leftover `/Users/Shared/.omo`, and delete `/Users/Shared/configs/opencode-configs.stale-*`.
+- `~/.config/opencode` stays the existing symlink to this repo.
 
 ## [1.5.78] — 2026-09-15
 

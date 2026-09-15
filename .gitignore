@@ -76,6 +76,7 @@ pnpm-lock.yaml
 bun.lock
 bun.lockb
 .omo
+.runtime
 .sisyphus
 .cache
 .codegraph
