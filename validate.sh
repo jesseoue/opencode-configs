@@ -1408,6 +1408,13 @@ if omo:
         err("agents.context-aware-hermes.permission.edit must be deny")
     else:
         ok("agents.context-aware-hermes edit deny")
+    # Official OmO tool boundaries: https://omo.vibetip.help/docs/agents
+    for ro in ("oracle", "librarian", "explore", "multimodal-looker"):
+        rp = ((omo.get("agents") or {}).get(ro) or {}).get("permission") or {}
+        if rp.get("edit") != "deny" or rp.get("task") != "deny":
+            err(f"agents.{ro} must deny edit+task (OmO read-only / no-delegation boundary)")
+        else:
+            ok(f"agents.{ro} edit+task deny (OmO docs)")
     for fb in hermes.get("fallback_models") or []:
         if "hermes" in str(fb).lower():
             err(f"context-aware-hermes fallback {fb!r} must be tool-capable (not Hermes)")

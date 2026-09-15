@@ -86,6 +86,12 @@
     "oracle": {
       "mode": "subagent",
       "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "question": "allow",
+        "task": "deny"
+      },
       "prompt_append": "file://~/.config/opencode/prompts/agents/oracle.md",
       "color": "#6C63FF",
       "maxTokens": 16384,
@@ -100,6 +106,12 @@
     "librarian": {
       "mode": "subagent",
       "temperature": 0.1,
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "question": "allow",
+        "task": "deny"
+      },
       "prompt_append": "file://~/.config/opencode/prompts/agents/librarian.md",
       "color": "#00FFD1",
       "maxTokens": 8192,
@@ -118,7 +130,7 @@
         "edit": "deny",
         "webfetch": "allow",
         "question": "allow",
-        "task": "allow"
+        "task": "deny"
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/explore.md",
       "color": "#FFD400",
@@ -133,6 +145,12 @@
     },
     "multimodal-looker": {
       "mode": "subagent",
+      "permission": {
+        "edit": "deny",
+        "webfetch": "allow",
+        "question": "allow",
+        "task": "deny"
+      },
       "prompt_append": "file://~/.config/opencode/prompts/agents/multimodal-looker.md",
       "color": "#FF2D95",
       "maxTokens": 12288,

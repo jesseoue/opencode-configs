@@ -2,7 +2,16 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.77):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.78):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.78] — 2026-09-15
+
+### OmO docs: read-only consult boundaries
+
+- Checked [omo.vibetip.help/docs/agents](https://omo.vibetip.help/docs/agents) and [configuration](https://omo.vibetip.help/docs/reference/configuration).
+- Oracle / Librarian / Explore / Multimodal-Looker now **deny edit + nested `task`** (official: no writes, no delegation). Explore `task` was `allow` and could nest.
+- Tab order already matches OmO core: Sisyphus → Hephaestus → Prometheus → Atlas. `runtime_fallback` stays **disabled** (OmO default). Goal / Ralph stay off.
+- `oc cleanup` prunes `~/.omo/tasks` and `migration-backup-*` older than 14 days.
 
 ## [1.5.77] — 2026-09-15
 

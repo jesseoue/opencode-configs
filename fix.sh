@@ -553,10 +553,32 @@ for section in ("agents", "categories"):
         if n == "explore":
             perm = a.setdefault("permission", {})
             if isinstance(perm, dict):
-                for k, v in (("edit", "deny"), ("webfetch", "allow"), ("question", "allow"), ("task", "allow")):
+                # Official OmO tool boundary: search-only, no writes, no delegation
+                # https://omo.vibetip.help/docs/agents
+                for k, v in (("edit", "deny"), ("webfetch", "allow"), ("question", "allow"), ("task", "deny")):
                     if perm.get(k) != v:
                         perm[k] = v
                         changes.append(f"explore permission.{k} -> {v}")
+
+# Official OmO read-only consult lanes (no writes, no nested task)
+# https://omo.vibetip.help/docs/agents — Oracle / Librarian / Multimodal-Looker
+OMO_READONLY = {
+    "oracle": ("edit", "webfetch", "question", "task"),
+    "librarian": ("edit", "webfetch", "question", "task"),
+    "multimodal-looker": ("edit", "webfetch", "question", "task"),
+}
+for n, keys in OMO_READONLY.items():
+    a = (omo.get("agents") or {}).get(n)
+    if not isinstance(a, dict):
+        continue
+    perm = a.setdefault("permission", {})
+    if not isinstance(perm, dict):
+        continue
+    want = {"edit": "deny", "webfetch": "allow", "question": "allow", "task": "deny"}
+    for k in keys:
+        if perm.get(k) != want[k]:
+            perm[k] = want[k]
+            changes.append(f"agents {n}: permission.{k} -> {want[k]} (OmO read-only boundary)")
 
 # Hermes consult lane — not Venice content-aware, not a recon/tool route.
 HERMES_PRIMARY = "openrouter/nousresearch/hermes-4-405b"

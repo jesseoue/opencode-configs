@@ -188,6 +188,24 @@ else
   ok "no backups"
 fi
 
+# ─── 6b. Stale OmO runtime (tasks + old migration backups) ───────────
+sec "OmO runtime leftovers"
+OMO_HOME="${HOME}/.omo"
+pruned_omo=0
+if [[ -d "$OMO_HOME/tasks" ]]; then
+  while IFS= read -r tf; do
+    [[ -z "$tf" ]] && continue
+    act "rm -f \"$tf\""; fix "pruned stale OmO task $(basename "$tf")"; pruned_omo=$((pruned_omo+1))
+  done < <(find "$OMO_HOME/tasks" -name 'T-*.json' -mtime +14 2>/dev/null)
+fi
+if [[ -d "$OMO_HOME" ]]; then
+  while IFS= read -r mb; do
+    [[ -z "$mb" ]] && continue
+    act "rm -rf \"$mb\""; fix "pruned OmO migration backup $(basename "$mb")"; pruned_omo=$((pruned_omo+1))
+  done < <(find "$OMO_HOME" -maxdepth 1 -type d -name 'migration-backup-*' -mtime +14 2>/dev/null)
+fi
+[[ $pruned_omo -eq 0 ]] && ok "no stale OmO tasks or migration backups (>14d)"
+
 # ─── 7. Repo cruft ───────────────────────────────────────────────────
 sec "Repo cruft"
 cruft=0
