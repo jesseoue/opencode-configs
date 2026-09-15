@@ -6,7 +6,7 @@
   "serverUrl": "http://127.0.0.1:4097",
   "serverPassword": "",
   "default_model": "openrouter/z-ai/glm-5.3",
-  "small_model": "openrouter/z-ai/glm-5.3-flash",
+  "small_model": "openrouter/deepseek/deepseek-v4.1-flash",
   "customModels": [],
   "notes": [
     "T3 talks to the local OpenCode serve from serve-desktop.sh (port 4097).",
@@ -27,11 +27,9 @@
     "openrouter/moonshotai/kimi-k2.7-code",
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/deepseek/deepseek-v4.1-flash",
-    "openrouter/deepseek/deepseek-v4-flash-0731",
     "openrouter/nousresearch/hermes-4-405b",
     "venice/deepseek-v4-pro-0813",
     "venice/deepseek-v4-pro",
-    "venice/deepseek-v4-1-flash",
-    "venice/deepseek-v4-flash-0731"
+    "venice/deepseek-v4-1-flash"
   ]
 }

@@ -27,7 +27,7 @@
 #   ./fix.sh                       repair + format + validate
 #   ./fix.sh --dry-run             show what would change, write nothing
 #   ./fix.sh --set model=openrouter/z-ai/glm-5.3
-#   ./fix.sh --set default_agent=atlas --set small_model=openrouter/deepseek/deepseek-v4-flash-0731
+#   ./fix.sh --set default_agent=atlas --set small_model=openrouter/deepseek/deepseek-v4.1-flash
 
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -478,7 +478,6 @@ RECON_PRIMARY = {
 CONTENT_AWARE_FALLBACKS = [
     "venice/deepseek-v4-pro",
     "venice/deepseek-v4-1-flash",
-    "venice/deepseek-v4-flash-0731",
 ]
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",

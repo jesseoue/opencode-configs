@@ -2,9 +2,15 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.76):** OpenRouter is the default gateway (GLM 5.3 / Flash + curated models). Tool loops use **Auto Exacto** (not `:exacto` / `:nitro` catalog slugs). Optional Sisyphus leads: native DeepSeek (`sisyphus-deepseek` / `sisyphus-deepseek-junior`) and Venice DeepSeek (`sisyphus-venice-deepseek` / `sisyphus-venice-deepseek-flash-junior`). Content-aware stays **Venice only**. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.76):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
 
 ## [1.5.76] — 2026-09-15
+
+### Cheap flash is DeepSeek V4.1 Flash (0731 retired)
+
+- Dropped `deepseek/deepseek-v4-flash-0731` from the OpenRouter whitelist and `venice/deepseek-v4-flash-0731` from the Venice roster. V4.1 Flash is the only cheap DeepSeek flash.
+- OpenCode `small_model` + title / summary / compaction → `openrouter/deepseek/deepseek-v4.1-flash`. GLM 5.3 Flash stays on sisyphus-junior / quick.
+- Content-aware-fast and Venice flash-junior fallbacks go to Pro 0813 / Pro — never 0731.
 
 ### Concurrency cap: OpenRouter DeepSeek Pro 0813 stays 8
 

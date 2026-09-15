@@ -250,8 +250,8 @@
       "model": "venice/deepseek-v4-1-flash",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-flash-0731",
         "venice/deepseek-v4-pro-0813",
+        "venice/deepseek-v4-pro",
         "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
@@ -293,8 +293,8 @@
       "model": "venice/deepseek-v4-1-flash",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-flash-0731",
-        "venice/deepseek-v4-pro-0813"
+        "venice/deepseek-v4-pro-0813",
+        "venice/deepseek-v4-pro"
       ]
     }
   },
@@ -432,8 +432,8 @@
       "model": "venice/deepseek-v4-1-flash",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-flash-0731",
-        "venice/deepseek-v4-pro-0813"
+        "venice/deepseek-v4-pro-0813",
+        "venice/deepseek-v4-pro"
       ]
     },
     "content-aware-deep": {
@@ -467,12 +467,10 @@
       "openrouter/moonshotai/kimi-k2.7-code": 5,
       "openrouter/deepseek/deepseek-v4-pro-0813": 8,
       "openrouter/deepseek/deepseek-v4.1-flash": 5,
-      "openrouter/deepseek/deepseek-v4-flash-0731": 10,
       "openrouter/nousresearch/hermes-4-405b": 2,
       "venice/deepseek-v4-pro-0813": 5,
       "venice/deepseek-v4-pro": 5,
       "venice/deepseek-v4-1-flash": 5,
-      "venice/deepseek-v4-flash-0731": 5,
       "deepseek/deepseek-v4-pro": 4,
       "deepseek/deepseek-flash": 6
     },

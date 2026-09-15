@@ -45,8 +45,8 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | Capability | What you get |
 | --- | --- |
 | **OpenRouter general gateway** | GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi via one `OPENROUTER_API_KEY` — no direct OpenAI/Anthropic/Google keys |
-| **13 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash / Flash 0731 · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (catalog-only) · Laguna S 2.1 · LongCat 2.0 |
-| **Venice content-aware lane** | `content-aware-research` / `-deep` on `venice/deepseek-v4-pro-0813`; flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`; fallbacks `-pro` / `-flash-0731`. Edit denied on research. Never `openrouter/…` here |
+| **12 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (catalog-only) · Laguna S 2.1 · LongCat 2.0 |
+| **Venice content-aware lane** | `content-aware-research` / `-deep` on `venice/deepseek-v4-pro-0813`; flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`; fallbacks `-pro` / `-pro-0813`. Edit denied on research. Never `openrouter/…` here |
 | **Optional Sisyphus leads** | Native DeepSeek (`sisyphus-deepseek` / `-junior`) via `DEEPSEEK_API_KEY`; Venice DeepSeek (`sisyphus-venice-deepseek` / `-flash-junior`) via `VENICE_API_KEY`. Default lead stays GLM `sisyphus` |
 | **Per-agent fallbacks** | `fallback_models` on every OmO agent/category. OmO `runtime_fallback` retry block is present (`max_fallback_attempts` 3) but **`enabled: false`** — 4.19.4 has no `cost_aware_routing` |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
@@ -295,11 +295,11 @@ Hephaestus, Prometheus, Atlas, and the consult subagents stay on OpenRouter. Inv
 | Deep implement | GLM 5.3 · DeepSeek V4 Pro 0813 | Hephaestus / Oracle / Momus / ultrabrain (GLM 5.3) · deep (Pro 0813) |
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
 | **Recon (unmoderated)** | DeepSeek V4 Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
-| **Content-aware** | Venice DeepSeek V4 Pro 0813 / Pro / V4.1 Flash / Flash 0731 | `venice/*` only — never OpenRouter on this lane |
+| **Content-aware** | Venice DeepSeek V4 Pro 0813 / Pro / V4.1 Flash | `venice/*` only — never OpenRouter on this lane |
 | **Optional native Sisyphus** | `deepseek/deepseek-v4-pro` · `deepseek/deepseek-flash` | `sisyphus-deepseek` / `sisyphus-deepseek-junior` |
 | **Optional Venice Sisyphus** | `venice/deepseek-v4-pro-0813` · `venice/deepseek-v4-1-flash` | `sisyphus-venice-deepseek` / flash junior (edit allowed; not content-aware) |
 | Fast parallel | GLM 5.3 Flash · Venice DeepSeek V4.1 Flash | sisyphus-junior / quick (GLM Flash) · content-aware-fast (`venice/deepseek-v4-1-flash`) |
-| Housekeeping | `openrouter/z-ai/glm-5.3-flash` | title / summary / compaction / default `small_model` |
+| Housekeeping | `openrouter/deepseek/deepseek-v4.1-flash` | title / summary / compaction / default `small_model` |
 | Visual / writing | Gemini 3.1 Pro · 3.8 Flash | artistry / visual / writing |
 | Ceiling | `z-ai/glm-5.3` | ultrawork · unspecified-high |
 
@@ -330,7 +330,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | Key | Required | Enables |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | **yes** | GLM, OpenRouter DeepSeek, Gemini, MiniMax, Qwen, Kimi |
-| `VENICE_API_KEY` | content-aware + optional Venice Sisyphus | `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731` |
+| `VENICE_API_KEY` | content-aware + optional Venice Sisyphus | `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` |
 | `DEEPSEEK_API_KEY` | optional native Sisyphus | `sisyphus-deepseek` / `sisyphus-deepseek-junior` — not OpenRouter |
 | `EXA_API_KEY` | for websearch | OmO Exa |
 | `CONTEXT7_API_KEY` | recommended | Context7 |

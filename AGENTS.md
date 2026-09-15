@@ -21,7 +21,7 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 | Runtime | [OpenCode](https://opencode.ai) | Provider-agnostic coding agent TUI/CLI; config-as-code; LSP; MCP |
 | Orchestration | [oh-my-openagent (OmO)](https://omo.vibetip.help/docs) | Multi-model agents, categories, team mode, ultrawork, hyperplan — docs on VibeTip |
 | Model gateway | [OpenRouter](https://openrouter.ai) | General gateway — one `OPENROUTER_API_KEY` for GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi; no direct OpenAI/Anthropic |
-| Content-aware | [Venice](https://venice.ai) | `VENICE_API_KEY` + `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731` only. Never `openrouter/…` on this lane |
+| Content-aware | [Venice](https://venice.ai) | `VENICE_API_KEY` + `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` only. Never `openrouter/…` on this lane |
 | Optional native DeepSeek | [DeepSeek platform](https://platform.deepseek.com) | `DEEPSEEK_API_KEY` for `sisyphus-deepseek` / `sisyphus-deepseek-junior` only — not OpenRouter slugs |
 | Docs truth | [Context7](https://context7.com) MCP | Versioned library docs via `resolve-library-id` → `query-docs` — stop inventing APIs |
 | Web | [Exa](https://exa.ai) via OmO `websearch` | Ideal-page queries; `category:company\|people\|news…`; then webfetch |
@@ -36,7 +36,7 @@ OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is t
 
 - **Orchestration / tool loops** → GLM 5.3 (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) on tool requests; no `:exacto` / `:nitro` catalog slugs.
 - **Optional Sisyphus** → `sisyphus-deepseek` (native V4 Pro) + `sisyphus-deepseek-junior` (native Flash); `sisyphus-venice-deepseek` + `sisyphus-venice-deepseek-flash-junior`. Default lead stays GLM `sisyphus`.
-- **Fast parallel / small_model** → GLM 5.3 Flash (title, summary, compaction, sisyphus-junior, quick). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731`). Flash agent is `content-aware-fast` on V4.1 Flash. Never OpenRouter→Venice. Edit denied.
+- **Fast parallel** → GLM 5.3 Flash (sisyphus-junior, quick). **Housekeeping `small_model`** → OpenRouter DeepSeek V4.1 Flash (title, summary, compaction). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash`). Flash agent is `content-aware-fast` on V4.1 Flash. Never OpenRouter→Venice. Edit denied.
 - **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep — OpenRouter DeepSeek / GLM / MiniMax / Gemini; never Claude/GPT primaries. **Content-aware-* stays Venice only** — never `openrouter/…`.
 - **Deep implement / critique** → GLM 5.3 (Hephaestus, Oracle, Momus, ultrabrain, unspecified-high) and DeepSeek Pro 0813 (deep) — all via OpenRouter; no GPT models. Fallback: Qwen 3.8 Max · Kimi K2.7 Code for coding tasks.
 - **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.8 Flash). Auto Exacto is a host sort, not a catalog slug — do not pin `:exacto`.
