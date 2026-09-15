@@ -1297,20 +1297,20 @@ for pname in ("openrouter",):
     opts = ((oc.get("provider") or {}).get(pname) or {}).get("options") or {}
     to = opts.get("timeout")
     chunk = opts.get("chunkTimeout")
-    if to == 300000 and chunk == 60000:
-        ok("provider.%s timeout=300s chunkTimeout=60s" % pname)
+    if to == 300000 and chunk == 180000:
+        ok("provider.%s timeout=300s chunkTimeout=180s" % pname)
     else:
-        bad("provider.%s timeouts drifted (want request=300000, chunk=60000)" % pname)
+        bad("provider.%s timeouts drifted (want request=300000, chunk=180000)" % pname)
 openai_block = (oc.get("provider") or {}).get("openai")
 enabled = oc.get("enabled_providers")
 if openai_block and isinstance(enabled, list) and "openai" in enabled:
     opts = (openai_block or {}).get("options") or {}
     to = opts.get("timeout")
     chunk = opts.get("chunkTimeout")
-    if to == 300000 and chunk == 60000:
-        ok("provider.openai timeout=300s chunkTimeout=60s")
+    if to == 300000 and chunk == 180000:
+        ok("provider.openai timeout=300s chunkTimeout=180s")
     else:
-        bad("provider.openai timeouts drifted (want request=300000, chunk=60000)")
+        bad("provider.openai timeouts drifted (want request=300000, chunk=180000)")
 elif not openai_block:
     ok("provider.openai absent (OpenRouter-only)")
 PY

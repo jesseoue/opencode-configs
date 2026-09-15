@@ -136,7 +136,7 @@ TEAM_TOOLS = (
     "team_task_create", "team_task_get", "team_task_list", "team_task_update",
 )
 CORE_TOOLS = (
-    "read", "edit", "glob", "grep", "list", "task", "call_omo_agent",
+    "edit", "glob", "grep", "list", "task", "call_omo_agent",
     "skill", "skill_mcp", "todowrite", "todoread",
     "webfetch", "websearch", "question", "doom_loop", "external_directory",
     "interactive_bash", "background_output", "background_cancel", "look_at",
@@ -153,6 +153,11 @@ for t in TEAM_TOOLS + CORE_TOOLS:
     if perm.get(t) != "allow":
         perm[t] = "allow"
         changes.append(f"permission.{t} -> allow")
+# Official OpenCode default: deny .env reads (https://opencode.ai/docs/permissions)
+READ_PERM = {"*": "allow", "*.env": "deny", "*.env.*": "deny", "*.env.example": "allow"}
+if perm.get("read") != READ_PERM:
+    perm["read"] = READ_PERM
+    changes.append("permission.read -> allow with .env deny (OpenCode default)")
 # bash: allow-everything with catastrophic denies kept
 bash = perm.get("bash")
 if not isinstance(bash, dict):
@@ -240,6 +245,16 @@ if oc.get("share") != "disabled":
     oc["share"] = "disabled"; changes.append("share -> disabled (no session sharing)")
 if oc.get("autoupdate") is not False:
     oc["autoupdate"] = False; changes.append("autoupdate -> false")
+if oc.get("subagent_depth") != 1:
+    oc["subagent_depth"] = 1; changes.append("subagent_depth -> 1 (OpenCode default; no nested Task storms)")
+comp = oc.setdefault("compaction", {})
+if isinstance(comp, dict):
+    if comp.get("auto") is not True:
+        comp["auto"] = True; changes.append("compaction.auto -> true")
+    if comp.get("prune") is not True:
+        comp["prune"] = True; changes.append("compaction.prune -> true")
+    if comp.get("reserved") != 24000:
+        comp["reserved"] = 24000; changes.append("compaction.reserved -> 24000")
 if oc.get("logLevel") != "ERROR":
     oc["logLevel"] = "ERROR"; changes.append("logLevel -> ERROR (minimize sensitive runtime logs)")
 exp = oc.setdefault("experimental", {})
@@ -267,7 +282,7 @@ if isinstance(srv, dict):
 # ─── OpenRouter app attribution (OpenConfig — not generic CLI / OpenCode) ─────
 or_opts = oc.setdefault("provider", {}).setdefault("openrouter", {}).setdefault("options", {})
 if isinstance(or_opts, dict):
-    for timeout_key, timeout_value in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+    for timeout_key, timeout_value in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 180000)):
         if or_opts.get(timeout_key) != timeout_value:
             or_opts[timeout_key] = timeout_value
             changes.append(f"openrouter.options.{timeout_key} -> {timeout_value}")
@@ -283,6 +298,15 @@ if isinstance(or_opts, dict):
             if hdrs.get(hk) != hv:
                 hdrs[hk] = hv
                 changes.append(f"openrouter.headers.{hk} -> {hv} (OpenConfig attribution)")
+# Venice + native DeepSeek: same documented timeout trio
+# (https://opencode.ai/docs/config). chunkTimeout 180s — official default is 300s.
+for _pname in ("venice", "deepseek"):
+    _opts = oc.setdefault("provider", {}).setdefault(_pname, {}).setdefault("options", {})
+    if isinstance(_opts, dict):
+        for timeout_key, timeout_value in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 180000)):
+            if _opts.get(timeout_key) != timeout_value:
+                _opts[timeout_key] = timeout_value
+                changes.append(f"{_pname}.options.{timeout_key} -> {timeout_value}")
 or_models = oc.setdefault("provider", {}).setdefault("openrouter", {}).setdefault("models", {})
 if isinstance(or_models, dict):
     for model_id, model_cfg in or_models.items():

@@ -6,6 +6,7 @@
   "model": "openrouter/z-ai/glm-5.3",
   "small_model": "openrouter/deepseek/deepseek-v4.1-flash",
   "default_agent": "sisyphus",
+  "subagent_depth": 1,
   "autoupdate": false,
   "share": "disabled",
   "snapshot": false,
@@ -94,7 +95,7 @@
       "options": {
         "timeout": 300000,
         "headerTimeout": 300000,
-        "chunkTimeout": 60000,
+        "chunkTimeout": 180000,
         "setCacheKey": true,
         "headers": {
           "HTTP-Referer": "https://github.com/jesseoue/opencode-configs",
@@ -671,7 +672,10 @@
         "deepseek-v4-1-flash"
       ],
       "options": {
-        "baseURL": "https://api.venice.ai/api/v1"
+        "baseURL": "https://api.venice.ai/api/v1",
+        "timeout": 300000,
+        "headerTimeout": 300000,
+        "chunkTimeout": 180000
       },
       "models": {
         "deepseek-v4-pro-0813": {
@@ -780,7 +784,7 @@
         "baseURL": "https://api.deepseek.com",
         "timeout": 300000,
         "headerTimeout": 300000,
-        "chunkTimeout": 60000
+        "chunkTimeout": 180000
       },
       "models": {
         "deepseek-v4-pro": {
@@ -859,7 +863,12 @@
     }
   },
   "permission": {
-    "read": "allow",
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
     "glob": "allow",
     "grep": "allow",
     "list": "allow",

@@ -2,7 +2,19 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.76):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.77):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.77] — 2026-09-15
+
+### OpenCode docs tuning (config / permissions / agents)
+
+- Checked [opencode.ai/docs/config](https://opencode.ai/docs/config), [permissions](https://opencode.ai/docs/permissions), and [agents](https://opencode.ai/docs/agents) against live `opencode.json`.
+- `chunkTimeout` **60s → 180s** on OpenRouter, Venice, and native DeepSeek. Official default is 300s; 60s was aborting long GLM / DeepSeek reasoning gaps. Request / header timeouts stay 300s.
+- `subagent_depth: 1` — documented default; primary can launch subagents, those cannot nest.
+- Compaction stays documented `auto` + `prune` + `reserved` 24000 (plus existing `tail_turns` / `preserve_recent_tokens`).
+- `permission.read` matches the official `.env` deny defaults. `doom_loop` / `external_directory` stay allow for this trusted local box.
+- Built-in `plan` stays enabled — OmO hyperplan deletes `agent.plan.disable`. Built-in `build` stays disabled; default lead is still `sisyphus`.
+- `share: disabled`, `snapshot: false`, `autoupdate: false`, localhost `:4097`, `mdns: false` already matched the docs.
 
 ## [1.5.76] — 2026-09-15
 

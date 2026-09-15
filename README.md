@@ -6,9 +6,9 @@
     ╰───╯     Pinned stack for OpenCode · OpenRouter · OmO
 ```
 
-> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter general gateway, Venice content-aware lane, 13 curated OpenRouter models + 4 Venice DeepSeek slugs, deployment guards, cost-aware fallbacks — one install, zero drift.
+> **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter general gateway, Venice content-aware lane, 12 curated OpenRouter models + 3 Venice DeepSeek slugs, deployment guards, cost-aware fallbacks — one install, zero drift.
 
-**v1.5.76** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.77** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · Venice · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -25,7 +25,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.76` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
+| **Pins** | OpenConfig `1.5.77` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -131,7 +131,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.76` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.77` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.30+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -492,7 +492,8 @@ Installer pulls OpenCode from `https://opencode.ai/install` and OmO from npm `oh
 - Don’t rename the plugin away from `oh-my-openagent`
 - Don’t pin `$schema` to `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` — runtime + `oc validate` require `omo.schema.json`
 - Don’t add Cloudflare / AI Gateway / OpenAI-compatible shims
-- Don’t put `plan` in `disabled_agents` (breaks hyperplan)
+- Don’t put `plan` in `disabled_agents` or `agent.plan.disable` (breaks hyperplan)
+- Don’t drop `chunkTimeout` back to 60s — OpenCode docs default is 300s; we pin 180s so reasoning streams don’t abort
 - Don’t commit `.env`, `vault.local.json`, `package.json`, `node_modules`, `.omo`, `.sisyphus`, or `plugins/` here
 - Don’t scaffold apps into this repo — use `oc new`
 - Don’t load `.opencode/profile.json` as `OPENCODE_CONFIG`

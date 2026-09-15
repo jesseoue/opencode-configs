@@ -85,7 +85,7 @@ if oc:
         err("opencode.json: provider.openrouter.options.managementKey is not a real key. Remove it.")
     if "defaultHeaders" in popts:
         err("opencode.json: provider.openrouter.options.defaultHeaders is invalid — rename to 'headers'.")
-    for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+    for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 180000)):
         if popts.get(timeout_key) != expected:
             err(f"opencode.json: provider.openrouter.options.{timeout_key} must be {expected}.")
     import base64
@@ -121,13 +121,22 @@ if oc:
     enabled_providers = oc.get("enabled_providers")
     openai_enabled = isinstance(enabled_providers, list) and "openai" in enabled_providers
     if openai_enabled:
-        for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 60000)):
+        for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 180000)):
             if direct_opts.get(timeout_key) != expected:
                 err(f"opencode.json: provider.openai.options.{timeout_key} must be {expected}.")
     elif (oc.get("provider") or {}).get("openai"):
         err("opencode.json: provider.openai present but direct OpenAI disabled — remove block (OpenRouter-only).")
     else:
         ok("direct OpenAI provider absent (OpenRouter-only)")
+    for pname in ("venice", "deepseek"):
+        popts_p = ((oc.get("provider") or {}).get(pname) or {}).get("options") or {}
+        timeout_ok = True
+        for timeout_key, expected in (("timeout", 300000), ("headerTimeout", 300000), ("chunkTimeout", 180000)):
+            if popts_p.get(timeout_key) != expected:
+                err(f"opencode.json: provider.{pname}.options.{timeout_key} must be {expected}.")
+                timeout_ok = False
+        if timeout_ok:
+            ok(f"provider.{pname} timeout=300s chunkTimeout=180s")
     tool_output = oc.get("tool_output") or {}
     if tool_output.get("max_lines") != 200 or tool_output.get("max_bytes") != 8000:
         err("opencode.json: tool_output must be 200 lines / 8000 bytes.")
@@ -275,6 +284,26 @@ if oc:
     for t in ("task", "edit", "external_directory", "doom_loop", "question", "call_omo_agent"):
         if perm.get(t) != "allow":
             err(f"permission.{t} must be allow (got {perm.get(t)!r})")
+    read_perm = perm.get("read")
+    if not (
+        isinstance(read_perm, dict)
+        and read_perm.get("*") == "allow"
+        and read_perm.get("*.env") == "deny"
+        and read_perm.get("*.env.*") == "deny"
+        and read_perm.get("*.env.example") == "allow"
+    ):
+        err("permission.read must allow * and deny .env / .env.* (OpenCode default). Run: oc fix")
+    else:
+        ok("permission.read denies .env (OpenCode docs default)")
+    if oc.get("subagent_depth") != 1:
+        err("opencode.json: subagent_depth must be 1 (OpenCode default; no nested Task storms).")
+    else:
+        ok("subagent_depth = 1")
+    compaction = oc.get("compaction") or {}
+    if compaction.get("auto") is not True or compaction.get("prune") is not True or compaction.get("reserved") != 24000:
+        err("opencode.json: compaction must be auto+prune with reserved 24000 (docs: auto/prune/reserved).")
+    else:
+        ok("compaction auto/prune/reserved=24000")
     bash = perm.get("bash")
     if not (isinstance(bash, dict) and bash.get("*") == "allow"):
         err("permission.bash['*'] must be allow (allow-everything mode)")
