@@ -203,14 +203,17 @@ bt=omo.get("background_task") or {}
 pc=bt.get("providerConcurrency") or {}
 mc=bt.get("modelConcurrency") or {}
 ok=(bt.get("defaultConcurrency")==10
-    and pc.get("openrouter")==12 and "openai" not in pc and "anthropic" not in pc
+    and pc.get("openrouter")==12 and pc.get("venice")==6 and pc.get("deepseek")==6
+    and "openai" not in pc and "anthropic" not in pc
     and mc.get("openrouter/deepseek/deepseek-v4-pro-0813")==8
     and mc.get("openrouter/deepseek/deepseek-v4.1-flash")==5
     and mc.get("venice/deepseek-v4-pro-0813")==5
-    and mc.get("venice/deepseek-v4-1-flash")==5)
+    and mc.get("venice/deepseek-v4-1-flash")==5
+    and mc.get("deepseek/deepseek-v4-pro")==4
+    and mc.get("deepseek/deepseek-flash")==6)
 sys.exit(0 if ok else 1)
 ' "$REPO/oh-my-openagent.json"; then
-  ok "fast concurrency pins (default=10 openrouter=12 DeepSeek Pro=8 Venice=5)"
+  ok "fast concurrency pins (default=10 openrouter=12 venice=6 deepseek=6)"
 else
   bad "concurrency drift — run: oc fix"
 fi

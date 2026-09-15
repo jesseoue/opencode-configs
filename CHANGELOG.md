@@ -2,7 +2,17 @@
 
 All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented here.
 
-**Current routing (1.5.74):** OpenRouter is the general gateway (GLM 5.3 / Flash, DeepSeek V4 Pro 0813 / V4.1 Flash / Flash 0731, Gemini 3.1 Pro / 3.8 Flash, MiniMax M3, Qwen 3.8 Max-0902, Kimi K2.7 Code, Laguna, LongCat; Hermes 4 405B is catalog-only). Content-aware is **Venice only** — `venice/deepseek-v4-pro-0813` (research + deep), flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`, fallbacks `-pro` / `-flash-0731`. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+**Current routing (1.5.75):** OpenRouter is the default gateway (GLM 5.3 / Flash + curated models). Tool loops use **Auto Exacto** (not `:exacto` / `:nitro` catalog slugs). Optional Sisyphus leads: native DeepSeek (`sisyphus-deepseek` / `sisyphus-deepseek-junior`) and Venice DeepSeek (`sisyphus-venice-deepseek` / `sisyphus-venice-deepseek-flash-junior`). Content-aware stays **Venice only**. Older bullets that mention Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
+
+## [1.5.75] — 2026-09-14
+
+### Optional Sisyphus lanes + documented concurrency
+
+- **Default lead stays** `sisyphus` on OpenRouter GLM 5.3. Tool-calling traffic uses [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) (quality-first host order). Do **not** pin `:exacto` or `:nitro` catalog slugs — they are virtual request suffixes, not `/api/v1/models` ids. `:nitro` ([throughput sort](https://openrouter.ai/docs/guides/routing/provider-selection)) is the speed shortcut; coding reliability wins for the main path.
+- **Native DeepSeek** (`DEEPSEEK_API_KEY`): `sisyphus-deepseek` → `deepseek/deepseek-v4-pro`; `sisyphus-deepseek-junior` → `deepseek/deepseek-flash`. Caps stay well under platform concurrency (Pro 500 / Flash 2500 per [DeepSeek rate limits](https://api-docs.deepseek.com/quick_start/rate_limit)): provider **6**, Pro **4**, Flash **6**.
+- **Venice Sisyphus** (`VENICE_API_KEY`): `sisyphus-venice-deepseek` → `venice/deepseek-v4-pro-0813`; `sisyphus-venice-deepseek-flash-junior` → `venice/deepseek-v4-1-flash`. Distinct from edit-denied `content-aware-*`. Venice limits are per-key ([rate_limits endpoint](https://docs.venice.ai/api-reference/endpoint/api_keys/rate_limits)); provider **6**, models **5**.
+- **`enabled_providers`**: `openrouter` + `venice` + `deepseek`. `providerConcurrency` is no longer OpenRouter-only.
+- Docs/doctor/validate/fix/smoke/cleanup track the four new agents. Keys stay env-var names only — never commit `.env`.
 
 ## [1.5.74] — 2026-09-10
 

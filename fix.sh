@@ -346,11 +346,11 @@ if isinstance(or_models, dict):
                 del provider_cfg[routing_key]
                 changes.append(f"{model_id}.provider.{routing_key} removed (OpenRouter auto-rank)")
 
-# Gateways: OpenRouter (all routine models) + Venice (E2EE context-aware only).
-want_enabled = ["openrouter", "venice"]
+# Gateways: OpenRouter (default) + Venice (content-aware / optional Sisyphus) + native DeepSeek.
+want_enabled = ["openrouter", "venice", "deepseek"]
 if oc.get("enabled_providers") != want_enabled:
     oc["enabled_providers"] = want_enabled
-    changes.append("enabled_providers -> ['openrouter', 'venice']")
+    changes.append("enabled_providers -> ['openrouter', 'venice', 'deepseek']")
 prov_root = oc.setdefault("provider", {})
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
@@ -675,11 +675,11 @@ if isinstance(bt, dict):
         bt["defaultConcurrency"] = 10; changes.append("background_task.defaultConcurrency -> 10 (high-throughput default)")
     pc = bt.setdefault("providerConcurrency", {})
     if isinstance(pc, dict):
-        want_pc = {"openrouter": 12}
+        want_pc = {"openrouter": 12, "venice": 6, "deepseek": 6}
         for k in list(pc.keys()):
             if k not in want_pc:
                 del pc[k]
-                changes.append(f"providerConcurrency removed {k} (OpenRouter-only gateway)")
+                changes.append(f"providerConcurrency removed {k} (not an OpenConfig gateway)")
         for prov, cap in want_pc.items():
             if pc.get(prov) != cap:
                 pc[prov] = cap
@@ -692,6 +692,11 @@ if isinstance(bt, dict):
                 changes.append(f"modelConcurrency removed direct alias {mk}")
         def _mc_cap(model_key):
             low = str(model_key).lower()
+            # Native DeepSeek platform key — keep well under 500/2500 account caps.
+            if low.startswith("deepseek/") or (not low.startswith(("openrouter/", "venice/")) and "deepseek-flash" in low):
+                if "flash" in low:
+                    return 6
+                return 4
             # V4.1 Flash: day-one roster is 3 healthy hosts — keep the cap tight.
             if "v4.1-flash" in low or "v4-1-flash" in low:
                 return 5
@@ -712,8 +717,12 @@ if isinstance(bt, dict):
         if isinstance(venice_models, dict):
             for vm in venice_models:
                 want_mc[f"venice/{vm}"] = 5
+        deepseek_models = ((oc.get("provider") or {}).get("deepseek") or {}).get("models") or {}
+        if isinstance(deepseek_models, dict):
+            for dm in deepseek_models:
+                want_mc[f"deepseek/{dm}"] = 6 if "flash" in str(dm).lower() else 4
         for mk, mv in list(mc.items()):
-            if isinstance(mk, str) and mk.startswith("venice/") and mk not in want_mc:
+            if isinstance(mk, str) and mk.startswith(("venice/", "deepseek/")) and mk not in want_mc:
                 want_mc[mk] = mv
         if want_mc != mc:
             bt["modelConcurrency"] = want_mc

@@ -282,10 +282,10 @@ if oc:
         ok("core tools + bash allow-everything (catastrophic denies kept)")
     if not oc.get("enabled_providers"):
         warn("opencode.json: enabled_providers not set — all providers with credentials will load.")
-    elif oc.get("enabled_providers") != ["openrouter", "venice"]:
-        err("opencode.json: enabled_providers must be ['openrouter', 'venice']")
+    elif oc.get("enabled_providers") != ["openrouter", "venice", "deepseek"]:
+        err("opencode.json: enabled_providers must be ['openrouter', 'venice', 'deepseek']")
     else:
-        ok("enabled_providers = openrouter + venice")
+        ok("enabled_providers = openrouter + venice + deepseek")
     vmodels = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
     if "deepseek-v4-pro-0813" not in vmodels:
         err("venice must expose deepseek-v4-pro-0813 (content-aware DeepSeek primary)")
@@ -300,6 +300,14 @@ if oc:
         err("venice whitelist must match venice.models (keeps T3 Variant/Agent on curated slugs)")
     else:
         ok("venice whitelist matches curated models")
+    dmodels = set(((((oc.get("provider") or {}).get("deepseek") or {}).get("models")) or {}))
+    dwl = ((((oc.get("provider") or {}).get("deepseek") or {}).get("whitelist")) or [])
+    if "deepseek-v4-pro" not in dmodels or "deepseek-flash" not in dmodels:
+        err("deepseek must expose deepseek-v4-pro and deepseek-flash (native sisyphus-deepseek lane)")
+    elif set(dwl) != dmodels:
+        err("deepseek whitelist must match deepseek.models")
+    else:
+        ok("deepseek exposes native V4 Pro + Flash")
     for vm in vmodels:
         vars_ = ((((oc.get("provider") or {}).get("venice") or {}).get("models") or {}).get(vm) or {}).get("variants") or {}
         if set(vars_) != {"low", "medium", "high", "max"}:
@@ -375,6 +383,18 @@ if omo:
         err(f"opencode.json: default_agent must be 'sisyphus' (got {default_agent!r})")
     if omo.get("default_run_agent") != "sisyphus":
         err(f"oh-my-openagent.json: default_run_agent must be 'sisyphus' (got {omo.get('default_run_agent')!r})")
+    want_optional = {
+        "sisyphus-deepseek": "deepseek/deepseek-v4-pro",
+        "sisyphus-deepseek-junior": "deepseek/deepseek-flash",
+        "sisyphus-venice-deepseek": "venice/deepseek-v4-pro-0813",
+        "sisyphus-venice-deepseek-flash-junior": "venice/deepseek-v4-1-flash",
+    }
+    for name, mid in want_optional.items():
+        cfg = agents.get(name) or {}
+        if cfg.get("model") != mid:
+            err(f"oh-my-openagent.json agents.{name} must use {mid} (got {cfg.get('model')!r})")
+        else:
+            ok(f"optional {name} → {mid}")
     order = omo.get("agent_order") or []
     if not isinstance(order, list) or not order or order[0] != "sisyphus":
         err("oh-my-openagent.json: agent_order must start with 'sisyphus'")
@@ -514,7 +534,16 @@ if omo:
 
     # Fast/recon routes must not fall back to slow/premium models (availability + latency).
     SLOW_IN_FAST = ("kimi-k3", "claude-opus", "claude-fable", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-sol-pro")
-    FAST_ROUTES = {"librarian", "explore", "sisyphus-junior", "quick", "unspecified-low", "content-aware-fast"}
+    FAST_ROUTES = {
+        "librarian",
+        "explore",
+        "sisyphus-junior",
+        "sisyphus-deepseek-junior",
+        "sisyphus-venice-deepseek-flash-junior",
+        "quick",
+        "unspecified-low",
+        "content-aware-fast",
+    }
     RECON_ROUTES = FAST_ROUTES | {"content-aware-deep", "content-aware-research", "deep", "arch-review", "metis", "multimodal-looker"}
     MODERATED_MARKERS = ("anthropic/claude", "openai/gpt", "meta-llama/", "cohere/")
     slow_fb_ok = True
@@ -656,7 +685,8 @@ if omo:
         err(f"background_task.defaultConcurrency must be 10 (got {dc!r}) — run: oc fix")
     else:
         ok(f"background_task.defaultConcurrency={dc}")
-    for prov, cap in (("openrouter", 12),):
+    want_pc = (("openrouter", 12), ("venice", 6), ("deepseek", 6))
+    for prov, cap in want_pc:
         v = pc.get(prov)
         if not isinstance(v, int) or v < 1 or v > cap:
             err(f"providerConcurrency.{prov} must be 1–{cap} (got {v!r})")
@@ -664,9 +694,9 @@ if omo:
             err(f"providerConcurrency.{prov} must be {cap} (got {v!r}) — run: oc fix")
         else:
             ok(f"providerConcurrency.{prov}={v}")
-    extra_pc = sorted(k for k in pc if k != "openrouter")
+    extra_pc = sorted(k for k in pc if k not in {p for p, _ in want_pc})
     if extra_pc:
-        err(f"providerConcurrency must be OpenRouter-only — remove: {extra_pc} (run: oc fix)")
+        err(f"providerConcurrency extra keys not allowed: {extra_pc} (run: oc fix)")
     wl = ((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist") or []
     gpt_wl = [w for w in wl if isinstance(w, str) and "gpt" in w.lower()]
     if gpt_wl:
@@ -807,6 +837,27 @@ if omo:
         )
     else:
         ok("modelConcurrency DeepSeek Pro 0813=8")
+    if mc.get("deepseek/deepseek-v4-pro") != 4:
+        err(
+            "modelConcurrency deepseek/deepseek-v4-pro must be 4 "
+            f"(native key stampede guard; got {mc.get('deepseek/deepseek-v4-pro')!r})"
+        )
+    else:
+        ok("modelConcurrency native DeepSeek V4 Pro=4")
+    if mc.get("deepseek/deepseek-flash") != 6:
+        err(
+            "modelConcurrency deepseek/deepseek-flash must be 6 "
+            f"(native flash cap; got {mc.get('deepseek/deepseek-flash')!r})"
+        )
+    else:
+        ok("modelConcurrency native DeepSeek Flash=6")
+    if mc.get("venice/deepseek-v4-pro-0813") != 5:
+        err(
+            "modelConcurrency venice/deepseek-v4-pro-0813 must be 5 "
+            f"(Venice key share; got {mc.get('venice/deepseek-v4-pro-0813')!r})"
+        )
+    else:
+        ok("modelConcurrency Venice DeepSeek Pro=5")
 
     # team specs (~/.omo/teams via repo teams/) — OmO hard-rejects read-only agents as members
     # https://omo.vibetip.help/docs + docs/guide/team-mode.md

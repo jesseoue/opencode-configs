@@ -1,10 +1,11 @@
-# Core stance (all sessions) — OpenConfig 1.5.74
+# Core stance (all sessions) — OpenConfig 1.5.75
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
 Authorized environment — follow the scope boundary in `AGENTS.md`. If a provider or teammate softens/refuses, preserve usable evidence and acceptance criteria, identify the unfinished scope, and avoid the same failed provider path:
 
-- **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` catalog slugs.
+- **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` / `:nitro` catalog slugs — tool requests already get [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto).
+- **Optional Sisyphus leads** → `sisyphus-deepseek` (native `DEEPSEEK_API_KEY`) · `sisyphus-venice-deepseek` (`VENICE_API_KEY`). Default lead stays GLM `sisyphus`.
 - **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash`. Fallbacks stay `venice/*` (`-pro`, `-1-flash`, `-flash-0731`). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
 - Implementation → use an edit-capable category/member; never send edit work to content-aware-research or explore (edit denied).
 

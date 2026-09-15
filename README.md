@@ -8,7 +8,7 @@
 
 > **Pinned, hardened config-as-code stack for [OpenCode](https://opencode.ai) + [OpenRouter](https://openrouter.ai) + [oh-my-openagent (OmO)](https://omo.vibetip.help/docs).** OpenRouter general gateway, Venice content-aware lane, 13 curated OpenRouter models + 4 Venice DeepSeek slugs, deployment guards, cost-aware fallbacks — one install, zero drift.
 
-**v1.5.74** · CLI **`oc`** · identity `jesseoue/opencode-configs`
+**v1.5.75** · CLI **`oc`** · identity `jesseoue/opencode-configs`
 
 **Keywords:** OpenCode config · OpenRouter gateway · Venice · oh-my-openagent · AI agent config · LLM model routing · multi-agent coding · DeepSeek · Gemini · GLM · Qwen · Kimi · circuit breaker · cost-aware fallback · deployment protection · content-aware research
 
@@ -25,7 +25,7 @@ source ~/.zshrc && oc doctor && oc launch
 
 | | |
 | --- | --- |
-| **Pins** | OpenConfig `1.5.74` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
+| **Pins** | OpenConfig `1.5.75` · OpenCode `1.18.30+` · OmO `oh-my-openagent@4.19.4` · `@opencode-ai/plugin` `1.18.30` |
 | **Default lead** | `sisyphus` (GLM 5.3) |
 | **Config path** | `~/.config/opencode` → this repo (symlink) |
 | **Projects home** | `oc new` → `~/Projects/<name>` |
@@ -47,13 +47,14 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 | **OpenRouter general gateway** | GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi via one `OPENROUTER_API_KEY` — no direct OpenAI/Anthropic/Google keys |
 | **13 curated OpenRouter models** | DeepSeek V4 Pro 0813 / V4.1 Flash / Flash 0731 · GLM 5.3 / GLM 5.3 Flash · Gemini 3.1 Pro / 3.8 Flash · Qwen 3.8 Max-0902 · Kimi K2.7 Code · MiniMax M3 · Hermes 4 405B (catalog-only) · Laguna S 2.1 · LongCat 2.0 |
 | **Venice content-aware lane** | `content-aware-research` / `-deep` on `venice/deepseek-v4-pro-0813`; flash agent `content-aware-fast` on `venice/deepseek-v4-1-flash`; fallbacks `-pro` / `-flash-0731`. Edit denied on research. Never `openrouter/…` here |
+| **Optional Sisyphus leads** | Native DeepSeek (`sisyphus-deepseek` / `-junior`) via `DEEPSEEK_API_KEY`; Venice DeepSeek (`sisyphus-venice-deepseek` / `-flash-junior`) via `VENICE_API_KEY`. Default lead stays GLM `sisyphus` |
 | **Cost-aware fallbacks** | `runtime_fallback` with per-request budget caps, budget-pressure degradation, and credit thresholds |
 | **Circuit breaker** | Consecutive-failure trip, half-open retries, cooldown, notify-on-trip — protects against provider outages |
 | **Deployment guards** | `oc deploy check` gates on credits, model health, rate limits, git cleanliness, and signature before you ship |
 | **Quarantine mode** | `oc deploy quarantine` auto-swaps to cheaper models when credits run low; one command to restore |
 | **Multi-agent teams** | Sisyphus / Hephaestus / Prometheus / Atlas / content-aware-research + 7 team specs (tmux panes) |
 | **T3 Code pin** | [`t3-opencode.json`](./t3-opencode.json) — OpenCode serve `127.0.0.1:4097`, same curated slugs, no keys |
-| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (113 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
+| **Config-as-code hygiene** | Deny-all `.gitignore`, signature fingerprinting, `oc validate` (137 checks), `oc fix` self-repair, smoke via `oc test`, hermetic GitHub Actions (`.github/workflows/check.yml`) |
 | **Privacy by default** | Telemetry off everywhere, `.env` never committed, allowlist-only env sync, no host paths in source |
 
 ---
@@ -61,8 +62,9 @@ Decision log: [`AGENTS.md`](./AGENTS.md) · Stance: [`prompts/core.md`](./prompt
 ## Install
 
 ```bash
-export OPENROUTER_API_KEY=…     # required — GLM / DeepSeek / Gemini / Qwen / Kimi via OpenRouter
-export VENICE_API_KEY=…         # content-aware lane only (venice/deepseek-v4-*)
+export OPENROUTER_API_KEY=…     # required — GLM / OpenRouter DeepSeek / Gemini / Qwen / Kimi
+export VENICE_API_KEY=…         # content-aware + optional Venice Sisyphus (venice/deepseek-v4-*)
+export DEEPSEEK_API_KEY=…       # optional — native sisyphus-deepseek / junior (not OpenRouter)
 export EXA_API_KEY=…            # OmO websearch
 export CONTEXT7_API_KEY=…       # library docs
 
@@ -128,7 +130,7 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 
 | Package | Source of truth | Current |
 | --- | --- | --- |
-| OpenConfig | `versions.json` → `opencode_configs` | `1.5.74` |
+| OpenConfig | `versions.json` → `opencode_configs` | `1.5.75` |
 | OpenCode CLI | install + `versions.json` → `opencode.min` | `1.18.30+` |
 | OmO | `opencode.json` plugin + `versions.json` → `oh_my_openagent.pin` | `4.19.4` |
 | `@opencode-ai/plugin` | `~/.opencode/package.json` (peer; not in this repo) | match CLI |
@@ -193,6 +195,8 @@ oc cursor probe     # tiny live call through /api/v1/cursor
 | Agent | Model | Role |
 | --- | --- | --- |
 | **sisyphus** | GLM 5.3 | Default orchestrator / lead |
+| **sisyphus-deepseek** | Native DeepSeek V4 Pro | Optional lead (`DEEPSEEK_API_KEY`) |
+| **sisyphus-venice-deepseek** | Venice DeepSeek V4 Pro 0813 | Optional lead (`VENICE_API_KEY`) |
 | **hephaestus** | GLM 5.3 | Implementation |
 | **prometheus** | GLM 5.3 | Planner |
 | **atlas** | GLM 5.3 | Plan executor after `/start-work` |
@@ -209,7 +213,9 @@ oc cursor probe     # tiny live call through /api/v1/cursor
 | multimodal-looker | Gemini 3.1 Pro | Vision (`look_at`, unmoderated) |
 | metis | GLM 5.3 | Pre-planning critic (unmoderated) |
 | momus | GLM 5.3 max | Plan / review gate |
-| sisyphus-junior | GLM 5.3 Flash | Cheap delegated work |
+| sisyphus-junior | GLM 5.3 Flash | Cheap delegated work (team-eligible) |
+| sisyphus-deepseek-junior | Native DeepSeek Flash | Lane-only child of `sisyphus-deepseek` |
+| sisyphus-venice-deepseek-flash-junior | Venice DeepSeek V4.1 Flash | Lane-only child of `sisyphus-venice-deepseek` |
 
 Native OpenCode `build` is disabled. `plan` stays demoted for hyperplan handoff — do **not** put it in `disabled_agents`.
 
@@ -267,6 +273,20 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 ---
 
+## Agent matrix
+
+| Agent | Role | Provider / model | Key |
+| --- | --- | --- | --- |
+| `sisyphus` | **Default lead** | OpenRouter `z-ai/glm-5.3` | `OPENROUTER_API_KEY` |
+| `sisyphus-junior` | Team-eligible fast child | OpenRouter `z-ai/glm-5.3-flash` | `OPENROUTER_API_KEY` |
+| `sisyphus-deepseek` | Optional lead | Native `deepseek/deepseek-v4-pro` | `DEEPSEEK_API_KEY` |
+| `sisyphus-deepseek-junior` | Lane-only fast child | Native `deepseek/deepseek-flash` | `DEEPSEEK_API_KEY` |
+| `sisyphus-venice-deepseek` | Optional lead | Venice `deepseek-v4-pro-0813` | `VENICE_API_KEY` |
+| `sisyphus-venice-deepseek-flash-junior` | Lane-only fast child | Venice `deepseek-v4-1-flash` | `VENICE_API_KEY` |
+| `content-aware-research` / `-fast` / `-deep` | Edit-denied research | Venice DeepSeek only | `VENICE_API_KEY` |
+
+Hephaestus, Prometheus, Atlas, and the consult subagents stay on OpenRouter. Invoke optional Sisyphus leads explicitly — they do not replace GLM `sisyphus`.
+
 ## Model routing
 
 | Lane | Models | Used for |
@@ -276,6 +296,8 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 | Deep fallback | Qwen 3.8 Max · Kimi K2.7 Code | hephaestus / oracle / deep / bug-hunt / refactor-safe / sisyphus |
 | **Recon (unmoderated)** | DeepSeek V4 Pro 0813 · GLM 5.3 · MiniMax M3 | explore / librarian / deep (Pro 0813) · metis / arch-review (GLM) · multimodal-looker (Gemini) |
 | **Content-aware** | Venice DeepSeek V4 Pro 0813 / Pro / V4.1 Flash / Flash 0731 | `venice/*` only — never OpenRouter on this lane |
+| **Optional native Sisyphus** | `deepseek/deepseek-v4-pro` · `deepseek/deepseek-flash` | `sisyphus-deepseek` / `sisyphus-deepseek-junior` |
+| **Optional Venice Sisyphus** | `venice/deepseek-v4-pro-0813` · `venice/deepseek-v4-1-flash` | `sisyphus-venice-deepseek` / flash junior (edit allowed; not content-aware) |
 | Fast parallel | GLM 5.3 Flash · Venice DeepSeek V4.1 Flash | sisyphus-junior / quick (GLM Flash) · content-aware-fast (`venice/deepseek-v4-1-flash`) |
 | Housekeeping | `openrouter/z-ai/glm-5.3-flash` | title / summary / compaction / default `small_model` |
 | Visual / writing | Gemini 3.1 Pro · 3.8 Flash | artistry / visual / writing |
@@ -283,17 +305,21 @@ Knobs: `max_parallel_members=4` · `max_members=5` · mailbox poll `1000ms` · t
 
 Recon routes never use Claude/GPT primaries or fallbacks — `oc validate` and `oc fix` enforce this. Check moderation policy: `oc models --moderation`; live probes: `oc models --probe`.
 
-OpenRouter serves every **non-content-aware** lane. Content-aware stays on the Venice API (`venice/deepseek-v4-*`). OpenRouter DeepSeek and MiniMax pin live-verified unmoderated fp8/full-precision hosts (`provider.only` — no fp4, no moderating proxies); GLM 5.3 stays unpinned so Auto Exacto can pick among live hosts (`require_parameters: true`). Auto Exacto is a host sort, not a catalog slug — do not pin `:exacto`. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
+OpenRouter is the **main** gateway. GLM 5.3 stays unpinned (`require_parameters: true`) so [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) can pick among live tool-calling hosts. **Do not ship `:exacto` or `:nitro` as catalog / whitelist ids** — they are virtual request suffixes ([provider selection](https://openrouter.ai/docs/guides/routing/provider-selection), [Exacto](https://openrouter.ai/docs/guides/routing/model-variants/exacto), [Nitro](https://openrouter.ai/docs/guides/routing/model-variants/nitro)). Auto Exacto (quality-first) is the right default for coding; `:nitro` is throughput + priority tier and would trade reliability for speed. Content-aware and Venice Sisyphus stay on the Venice API (`venice/deepseek-v4-*`). Native Sisyphus stays on `https://api.deepseek.com`. Transient-only fallback retries capped at three. Request / stalled-chunk timeouts: **300s / 60s**.
 
 ### Concurrency
 
 Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`. `oc heal` / `fix.sh` re-apply caps if they drift.
 
+| Provider | Acceleration | `providerConcurrency` | Model caps | Docs |
+| --- | --- | --- | --- | --- |
+| OpenRouter | **Auto Exacto** (tool requests); no `:nitro` / `:exacto` slugs | **12** | GLM / Flash / OpenRouter DeepSeek Pro 0813 / Hermes **8 / 10 / 8 / 2** | [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) · [provider selection](https://openrouter.ai/docs/guides/routing/provider-selection) |
+| Venice | neither (direct API) | **6** | all Venice DeepSeek slugs **5** | [per-key rate_limits](https://docs.venice.ai/api-reference/endpoint/api_keys/rate_limits) |
+| DeepSeek native | neither (direct API) | **6** | V4 Pro **4** · Flash **6** (platform allows 500 / 2500) | [DeepSeek concurrency](https://api-docs.deepseek.com/quick_start/rate_limit) |
+
 | Knob | Value |
 | --- | --- |
 | `background_task.defaultConcurrency` | **10** |
-| OpenRouter provider concurrency | **12** (OpenRouter gateway) |
-| Flash / GLM / DeepSeek Pro 0813 / Venice / Hermes | **10 / 8 / 8 / 5 / 2** |
 | Team parallel / max members | **4 / 5** |
 | Goal / stale / TTL | **off / 180s / 30m** |
 
@@ -303,8 +329,9 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 
 | Key | Required | Enables |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | **yes** | GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi via OpenRouter |
-| `VENICE_API_KEY` | content-aware lane | `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731` |
+| `OPENROUTER_API_KEY` | **yes** | GLM, OpenRouter DeepSeek, Gemini, MiniMax, Qwen, Kimi |
+| `VENICE_API_KEY` | content-aware + optional Venice Sisyphus | `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` / `-flash-0731` |
+| `DEEPSEEK_API_KEY` | optional native Sisyphus | `sisyphus-deepseek` / `sisyphus-deepseek-junior` — not OpenRouter |
 | `EXA_API_KEY` | for websearch | OmO Exa |
 | `CONTEXT7_API_KEY` | recommended | Context7 |
 | `OPENROUTER_MGMT_KEY` | optional | `oc admin` |
@@ -355,6 +382,7 @@ Every OmO agent/category loads a `prompt_append` from `prompts/`. Profiles under
 | `prompts/profiles/*.md` | Profile briefs |
 | `agents/content-aware-research.md` | OpenCode primary-agent def (synced with prompts) |
 | `agents/content-aware-fast.md` | OpenCode flash-agent def (Venice V4.1 Flash) |
+| `agents/sisyphus*.md` | OpenCode defs for GLM + optional native/Venice Sisyphus |
 
 ---
 

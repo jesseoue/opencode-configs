@@ -12,6 +12,8 @@
     "hephaestus",
     "prometheus",
     "atlas",
+    "sisyphus-deepseek",
+    "sisyphus-venice-deepseek",
     "content-aware-research",
     "content-aware-fast"
   ],
@@ -181,6 +183,72 @@
         "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
+    "sisyphus-deepseek": {
+      "mode": "primary",
+      "name": "Sisyphus DeepSeek",
+      "ultrawork": {
+        "model": "deepseek/deepseek-v4-pro",
+        "variant": "max"
+      },
+      "temperature": 0.25,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-deepseek.md",
+      "color": "#4D7CFF",
+      "description": "Optional Sisyphus lead on native DeepSeek V4 Pro (not OpenRouter, not Venice)",
+      "maxTokens": 8192,
+      "model": "deepseek/deepseek-v4-pro",
+      "reasoning": "low",
+      "fallback_models": [
+        "deepseek/deepseek-flash"
+      ]
+    },
+    "sisyphus-deepseek-junior": {
+      "mode": "subagent",
+      "name": "Sisyphus DeepSeek Junior",
+      "temperature": 0.2,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-deepseek-junior.md",
+      "color": "#8AA8FF",
+      "description": "Fast child of sisyphus-deepseek on native DeepSeek V4.1 Flash",
+      "maxTokens": 8192,
+      "model": "deepseek/deepseek-flash",
+      "reasoning": "low",
+      "fallback_models": [
+        "deepseek/deepseek-v4-pro"
+      ]
+    },
+    "sisyphus-venice-deepseek": {
+      "mode": "primary",
+      "name": "Sisyphus Venice DeepSeek",
+      "ultrawork": {
+        "model": "venice/deepseek-v4-pro-0813",
+        "variant": "max"
+      },
+      "temperature": 0.25,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-venice-deepseek.md",
+      "color": "#C2185B",
+      "description": "Optional Sisyphus lead on Venice DeepSeek V4 Pro (coding/context; not default)",
+      "maxTokens": 8192,
+      "model": "venice/deepseek-v4-pro-0813",
+      "reasoning": "low",
+      "fallback_models": [
+        "venice/deepseek-v4-pro",
+        "venice/deepseek-v4-1-flash"
+      ]
+    },
+    "sisyphus-venice-deepseek-flash-junior": {
+      "mode": "subagent",
+      "name": "Sisyphus Venice DeepSeek Flash Junior",
+      "temperature": 0.2,
+      "prompt_append": "file://~/.config/opencode/prompts/agents/sisyphus-venice-deepseek-flash-junior.md",
+      "color": "#F06292",
+      "description": "Fast child of sisyphus-venice-deepseek on Venice DeepSeek V4.1 Flash",
+      "maxTokens": 8192,
+      "model": "venice/deepseek-v4-1-flash",
+      "reasoning": "low",
+      "fallback_models": [
+        "venice/deepseek-v4-flash-0731",
+        "venice/deepseek-v4-pro-0813"
+      ]
+    },
     "content-aware-research": {
       "mode": "primary",
       "name": "Content-aware research",
@@ -193,7 +261,7 @@
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-research.md",
       "color": "#FF1744",
-      "description": "Content-aware research \u2014 full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills.",
+      "description": "Content-aware research — full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills.",
       "maxTokens": 16384,
       "model": "venice/deepseek-v4-pro-0813",
       "reasoning": "high",
@@ -316,7 +384,7 @@
       ]
     },
     "bug-hunt": {
-      "description": "Reproduce \u2192 root cause \u2192 minimal fix \u2192 verify. Cite file:line.",
+      "description": "Reproduce → root cause → minimal fix → verify. Cite file:line.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/bug-hunt.md",
       "maxTokens": 8192,
       "model": "openrouter/z-ai/glm-5.3",
@@ -377,7 +445,9 @@
   "background_task": {
     "defaultConcurrency": 10,
     "providerConcurrency": {
-      "openrouter": 12
+      "openrouter": 12,
+      "venice": 6,
+      "deepseek": 6
     },
     "modelConcurrency": {
       "openrouter/z-ai/glm-5.3": 8,
@@ -396,7 +466,9 @@
       "venice/deepseek-v4-pro-0813": 5,
       "venice/deepseek-v4-pro": 5,
       "venice/deepseek-v4-1-flash": 5,
-      "venice/deepseek-v4-flash-0731": 5
+      "venice/deepseek-v4-flash-0731": 5,
+      "deepseek/deepseek-v4-pro": 4,
+      "deepseek/deepseek-flash": 6
     },
     "maxDepth": 2,
     "staleTimeoutMs": 180000,

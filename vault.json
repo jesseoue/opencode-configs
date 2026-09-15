@@ -8,6 +8,7 @@
     "refs": {
       "OPENROUTER_API_KEY": "op://Vault/OpenRouter/credential",
       "VENICE_API_KEY": "op://Vault/Venice/credential",
+      "DEEPSEEK_API_KEY": "op://Vault/DeepSeek/credential",
       "EXA_API_KEY": "op://Vault/Exa/credential",
       "CONTEXT7_API_KEY": "op://Vault/Context7/credential"
     }

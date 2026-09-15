@@ -61,6 +61,10 @@ REQUIRED=(
   prompts/agents/sisyphus.md prompts/agents/hephaestus.md prompts/agents/prometheus.md prompts/agents/atlas.md
   prompts/agents/oracle.md prompts/agents/librarian.md prompts/agents/explore.md prompts/agents/multimodal-looker.md
   prompts/agents/metis.md prompts/agents/momus.md prompts/agents/sisyphus-junior.md
+  prompts/agents/sisyphus-deepseek.md prompts/agents/sisyphus-deepseek-junior.md
+  prompts/agents/sisyphus-venice-deepseek.md prompts/agents/sisyphus-venice-deepseek-flash-junior.md
+  agents/sisyphus-deepseek.md agents/sisyphus-deepseek-junior.md
+  agents/sisyphus-venice-deepseek.md agents/sisyphus-venice-deepseek-flash-junior.md
   prompts/categories/content-aware-fast.md prompts/categories/content-aware-deep.md prompts/categories/bug-hunt.md
   prompts/categories/refactor-safe.md prompts/categories/arch-review.md
   prompts/categories/visual-engineering.md prompts/categories/ultrabrain.md prompts/categories/deep.md

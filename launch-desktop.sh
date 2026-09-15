@@ -13,7 +13,7 @@ oc_telemetry_off
 oc_export_env_file "$REPO/.env"
 oc_export_vault_allowlist
 
-for KEY in OPENROUTER_API_KEY VENICE_API_KEY EXA_API_KEY CONTEXT7_API_KEY; do
+for KEY in OPENROUTER_API_KEY VENICE_API_KEY DEEPSEEK_API_KEY EXA_API_KEY CONTEXT7_API_KEY; do
   if [[ -n "${!KEY:-}" ]]; then
     launchctl setenv "$KEY" "${!KEY}"
   fi

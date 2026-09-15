@@ -420,7 +420,7 @@ if [[ -f "$ENV_FILE" ]]; then
       tip "https://openrouter.ai/keys  ·  then: oc secrets sync"
     fi
   done
-  for k in CONTEXT7_API_KEY EXA_API_KEY VENICE_API_KEY; do
+  for k in CONTEXT7_API_KEY EXA_API_KEY VENICE_API_KEY DEEPSEEK_API_KEY; do
     if [[ -n "$(getkey $k)" ]]; then ok "$k set"
     else
       case "$k" in
@@ -439,6 +439,10 @@ if [[ -f "$ENV_FILE" ]]; then
             opt "$k unset (content-aware lane; optional on clone)"
           fi
           tip "https://venice.ai  ·  oc secrets sync"
+          ;;
+        DEEPSEEK_API_KEY)
+          opt "$k unset (native sisyphus-deepseek lane unavailable)"
+          tip "https://platform.deepseek.com  ·  oc secrets sync"
           ;;
       esac
     fi
@@ -1144,7 +1148,8 @@ elif dc != 10:
 else:
     ok("defaultConcurrency=%s" % dc)
 
-for prov, cap in (("openrouter", 12),):
+want_pc = (("openrouter", 12), ("venice", 6), ("deepseek", 6))
+for prov, cap in want_pc:
     v = pc.get(prov)
     if not isinstance(v, int):
         bad("providerConcurrency.%s missing" % prov)
@@ -1154,9 +1159,9 @@ for prov, cap in (("openrouter", 12),):
         bad("providerConcurrency.%s=%s (want %s) — run: oc fix" % (prov, v, cap))
     else:
         ok("providerConcurrency.%s=%s" % (prov, v))
-extra_pc = sorted(k for k in pc if k != "openrouter")
+extra_pc = sorted(k for k in pc if k not in {p for p, _ in want_pc})
 if extra_pc:
-    bad("providerConcurrency must be OpenRouter-only — remove: %s" % ", ".join(extra_pc))
+    bad("providerConcurrency extra keys not allowed: %s" % ", ".join(extra_pc))
 
 # Referenced models = agents/categories (+fallbacks) + OpenCode whitelist.
 # Aliases: openai/X ↔ openrouter/openai/X (both keys are intentional for dual lane).
