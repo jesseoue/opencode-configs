@@ -13,6 +13,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 - **Venice Sisyphus** (`VENICE_API_KEY`): `sisyphus-venice-deepseek` → `venice/deepseek-v4-pro-0813`; `sisyphus-venice-deepseek-flash-junior` → `venice/deepseek-v4-1-flash`. Distinct from edit-denied `content-aware-*`. Venice limits are per-key ([rate_limits endpoint](https://docs.venice.ai/api-reference/endpoint/api_keys/rate_limits)); provider **6**, models **5**.
 - **`enabled_providers`**: `openrouter` + `venice` + `deepseek`. `providerConcurrency` is no longer OpenRouter-only.
 - Docs/doctor/validate/fix/smoke/cleanup track the four new agents. Keys stay env-var names only — never commit `.env`.
+- Doctor live model probes print HTTP status / error codes only (redacted); never provider error bodies that might echo a key.
 
 ## [1.5.74] — 2026-09-10
 

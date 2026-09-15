@@ -681,8 +681,14 @@ if [[ $DO_QUICK -eq 1 ]]; then
   info "skipped (--quick) — run: oc doctor   or   oc admin health"
 elif [[ -f "$ENV_FILE" ]] && [[ -n "$(getkey OPENROUTER_API_KEY)" ]] && command -v curl >/dev/null; then
   probe="$(ORK="$(getkey OPENROUTER_API_KEY)" python3 - "$REPO" <<'PY'
-import json, os, sys, time, urllib.request, urllib.error
-repo=sys.argv[1]; key=os.environ["ORK"]
+import json, os, re, sys, time, urllib.request, urllib.error
+repo=sys.argv[1]; key=os.environ.pop("ORK", "")
+def scrub(s):
+    s = str(s or "")
+    s = re.sub(r"(?i)bearer\s+\S+", "Bearer <redacted>", s)
+    s = re.sub(r"sk-(or-v1-|proj-)?[A-Za-z0-9_-]{8,}", "sk-<redacted>", s)
+    s = re.sub(r"(?i)(api[_-]?key|token|secret)[=:]\S+", r"\1=<redacted>", s)
+    return s[:80]
 models=json.load(open(os.path.join(repo,"opencode.json")))["provider"]["openrouter"]["models"]
 for mid,m in models.items():
     if m.get("family")=="claude": continue  # premium escalation-only; skip to save cost
@@ -698,13 +704,23 @@ for mid,m in models.items():
         ms=int(round((time.time()-t0)*1000))
         print(f"OK|{mid}|{d.get('provider','?')} {ms}ms")
     except urllib.error.HTTPError as e:
-        try: msg=json.load(e).get("error",{}).get("message","")[:70]
-        except Exception: msg=f"HTTP {e.code}"
-        print(f"ERR|{mid}|{msg}")
+        msg = f"HTTP {e.code}"
+        try:
+            raw = e.read().decode("utf-8", "replace")[:400]
+            err = json.loads(raw).get("error", {})
+            if isinstance(err, dict):
+                code = err.get("code") or err.get("type")
+                if code:
+                    msg = f"HTTP {e.code} {code}"
+        except Exception:
+            pass
+        print(f"ERR|{mid}|{scrub(msg)}")
     except Exception as e:
-        print(f"ERR|{mid}|{str(e)[:60]}")
+        print(f"ERR|{mid}|{scrub(e)}")
 PY
 )"
+  unset ORK 2>/dev/null || true
+  probe="$(printf '%s\n' "$probe" | oc_redact_secrets)"
   while IFS='|' read -r st mid msg; do
     [[ -z "$mid" ]] && continue
     if [[ "$st" == OK ]]; then ok "$mid routes ($msg)"; else bad "$mid → $msg"; fi
