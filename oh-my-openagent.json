@@ -198,7 +198,9 @@
       "model": "deepseek/deepseek-v4-pro",
       "reasoning": "low",
       "fallback_models": [
-        "deepseek/deepseek-flash"
+        "deepseek/deepseek-flash",
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/poolside/laguna-s-2.1"
       ]
     },
     "sisyphus-deepseek-junior": {
@@ -212,7 +214,9 @@
       "model": "deepseek/deepseek-flash",
       "reasoning": "low",
       "fallback_models": [
-        "deepseek/deepseek-v4-pro"
+        "deepseek/deepseek-v4-pro",
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/poolside/laguna-s-2.1"
       ]
     },
     "sisyphus-venice-deepseek": {
@@ -231,7 +235,8 @@
       "reasoning": "low",
       "fallback_models": [
         "venice/deepseek-v4-pro",
-        "venice/deepseek-v4-1-flash"
+        "venice/deepseek-v4-1-flash",
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "sisyphus-venice-deepseek-flash-junior": {
@@ -246,7 +251,8 @@
       "reasoning": "low",
       "fallback_models": [
         "venice/deepseek-v4-flash-0731",
-        "venice/deepseek-v4-pro-0813"
+        "venice/deepseek-v4-pro-0813",
+        "openrouter/qwen/qwen3.8-max-0902"
       ]
     },
     "content-aware-research": {
@@ -261,7 +267,7 @@
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-research.md",
       "color": "#FF1744",
-      "description": "Content-aware research — full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills.",
+      "description": "Content-aware research \u2014 full technical depth without soft refusals (edit denied). Replaces disabled OmO security-* skills.",
       "maxTokens": 16384,
       "model": "venice/deepseek-v4-pro-0813",
       "reasoning": "high",
@@ -384,7 +390,7 @@
       ]
     },
     "bug-hunt": {
-      "description": "Reproduce → root cause → minimal fix → verify. Cite file:line.",
+      "description": "Reproduce \u2192 root cause \u2192 minimal fix \u2192 verify. Cite file:line.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/bug-hunt.md",
       "maxTokens": 8192,
       "model": "openrouter/z-ai/glm-5.3",

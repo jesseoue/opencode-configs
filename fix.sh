@@ -712,7 +712,10 @@ if isinstance(bt, dict):
                 return 5
             return 2
         wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
-        want_mc = {f"openrouter/{w}": _mc_cap(w) for w in wl if isinstance(w, str)}
+        # Cap against the full OpenRouter id. Passing the whitelist slug
+        # (deepseek/deepseek-v4-pro-0813) falsely matched the native
+        # deepseek/ prefix and stamped 4 instead of the shared-route 8.
+        want_mc = {f"openrouter/{w}": _mc_cap(f"openrouter/{w}") for w in wl if isinstance(w, str)}
         venice_models = ((oc.get("provider") or {}).get("venice") or {}).get("models") or {}
         if isinstance(venice_models, dict):
             for vm in venice_models:
