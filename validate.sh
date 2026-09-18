@@ -53,7 +53,6 @@ json_files = [os.path.join(repo, "opencode.json"),
               os.path.join(repo, "oh-my-openagent.json"),
               os.path.join(repo, "tui.json"),
               os.path.join(repo, "cursor-openrouter.json"),
-              os.path.join(repo, "cursor-venice.json"),
               os.path.join(repo, "t3-opencode.json")]
 json_files += sorted(glob.glob(os.path.join(repo, "profiles", "*.json")))
 parsed = {}
@@ -354,27 +353,37 @@ if oc:
     for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
         if not isinstance(vcfg, dict):
             continue
-        if ((vcfg.get("options") or {}).get("disable_thinking") is not True):
-            err(f"venice/{vm} options.disable_thinking must be true (Pro/Flash fill max_tokens with reasoning_content)")
+        vopts = vcfg.get("options") or {}
+        if vopts.get("disable_thinking") is True:
+            err(f"venice/{vm} options.disable_thinking is top-level — Venice 400s; nest under venice_parameters")
+            venice_thinking_ok = False
+        vp = vopts.get("venice_parameters") or {}
+        if vp.get("disable_thinking") is not True:
+            err(f"venice/{vm} options.venice_parameters.disable_thinking must be true (top-level disable_thinking is an unrecognized key)")
             venice_thinking_ok = False
         for vn, vv in (vcfg.get("variants") or {}).items():
-            if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
-                err(f"venice/{vm} variants.{vn}.disable_thinking must be true")
+            if not isinstance(vv, dict):
+                continue
+            if vv.get("disable_thinking") is True:
+                err(f"venice/{vm} variants.{vn}.disable_thinking is top-level — Venice 400s; nest under venice_parameters")
+                venice_thinking_ok = False
+            if (vv.get("venice_parameters") or {}).get("disable_thinking") is not True:
+                err(f"venice/{vm} variants.{vn}.venice_parameters.disable_thinking must be true")
                 venice_thinking_ok = False
     or_models_chk = (((oc.get("provider") or {}).get("openrouter") or {}).get("models")) or {}
     for mid, m in or_models_chk.items() if isinstance(or_models_chk, dict) else []:
         o = (m or {}).get("options") or {}
-        if o.get("disable_thinking") is True:
+        if o.get("disable_thinking") is True or (o.get("venice_parameters") or {}).get("disable_thinking") is True:
             err(f"openrouter {mid}: disable_thinking is Venice-only — do not set it on OpenRouter/GLM")
             venice_thinking_ok = False
     ds_models_chk = (((oc.get("provider") or {}).get("deepseek") or {}).get("models")) or {}
     for mid, m in ds_models_chk.items() if isinstance(ds_models_chk, dict) else []:
         o = (m or {}).get("options") or {}
-        if o.get("disable_thinking") is True:
+        if o.get("disable_thinking") is True or (o.get("venice_parameters") or {}).get("disable_thinking") is True:
             err(f"deepseek {mid}: disable_thinking is Venice-only — native DeepSeek stays separate")
             venice_thinking_ok = False
     if venice_thinking_ok:
-        ok("venice models pin disable_thinking (OpenRouter/native DeepSeek do not)")
+        ok("venice models pin venice_parameters.disable_thinking (OpenRouter/native DeepSeek do not)")
     or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
     venice_slugs = {"deepseek-v4-pro-0813", "deepseek-v4-pro", "deepseek-v4-1-flash"}
     leaked_venice = sorted(x for x in or_wl if x in venice_slugs or str(x).startswith("venice/"))
@@ -1679,29 +1688,8 @@ else:
     except json.JSONDecodeError as e:
         err(f"cursor-openrouter.json invalid JSON: {e}")
 
-venice_spec_path = os.path.join(repo, "cursor-venice.json")
-if not os.path.isfile(venice_spec_path):
-    err("cursor-venice.json missing")
-else:
-    try:
-        vcur = json.load(open(venice_spec_path, encoding="utf-8"))
-        vraw = open(venice_spec_path, encoding="utf-8").read()
-        want_vep = "https://api.venice.ai/api/v1"
-        if vcur.get("endpoint") != want_vep:
-            err(f"cursor-venice.json endpoint must be {want_vep}")
-        if re.search(r"sk-or-v1-|ven_[A-Za-z0-9]{8,}|\"apiKey\"", vraw):
-            err("cursor-venice.json must not contain keys")
-        vmodels = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
-        models = vcur.get("models") or []
-        extra = [m for m in models if m not in vmodels]
-        if extra:
-            err(f"cursor-venice.json models not on venice.models: {extra}")
-        elif vcur.get("default_model") not in models or vcur.get("small_model") not in models:
-            err("cursor-venice.json default/small model must be in models[]")
-        else:
-            ok(f"cursor-venice.json ({len(models)} models → {want_vep})")
-    except json.JSONDecodeError as e:
-        err(f"cursor-venice.json invalid JSON: {e}")
+if os.path.isfile(os.path.join(repo, "cursor-venice.json")):
+    err("cursor-venice.json must not exist — Venice is OpenCode provider.venice only, not oc cursor")
 
 t3_spec_path = os.path.join(repo, "t3-opencode.json")
 if not os.path.isfile(t3_spec_path):

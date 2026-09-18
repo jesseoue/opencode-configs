@@ -696,29 +696,39 @@
               "reasoning": {
                 "effort": "low"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "medium": {
               "reasoning": {
                 "effort": "medium"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "high": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "max": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             }
           },
           "options": {
-            "disable_thinking": true
+            "venice_parameters": {
+              "disable_thinking": true
+            }
           }
         },
         "deepseek-v4-pro": {
@@ -739,29 +749,39 @@
               "reasoning": {
                 "effort": "low"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "medium": {
               "reasoning": {
                 "effort": "medium"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "high": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "max": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             }
           },
           "options": {
-            "disable_thinking": true
+            "venice_parameters": {
+              "disable_thinking": true
+            }
           }
         },
         "deepseek-v4-1-flash": {
@@ -782,29 +802,39 @@
               "reasoning": {
                 "effort": "low"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "medium": {
               "reasoning": {
                 "effort": "medium"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "high": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             },
             "max": {
               "reasoning": {
                 "effort": "high"
               },
-              "disable_thinking": true
+              "venice_parameters": {
+                "disable_thinking": true
+              }
             }
           },
           "options": {
-            "disable_thinking": true
+            "venice_parameters": {
+              "disable_thinking": true
+            }
           }
         }
       }

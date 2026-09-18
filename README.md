@@ -317,7 +317,7 @@ Priority: `modelConcurrency` → `providerConcurrency` → `defaultConcurrency`.
 | Provider | Acceleration | `providerConcurrency` | Model caps | Docs |
 | --- | --- | --- | --- | --- |
 | OpenRouter | **Auto Exacto** (tool requests); no `:nitro` / `:exacto` slugs | **12** | GLM / Flash / OpenRouter DeepSeek Pro 0813 / Hermes **8 / 10 / 8 / 2** | [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) · [provider selection](https://openrouter.ai/docs/guides/routing/provider-selection) |
-| Venice | neither (direct API); pin `disable_thinking` so Pro/Flash do not fill `max_tokens` with `reasoning_content` | **6** | all Venice DeepSeek slugs **5** | [per-key rate_limits](https://docs.venice.ai/api-reference/endpoint/api_keys/rate_limits) · [disable_thinking](https://docs.venice.ai/api-reference/endpoint/chat/completions) |
+| Venice | neither (direct API); pin `venice_parameters.disable_thinking` (top-level `disable_thinking` 400s) so Pro/Flash do not fill `max_tokens` with `reasoning_content` | **6** | all Venice DeepSeek slugs **5** | [per-key rate_limits](https://docs.venice.ai/api-reference/endpoint/api_keys/rate_limits) · [disable_thinking](https://docs.venice.ai/api-reference/endpoint/chat/completions) |
 | DeepSeek native | neither (direct API) | **6** | V4 Pro **4** · Flash **6** (platform allows 500 / 2500) | [DeepSeek concurrency](https://api-docs.deepseek.com/quick_start/rate_limit) |
 
 | Knob | Value |

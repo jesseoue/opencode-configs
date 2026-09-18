@@ -408,16 +408,27 @@ if isinstance(venice_models, dict):
                 vcfg[field] = default
                 changes.append(f"venice.models.{vm}.{field} -> {default!r}")
         # Venice DeepSeek spends max_tokens in reasoning_content unless thinking
-        # is off (docs.venice.ai disable_thinking). Model/variant options merge
-        # into the openai-compatible body — OpenRouter/GLM are untouched.
+        # is off. disable_thinking is a venice_parameters key — top-level is
+        # unrecognized and 400s (Flash and Pro). OpenRouter/native DeepSeek stay clean.
         vopts = vcfg.setdefault("options", {})
-        if isinstance(vopts, dict) and vopts.get("disable_thinking") is not True:
-            vopts["disable_thinking"] = True
-            changes.append(f"venice.models.{vm}.options.disable_thinking -> true")
+        if isinstance(vopts, dict):
+            if "disable_thinking" in vopts:
+                del vopts["disable_thinking"]
+                changes.append(f"venice.models.{vm}.options.disable_thinking removed (top-level 400s)")
+            vp = vopts.setdefault("venice_parameters", {})
+            if isinstance(vp, dict) and vp.get("disable_thinking") is not True:
+                vp["disable_thinking"] = True
+                changes.append(f"venice.models.{vm}.options.venice_parameters.disable_thinking -> true")
         for vn, vv in list((vcfg.get("variants") or {}).items()):
-            if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
-                vv["disable_thinking"] = True
-                changes.append(f"venice.models.{vm}.variants.{vn}.disable_thinking -> true")
+            if not isinstance(vv, dict):
+                continue
+            if "disable_thinking" in vv:
+                del vv["disable_thinking"]
+                changes.append(f"venice.models.{vm}.variants.{vn}.disable_thinking removed (top-level 400s)")
+            vvp = vv.setdefault("venice_parameters", {})
+            if isinstance(vvp, dict) and vvp.get("disable_thinking") is not True:
+                vvp["disable_thinking"] = True
+                changes.append(f"venice.models.{vm}.variants.{vn}.venice_parameters.disable_thinking -> true")
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
     changes.append("removed provider.openai (OpenRouter-only)")

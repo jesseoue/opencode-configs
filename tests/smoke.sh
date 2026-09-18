@@ -278,16 +278,7 @@ blocked={"content-aware-research","content-aware-fast",
 hit=sorted(blocked & set((oc.get("agent") or {})))
 sys.exit(1 if hit else 0)
 ' "$REPO/opencode.json" \
-  && [[ -f "$REPO/cursor-venice.json" ]] \
-  && python3 -c '
-import json,sys
-c=json.load(open(sys.argv[1]))
-assert c.get("endpoint")=="https://api.venice.ai/api/v1"
-assert "deepseek-v4-pro-0813" in (c.get("models") or [])
-raw=open(sys.argv[1]).read()
-assert "sk-or-v1-" not in raw and "\"apiKey\"" not in raw
-assert not __import__("re").search(r"ven_[A-Za-z0-9]{8,}", raw)
-' "$REPO/cursor-venice.json" \
+  && [[ ! -e "$REPO/cursor-venice.json" ]] \
   && python3 -c '
 import json,sys
 omo=json.load(open(sys.argv[1]))
@@ -302,26 +293,34 @@ for name in ("sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
 ' "$REPO/oh-my-openagent.json"; then
   ok "no OmO agent duplicates in opencode.json + Venice stays on venice/*"
 else
-  bad "duplicate native agents or cursor-venice.json drift"
+  bad "duplicate native agents or leftover cursor-venice.json"
 fi
 
 if python3 -c '
 import json,sys
 oc=json.load(open(sys.argv[1]))
 for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
-    if (vcfg.get("options") or {}).get("disable_thinking") is not True:
+    opts = (vcfg.get("options") or {})
+    if opts.get("disable_thinking") is True:
+        raise SystemExit(f"{vm} top-level")
+    if (opts.get("venice_parameters") or {}).get("disable_thinking") is not True:
         raise SystemExit(vm)
     for vn, vv in (vcfg.get("variants") or {}).items():
-        if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
+        if not isinstance(vv, dict):
+            continue
+        if vv.get("disable_thinking") is True:
+            raise SystemExit(f"{vm}.{vn} top-level")
+        if (vv.get("venice_parameters") or {}).get("disable_thinking") is not True:
             raise SystemExit(f"{vm}.{vn}")
 for pname in ("openrouter", "deepseek"):
     for mid, m in ((((oc.get("provider") or {}).get(pname) or {}).get("models")) or {}).items():
-        if ((m or {}).get("options") or {}).get("disable_thinking") is True:
+        o = (m or {}).get("options") or {}
+        if o.get("disable_thinking") is True or (o.get("venice_parameters") or {}).get("disable_thinking") is True:
             raise SystemExit(f"{pname}/{mid}")
 ' "$REPO/opencode.json"; then
-  ok "venice disable_thinking pinned (OpenRouter/native DeepSeek clean)"
+  ok "venice venice_parameters.disable_thinking pinned (OpenRouter/native DeepSeek clean)"
 else
-  bad "venice disable_thinking missing or leaked onto OpenRouter/DeepSeek"
+  bad "venice thinking pin missing, top-level, or leaked onto OpenRouter/DeepSeek"
 fi
 
 # OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)

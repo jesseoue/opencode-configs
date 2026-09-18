@@ -20,7 +20,6 @@
 !vault.json
 !signature.json
 !cursor-openrouter.json
-!cursor-venice.json
 !t3-opencode.json
 !tui.json
 !tmux.conf
