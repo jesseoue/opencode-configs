@@ -58,7 +58,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 - `oc fix` was computing `modelConcurrency` from the OpenRouter whitelist slug (`deepseek/deepseek-v4-pro-0813`). That matched the native `deepseek/` prefix and stamped **4**, so `oc validate` / smoke failed after every heal.
 - Caps now use the full `openrouter/…` id. Shared explore+librarian+deep route stays **8**. Native DeepSeek Pro stays **4**; Flash **6**; Venice models **5**.
-- Optional Sisyphus lanes keep a last-resort OpenRouter fallback (Qwen / Laguna) when the native or Venice key is down. Content-aware stays Venice-only.
+- Optional native DeepSeek Sisyphus may keep a last-resort OpenRouter fallback (Qwen / Laguna) when `DEEPSEEK_API_KEY` is down. Venice Sisyphus and content-aware stay **Venice-only** (`venice/*`, `VENICE_API_KEY`) — never OpenRouter.
 
 ### Docs/agent 1:1 + drop dead fallback claims
 

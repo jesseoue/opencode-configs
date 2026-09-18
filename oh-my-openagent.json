@@ -254,8 +254,7 @@
       "reasoning": "low",
       "fallback_models": [
         "venice/deepseek-v4-pro",
-        "venice/deepseek-v4-1-flash",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "venice/deepseek-v4-1-flash"
       ]
     },
     "sisyphus-venice-deepseek-flash-junior": {
@@ -270,8 +269,7 @@
       "reasoning": "low",
       "fallback_models": [
         "venice/deepseek-v4-pro-0813",
-        "venice/deepseek-v4-pro",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "venice/deepseek-v4-pro"
       ]
     },
     "content-aware-research": {

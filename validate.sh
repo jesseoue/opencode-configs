@@ -53,6 +53,7 @@ json_files = [os.path.join(repo, "opencode.json"),
               os.path.join(repo, "oh-my-openagent.json"),
               os.path.join(repo, "tui.json"),
               os.path.join(repo, "cursor-openrouter.json"),
+              os.path.join(repo, "cursor-venice.json"),
               os.path.join(repo, "t3-opencode.json")]
 json_files += sorted(glob.glob(os.path.join(repo, "profiles", "*.json")))
 parsed = {}
@@ -281,7 +282,8 @@ if oc:
         err(f"team_* tools not allow: {missing_team} — run: oc fix")
     else:
         ok(f"{len(TEAM_TOOLS)} team_* tools allowed")
-    for t in ("task", "edit", "external_directory", "doom_loop", "question", "call_omo_agent"):
+    for t in ("task", "edit", "external_directory", "doom_loop", "question", "call_omo_agent",
+              "lsp", "grep_app", "webfetch", "websearch"):
         if perm.get(t) != "allow":
             err(f"permission.{t} must be allow (got {perm.get(t)!r})")
     read_perm = perm.get("read")
@@ -308,7 +310,16 @@ if oc:
     if not (isinstance(bash, dict) and bash.get("*") == "allow"):
         err("permission.bash['*'] must be allow (allow-everything mode)")
     else:
-        ok("core tools + bash allow-everything (catastrophic denies kept)")
+        want_deny = {
+            "rm -rf /", "rm -rf /*", "rm -rf ~", "rm -rf ~/*",
+            "mkfs*", "sudo *", "sudo",
+            "git push --force*", "git push -f*", "gh repo delete*",
+        }
+        missing_deny = sorted(p for p in want_deny if bash.get(p) != "deny")
+        if missing_deny:
+            err(f"permission.bash missing catastrophic deny: {missing_deny} — run: oc fix")
+        else:
+            ok("core tools + bash allow-everything (catastrophic denies kept)")
     if not oc.get("enabled_providers"):
         warn("opencode.json: enabled_providers not set — all providers with credentials will load.")
     elif oc.get("enabled_providers") != ["openrouter", "venice", "deepseek"]:
@@ -329,6 +340,21 @@ if oc:
         err("venice whitelist must match venice.models (keeps T3 Variant/Agent on curated slugs)")
     else:
         ok("venice whitelist matches curated models")
+    vprov = ((oc.get("provider") or {}).get("venice") or {})
+    vopts = vprov.get("options") or {}
+    if vprov.get("npm") != "@ai-sdk/openai-compatible":
+        err("provider.venice.npm must be @ai-sdk/openai-compatible (direct Venice API, not OpenRouter)")
+    elif str(vopts.get("baseURL") or "") != "https://api.venice.ai/api/v1":
+        err("provider.venice.options.baseURL must be https://api.venice.ai/api/v1")
+    elif "apiKey" in vprov or "apiKey" in vopts or "{env:VENICE" in json.dumps(vprov):
+        err("provider.venice must not embed apiKey / {env:VENICE} — use opencode auth + .env")
+    else:
+        ok("venice is a first-party provider (api.venice.ai, no key in JSON)")
+    or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
+    venice_slugs = {"deepseek-v4-pro-0813", "deepseek-v4-pro", "deepseek-v4-1-flash"}
+    leaked_venice = sorted(x for x in or_wl if x in venice_slugs or str(x).startswith("venice/"))
+    if leaked_venice:
+        err(f"openrouter whitelist must not carry Venice slugs {leaked_venice} — Venice is its own provider")
     dmodels = set(((((oc.get("provider") or {}).get("deepseek") or {}).get("models")) or {}))
     dwl = ((((oc.get("provider") or {}).get("deepseek") or {}).get("whitelist")) or [])
     if "deepseek-v4-pro" not in dmodels or "deepseek-flash" not in dmodels:
@@ -410,6 +436,24 @@ if omo:
     default_agent = (oc or {}).get("default_agent")
     if default_agent != "sisyphus":
         err(f"opencode.json: default_agent must be 'sisyphus' (got {default_agent!r})")
+    oc_native = (oc or {}).get("agent") or {}
+    if isinstance(oc_native, dict):
+        dup_omo = [
+            "content-aware-research",
+            "content-aware-fast",
+            "sisyphus-venice-deepseek",
+            "sisyphus-venice-deepseek-flash-junior",
+            "sisyphus-deepseek",
+            "sisyphus-deepseek-junior",
+        ]
+        collided = [n for n in dup_omo if n in oc_native]
+        if collided:
+            err(
+                "opencode.json agent duplicates OmO agents "
+                f"{collided} — merge conflict crashes the TUI. Run: oc fix"
+            )
+        else:
+            ok("opencode.json agent has no OmO Venice/DeepSeek duplicates")
     if omo.get("default_run_agent") != "sisyphus":
         err(f"oh-my-openagent.json: default_run_agent must be 'sisyphus' (got {omo.get('default_run_agent')!r})")
     want_optional = {
@@ -1398,6 +1442,18 @@ if omo:
                 err(f"{sec}.{ca_name} fallback {fb!r} must be venice/<model> (never OpenRouter)")
         if "openrouter/" in cm.lower():
             err(f"{sec}.{ca_name} primary {cm!r} must never be OpenRouter — Venice only")
+    for vname in ("sisyphus-venice-deepseek", "sisyphus-venice-deepseek-flash-junior"):
+        vcfg = ((omo.get("agents") or {}).get(vname) or {})
+        vm = str(vcfg.get("model") or "")
+        if not vm.startswith("venice/"):
+            err(f"agents.{vname} must be venice/<model> (got {vm!r})")
+        for fb in (vcfg.get("fallback_models") or []):
+            if "openrouter/" in str(fb).lower() or not str(fb).startswith("venice/"):
+                err(f"agents.{vname} fallback {fb!r} must be venice/<model> (never OpenRouter)")
+        uw = vcfg.get("ultrawork") or {}
+        uwm = uw.get("model") if isinstance(uw, dict) else None
+        if uwm and not str(uwm).startswith("venice/"):
+            err(f"agents.{vname} ultrawork.model must be venice/<model> (got {uwm!r})")
     hermes = ((omo.get("agents") or {}).get("context-aware-hermes") or {})
     hm = str(hermes.get("model") or "")
     if hm != "openrouter/nousresearch/hermes-4-405b":
@@ -1598,6 +1654,30 @@ else:
     except json.JSONDecodeError as e:
         err(f"cursor-openrouter.json invalid JSON: {e}")
 
+venice_spec_path = os.path.join(repo, "cursor-venice.json")
+if not os.path.isfile(venice_spec_path):
+    err("cursor-venice.json missing")
+else:
+    try:
+        vcur = json.load(open(venice_spec_path, encoding="utf-8"))
+        vraw = open(venice_spec_path, encoding="utf-8").read()
+        want_vep = "https://api.venice.ai/api/v1"
+        if vcur.get("endpoint") != want_vep:
+            err(f"cursor-venice.json endpoint must be {want_vep}")
+        if re.search(r"sk-or-v1-|ven_[A-Za-z0-9]{8,}|\"apiKey\"", vraw):
+            err("cursor-venice.json must not contain keys")
+        vmodels = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
+        models = vcur.get("models") or []
+        extra = [m for m in models if m not in vmodels]
+        if extra:
+            err(f"cursor-venice.json models not on venice.models: {extra}")
+        elif vcur.get("default_model") not in models or vcur.get("small_model") not in models:
+            err("cursor-venice.json default/small model must be in models[]")
+        else:
+            ok(f"cursor-venice.json ({len(models)} models → {want_vep})")
+    except json.JSONDecodeError as e:
+        err(f"cursor-venice.json invalid JSON: {e}")
+
 t3_spec_path = os.path.join(repo, "t3-opencode.json")
 if not os.path.isfile(t3_spec_path):
     err("t3-opencode.json missing")
@@ -1737,7 +1817,7 @@ for rel, label in (
 
 env_ex = open(os.path.join(repo, ".env.example"), encoding="utf-8").read()
 for key in ("OPENROUTER_API_KEY", "EXA_API_KEY", "CONTEXT7_API_KEY", "VENICE_API_KEY",
-            "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE", "OC_DEFAULT_PROFILE"):
+            "DEEPSEEK_API_KEY", "OC_PROJECTS_DIR", "OC_DEFAULT_WORKSPACE", "OC_DEFAULT_PROFILE"):
     if key not in env_ex:
         err(f".env.example missing {key}")
 if "OPENROUTER_API_KEY" in env_ex and "OC_PROJECTS_DIR" in env_ex and "OC_DEFAULT_PROFILE" in env_ex:
@@ -1770,8 +1850,14 @@ if re.search(r"export OPENAI_API_KEY|OPENAI_API_KEY\|", zshrc):
     err("zshrc.snippet must not export OPENAI_API_KEY")
 elif "OC_DEFAULT_PROFILE" not in zshrc:
     err("zshrc.snippet missing OC_DEFAULT_PROFILE")
+elif "VENICE_API_KEY" not in zshrc or "DEEPSEEK_API_KEY" not in zshrc:
+    err("zshrc.snippet must allowlist VENICE_API_KEY and DEEPSEEK_API_KEY")
+elif "TERM=xterm-256color" not in zshrc:
+    err("zshrc.snippet must launch OpenCode with TERM=xterm-256color")
+elif "1049l" in zshrc:
+    err("zshrc.snippet must not send \\033[?1049l (clears the visible terminal)")
 else:
-    ok("zshrc.snippet allowlist matches OpenRouter-only + OC_DEFAULT_PROFILE")
+    ok("zshrc.snippet allowlist + TERM + no alt-screen teardown")
 
 docs_team = os.path.join(repo, "teams/docs-team/config.json")
 if os.path.isfile(docs_team):

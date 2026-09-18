@@ -94,9 +94,10 @@
     "doctor.sh",
     "versions.sh",
     "cursor-openrouter.json",
+    "cursor-venice.json",
     "t3-opencode.json",
     "vault.json"
   ],
-  "fingerprint": "11b6b95facf1b6c1ac2878019bb00e505411ebbf664ac124ae299c29c96dca31",
+  "fingerprint": "2ba98d2cb01164dd7188973e74a5c1a6a37e7b5937cf8cade6d95104919d9c8c",
   "github_b64": "aHR0cHM6Ly9naXRodWIuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3M="
 }

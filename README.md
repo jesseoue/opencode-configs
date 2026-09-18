@@ -414,7 +414,7 @@ Each project gets `opencode.json` + `AGENTS.md`. Do not set `OPENCODE_CONFIG` to
 
 - Allow-everything locally for normal tools (trusted box).
 - Hard-deny bash: `rm -rf /|~`, `mkfs`, `sudo`, `git push --force*`, `gh repo delete*`.
-- Providers allowed: OpenRouter (general) + Venice (content-aware only). No direct OpenAI/Anthropic/Google.
+- Providers allowed: OpenRouter (general) + Venice (`api.venice.ai` / `VENICE_API_KEY`, content-aware + optional Venice Sisyphus) + native DeepSeek (`api.deepseek.com` / `DEEPSEEK_API_KEY`). No direct OpenAI/Anthropic.
 - Server: `127.0.0.1:4097` · share disabled · mdns off.
 
 ---

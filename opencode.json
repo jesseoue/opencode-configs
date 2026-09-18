@@ -679,9 +679,14 @@
       },
       "models": {
         "deepseek-v4-pro-0813": {
+          "id": "deepseek-v4-pro-0813",
           "name": "DeepSeek V4 Pro 0813",
+          "family": "deepseek",
           "reasoning": true,
           "tool_call": true,
+          "temperature": true,
+          "attachment": false,
+          "status": "active",
           "limit": {
             "context": 1000000,
             "output": 32768
@@ -710,9 +715,14 @@
           }
         },
         "deepseek-v4-pro": {
+          "id": "deepseek-v4-pro",
           "name": "DeepSeek V4 Pro",
+          "family": "deepseek",
           "reasoning": true,
           "tool_call": true,
+          "temperature": true,
+          "attachment": false,
+          "status": "active",
           "limit": {
             "context": 1000000,
             "output": 32768
@@ -741,9 +751,14 @@
           }
         },
         "deepseek-v4-1-flash": {
+          "id": "deepseek-v4-1-flash",
           "name": "DeepSeek V4.1 Flash",
+          "family": "deepseek",
           "reasoning": true,
           "tool_call": true,
+          "temperature": true,
+          "attachment": false,
+          "status": "active",
           "limit": {
             "context": 1000000,
             "output": 32768

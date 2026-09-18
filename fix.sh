@@ -376,6 +376,37 @@ if oc.get("enabled_providers") != want_enabled:
     oc["enabled_providers"] = want_enabled
     changes.append("enabled_providers -> ['openrouter', 'venice', 'deepseek']")
 prov_root = oc.setdefault("provider", {})
+# Do not duplicate OmO Venice/DeepSeek agents into opencode.json agent.
+# Native OpenCode agent + OmO merge conflicts (mode primary vs subagent) crash the TUI.
+# Venice lives in oh-my-openagent.json + agents/*.md; keep provider.venice.models metadata only.
+oc_agents = oc.get("agent") or {}
+if isinstance(oc_agents, dict):
+    for aname in (
+        "content-aware-research",
+        "content-aware-fast",
+        "sisyphus-venice-deepseek",
+        "sisyphus-venice-deepseek-flash-junior",
+        "sisyphus-deepseek",
+        "sisyphus-deepseek-junior",
+    ):
+        if aname in oc_agents:
+            del oc_agents[aname]
+            changes.append(f"agent.{aname} removed (OmO-owned; duplicate native agent crashes TUI)")
+venice_models = prov_root.setdefault("venice", {}).setdefault("models", {})
+if isinstance(venice_models, dict):
+    for vm, vcfg in venice_models.items():
+        if not isinstance(vcfg, dict):
+            continue
+        for field, default in (
+            ("id", vm),
+            ("family", "deepseek"),
+            ("temperature", True),
+            ("attachment", False),
+            ("status", "active"),
+        ):
+            if vcfg.get(field) != default:
+                vcfg[field] = default
+                changes.append(f"venice.models.{vm}.{field} -> {default!r}")
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
     changes.append("removed provider.openai (OpenRouter-only)")
@@ -503,6 +534,21 @@ CONTENT_AWARE_FALLBACKS = [
     "venice/deepseek-v4-pro",
     "venice/deepseek-v4-1-flash",
 ]
+VENICE_SISYPHUS = {
+    "sisyphus-venice-deepseek",
+    "sisyphus-venice-deepseek-flash-junior",
+}
+VENICE_SISYPHUS_FALLBACKS = [
+    "venice/deepseek-v4-pro-0813",
+    "venice/deepseek-v4-pro",
+    "venice/deepseek-v4-1-flash",
+]
+
+def _venice_lane(n, a=None):
+    if n.startswith("content-aware") or n in VENICE_SISYPHUS:
+        return True
+    model = str((a or {}).get("model") or "")
+    return model.startswith("venice/")
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/z-ai/glm-5.3",
@@ -535,7 +581,7 @@ for section in ("agents", "categories"):
         cleaned = []
         for fb in fbs:
             fb = _norm_or_model(fb)
-            if n.startswith("content-aware") and not str(fb).startswith("venice/"):
+            if _venice_lane(n, a) and not str(fb).startswith("venice/"):
                 changes.append(f"{section} {n}: dropped non-Venice fallback {fb}")
                 continue
             if any(m in str(fb).lower() for m in MODERATED_FB):
@@ -543,8 +589,9 @@ for section in ("agents", "categories"):
                 continue
             cleaned.append(fb)
         if not cleaned:
-            if n.startswith("content-aware"):
-                cleaned = [x for x in CONTENT_AWARE_FALLBACKS if x != a.get("model")][:3]
+            if _venice_lane(n, a):
+                pool = CONTENT_AWARE_FALLBACKS if n.startswith("content-aware") else VENICE_SISYPHUS_FALLBACKS
+                cleaned = [x for x in pool if x != a.get("model")][:3]
             else:
                 cleaned = [x for x in RECON_FALLBACKS if x != a.get("model")][:3]
             changes.append(f"{section} {n}: rebuilt unmoderated fallbacks")
@@ -652,6 +699,9 @@ for section in ("agents", "categories"):
             if n.startswith("content-aware"):
                 repl = RECON_PRIMARY.get(n, "venice/deepseek-v4-pro-0813")
                 note = "Venice content-aware, no GPT"
+            elif _venice_lane(n, a):
+                repl = "venice/deepseek-v4-pro-0813" if n != "sisyphus-venice-deepseek-flash-junior" else "venice/deepseek-v4-1-flash"
+                note = "Venice Sisyphus, no GPT"
             else:
                 repl = want_p or DEEP_PRIMARY
                 note = "OpenRouter-only, no GPT"
@@ -663,17 +713,18 @@ for section in ("agents", "categories"):
         cleaned = []
         for fb in fbs:
             fb = _norm_or_model(fb)
-            if n.startswith("content-aware") and not str(fb).startswith("venice/"):
+            if _venice_lane(n, a) and not str(fb).startswith("venice/"):
                 changes.append(f"{section} {n}: dropped non-Venice fallback {fb}")
                 continue
             if _is_gpt(fb):
                 changes.append(f"{section} {n}: dropped GPT fallback {fb}")
                 continue
             cleaned.append(fb)
-        # Venice-only content-aware routes: never backfill OpenRouter fallbacks.
-        if n.startswith("content-aware"):
+        # Venice lanes never backfill OpenRouter fallbacks.
+        if _venice_lane(n, a):
             if not cleaned:
-                cleaned = [x for x in CONTENT_AWARE_FALLBACKS if x != a.get("model")][:3]
+                pool = CONTENT_AWARE_FALLBACKS if n.startswith("content-aware") else VENICE_SISYPHUS_FALLBACKS
+                cleaned = [x for x in pool if x != a.get("model")][:3]
                 changes.append(f"{section} {n}: rebuilt Venice fallbacks")
         else:
             fill = want_f or DEEP_FALLBACKS

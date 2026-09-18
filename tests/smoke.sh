@@ -268,6 +268,43 @@ else
   bad "content-aware left Venice — run: oc fix"
 fi
 
+# Native OpenCode agent must not duplicate OmO Venice/DeepSeek agents (TUI crash)
+if python3 -c '
+import json, sys
+oc=json.load(open(sys.argv[1]))
+blocked={"content-aware-research","content-aware-fast",
+         "sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
+         "sisyphus-deepseek","sisyphus-deepseek-junior"}
+hit=sorted(blocked & set((oc.get("agent") or {})))
+sys.exit(1 if hit else 0)
+' "$REPO/opencode.json" \
+  && [[ -f "$REPO/cursor-venice.json" ]] \
+  && python3 -c '
+import json,sys
+c=json.load(open(sys.argv[1]))
+assert c.get("endpoint")=="https://api.venice.ai/api/v1"
+assert "deepseek-v4-pro-0813" in (c.get("models") or [])
+raw=open(sys.argv[1]).read()
+assert "sk-or-v1-" not in raw and "\"apiKey\"" not in raw
+assert not __import__("re").search(r"ven_[A-Za-z0-9]{8,}", raw)
+' "$REPO/cursor-venice.json" \
+  && python3 -c '
+import json,sys
+omo=json.load(open(sys.argv[1]))
+for name in ("sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
+             "content-aware-research","content-aware-fast"):
+    a=(omo.get("agents") or {}).get(name) or {}
+    if not str(a.get("model") or "").startswith("venice/"):
+        raise SystemExit(name)
+    for fb in a.get("fallback_models") or []:
+        if not str(fb).startswith("venice/") or "openrouter/" in str(fb).lower():
+            raise SystemExit(f"{name} fallback {fb}")
+' "$REPO/oh-my-openagent.json"; then
+  ok "no OmO agent duplicates in opencode.json + Venice stays on venice/*"
+else
+  bad "duplicate native agents or cursor-venice.json drift"
+fi
+
 # OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)
 if python3 -c '
 import json, sys
