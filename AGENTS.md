@@ -96,7 +96,7 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 
 ## Commands
 
-`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc models` · `oc test` · `oc env` · `oc secrets` · `oc setup` · `oc cleanup` · `oc cursor` · `oc new` · `oc projects` · `oc launch` · `oc run` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
+`oc help` · `oc check` · `oc heal` · `oc doctor` · `oc validate` · `oc fix` · `oc plugin doctor` · `oc versions` · `oc models` · `oc test` · `oc env` · `oc secrets` · `oc setup` · `oc cleanup` · `oc new` · `oc projects` · `oc launch` · `oc run` · `oc signature` · `oc admin health` · `oc deploy check|quarantine|status`. Details: `README.md`.
 
 ## Projects & scaffolding
 

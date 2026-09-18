@@ -19,7 +19,6 @@
 !versions.json
 !vault.json
 !signature.json
-!cursor-openrouter.json
 !t3-opencode.json
 !tui.json
 !tmux.conf

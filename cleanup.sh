@@ -49,10 +49,10 @@ drift=0
 # ─── 1. Manifest: what MUST be here ──────────────────────────────────
 sec "Required files"
 REQUIRED=(
-  opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json cursor-openrouter.json t3-opencode.json vault.json
+  opencode.json oh-my-openagent.json tui.json tmux.conf ghostty.conf zshrc.snippet bunfig.toml README.md AGENTS.md CHANGELOG.md .env.example .gitignore projects.json versions.json signature.json t3-opencode.json vault.json
   .github/workflows/check.yml
   validate.sh doctor.sh cleanup.sh fix.sh models.sh versions.sh diagnose.sh setup.sh install.sh maintain.sh
-  opencode.sh run.sh openrouter-admin.sh cursor.sh oc locate.sh signature.sh deploy-guard.sh
+  opencode.sh run.sh openrouter-admin.sh oc locate.sh signature.sh deploy-guard.sh
   launch-desktop.sh serve-desktop.sh export-t3.py sync-t3.py
   tests/smoke.sh tests/idempotency.sh tests/runtime-diagnostics.sh tests/prepare-ci-runtime.py
   lib/common.sh

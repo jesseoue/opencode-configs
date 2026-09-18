@@ -52,7 +52,6 @@ def load(path):
 json_files = [os.path.join(repo, "opencode.json"),
               os.path.join(repo, "oh-my-openagent.json"),
               os.path.join(repo, "tui.json"),
-              os.path.join(repo, "cursor-openrouter.json"),
               os.path.join(repo, "t3-opencode.json")]
 json_files += sorted(glob.glob(os.path.join(repo, "profiles", "*.json")))
 parsed = {}
@@ -1646,7 +1645,7 @@ else:
 # ---- 4c6. OpenConfig CLI surface + required scripts ----
 required_scripts = [
     "oc", "install.sh", "setup.sh", "doctor.sh", "validate.sh", "fix.sh",
-    "cleanup.sh", "run.sh", "opencode.sh", "openrouter-admin.sh", "cursor.sh",
+    "cleanup.sh", "run.sh", "opencode.sh", "openrouter-admin.sh",
     "diagnose.sh", "maintain.sh", "models.sh", "versions.sh", "locate.sh", "signature.sh",
     "deploy-guard.sh", "lib/common.sh",
 ]
@@ -1667,29 +1666,9 @@ if nonexec:
 elif not missing_scripts:
     ok("required scripts are executable")
 
-cursor_spec_path = os.path.join(repo, "cursor-openrouter.json")
-if not os.path.isfile(cursor_spec_path):
-    err("cursor-openrouter.json missing")
-else:
-    try:
-        cur = json.load(open(cursor_spec_path, encoding="utf-8"))
-        want_ep = "https://openrouter.ai/api/v1/cursor"
-        if cur.get("endpoint") != want_ep:
-            err(f"cursor-openrouter.json endpoint must be {want_ep}")
-        wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
-        models = cur.get("models") or []
-        extra = [m for m in models if m not in wl]
-        if extra:
-            err(f"cursor-openrouter.json models not on OpenRouter whitelist: {extra}")
-        elif cur.get("default_model") not in models or cur.get("small_model") not in models:
-            err("cursor-openrouter.json default/small model must be in models[]")
-        else:
-            ok(f"cursor-openrouter.json ({len(models)} models → {want_ep})")
-    except json.JSONDecodeError as e:
-        err(f"cursor-openrouter.json invalid JSON: {e}")
-
-if os.path.isfile(os.path.join(repo, "cursor-venice.json")):
-    err("cursor-venice.json must not exist — Venice is OpenCode provider.venice only, not oc cursor")
+for leftover in ("cursor.sh", "cursor-openrouter.json", "cursor-venice.json"):
+    if os.path.isfile(os.path.join(repo, leftover)):
+        err(f"{leftover} must not exist — OpenConfig does not wire Cursor IDE")
 
 t3_spec_path = os.path.join(repo, "t3-opencode.json")
 if not os.path.isfile(t3_spec_path):

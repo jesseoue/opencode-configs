@@ -94,14 +94,12 @@ oc launch [dir]        # TUI (never starts in the config repo)
 oc new myapp           # scaffold under ~/Projects
 oc run "…"             # headless to completion
 oc admin health        # live OpenRouter model probes + rate limits
-oc cursor apply        # point Cursor at OpenRouter /api/v1/cursor
 oc models --probe       # fast parallel live test (latency + moderation flags)
 oc models --moderation  # provider moderation/data-policy catalog (no chat calls)
 oc models --providers   # OpenRouter endpoint health for routed models
 oc versions            # pins vs npm + GitHub (+ other opencode.json)
 oc versions --fix       # align ~/.opencode @opencode-ai/plugin to CLI
 oc plugin doctor       # OmO pin-cache doctor (also: oc plugin --fix)
-oc cursor setup        # Cursor + OpenRouter wiring (dedicated /api/v1/cursor endpoint)
 oc locate              # repo / CLI / keys
 oc signature           # identity fingerprint
 oc test                # smoke + idempotency + runtime diagnostics
@@ -168,24 +166,6 @@ oc versions --fix         # set ~/.opencode @opencode-ai/plugin to match OpenCod
 Disabled on purpose (noisy / footguns): `interactive_bash`, monitor tools, `session_list` / `session_search`.
 
 Encoded in `prompts/core.md`, `sisyphus`, and `librarian`.
-
----
-
-## Cursor + OpenRouter
-
-Cursor BYOK must use OpenRouter's **dedicated Cursor endpoint**, not the generic OpenAI-compatible URL. The generic `/api/v1` path does not accept Cursor's flat tool format.
-
-Docs: [OpenRouter Cursor integration](https://openrouter.ai/docs/cookbook/coding-agents/cursor-integration)
-
-```bash
-oc cursor setup     # print wiring + current settings.json check
-oc cursor apply     # set openai.baseUrl → https://openrouter.ai/api/v1/cursor
-oc cursor models    # pinned model ids (same whitelist as OpenCode)
-oc cursor usage     # last-30-day OpenRouter activity by model
-oc cursor probe     # tiny live call through /api/v1/cursor
-```
-
-`oc cursor apply` writes `openai.baseUrl`, injects every pin in `cursor-openrouter.json`, and stores your `.env` `OPENROUTER_API_KEY` in Cursor Safe Storage (not git). **Fully quit Cursor (Cmd+Q) before the sqlite inject; Reload Window flushes the old in-memory list and undoes it.** Reopen, then pick `z-ai/glm-5.3` in Agent — not Composer (Composer ignores BYOK). Tab completions stay Cursor-native.
 
 ---
 
@@ -436,7 +416,7 @@ opencode-configs/
 ├── models.sh · versions.sh · cleanup.sh · signature.sh · locate.sh
 ├── deploy-guard.sh · diagnose.sh · maintain.sh · run.sh · opencode.sh
 ├── launch-desktop.sh · serve-desktop.sh · export-t3.py · sync-t3.py
-├── openrouter-admin.sh · cursor.sh · cursor-openrouter.json · t3-opencode.json
+├── openrouter-admin.sh · t3-opencode.json
 ├── opencode.json · oh-my-openagent.json · tui.json
 ├── versions.json · signature.json · projects.json · vault.json · AGENTS.md
 ├── .github/workflows/check.yml · tests/

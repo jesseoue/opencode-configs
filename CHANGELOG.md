@@ -10,7 +10,7 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 - Live `GET /models` on `api.venice.ai` confirms official ids: `deepseek-v4-pro-0813`, `deepseek-v4-pro`, `deepseek-v4-1-flash` (not OpenRouter `deepseek/deepseek-v4.1-flash`).
 - Top-level `disable_thinking` is an unrecognized key and **400s on Flash and Pro**. Pin lives under `options.venice_parameters` / variant `venice_parameters` so the openai-compatible merge sends the documented body. `oc fix` / `oc validate` reject the top-level form.
-- Cursor Venice (`cursor-venice.json` / `oc cursor venice`) is removed. Venice is OpenCode `provider.venice` + OmO agents only. `oc cursor` stays OpenRouter `/api/v1/cursor`.
+- `oc cursor` / `cursor.sh` / `cursor-openrouter.json` / `cursor-venice.json` are gone. OpenConfig does not wire Cursor IDE. Venice stays OpenCode `provider.venice` + OmO agents only.
 
 ### Clone stays config-only
 

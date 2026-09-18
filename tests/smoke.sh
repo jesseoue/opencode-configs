@@ -279,6 +279,8 @@ hit=sorted(blocked & set((oc.get("agent") or {})))
 sys.exit(1 if hit else 0)
 ' "$REPO/opencode.json" \
   && [[ ! -e "$REPO/cursor-venice.json" ]] \
+  && [[ ! -e "$REPO/cursor.sh" ]] \
+  && [[ ! -e "$REPO/cursor-openrouter.json" ]] \
   && python3 -c '
 import json,sys
 omo=json.load(open(sys.argv[1]))
@@ -293,7 +295,7 @@ for name in ("sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
 ' "$REPO/oh-my-openagent.json"; then
   ok "no OmO agent duplicates in opencode.json + Venice stays on venice/*"
 else
-  bad "duplicate native agents or leftover cursor-venice.json"
+  bad "duplicate native agents or leftover oc cursor files"
 fi
 
 if python3 -c '

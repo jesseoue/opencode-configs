@@ -93,10 +93,9 @@
     "validate.sh",
     "doctor.sh",
     "versions.sh",
-    "cursor-openrouter.json",
     "t3-opencode.json",
     "vault.json"
   ],
-  "fingerprint": "23bfcb10d22a77f11638651e0bbbf11cced3804b00763564318c372a7e3be9cd",
+  "fingerprint": "7dd591da5d1ef21198a3760e6b009222caaf81a9f1f8736fb9f3087ea20fead5",
   "github_b64": "aHR0cHM6Ly9naXRodWIuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3M="
 }
