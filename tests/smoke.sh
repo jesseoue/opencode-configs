@@ -305,6 +305,25 @@ else
   bad "duplicate native agents or cursor-venice.json drift"
 fi
 
+if python3 -c '
+import json,sys
+oc=json.load(open(sys.argv[1]))
+for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
+    if (vcfg.get("options") or {}).get("disable_thinking") is not True:
+        raise SystemExit(vm)
+    for vn, vv in (vcfg.get("variants") or {}).items():
+        if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
+            raise SystemExit(f"{vm}.{vn}")
+for pname in ("openrouter", "deepseek"):
+    for mid, m in ((((oc.get("provider") or {}).get(pname) or {}).get("models")) or {}).items():
+        if ((m or {}).get("options") or {}).get("disable_thinking") is True:
+            raise SystemExit(f"{pname}/{mid}")
+' "$REPO/opencode.json"; then
+  ok "venice disable_thinking pinned (OpenRouter/native DeepSeek clean)"
+else
+  bad "venice disable_thinking missing or leaked onto OpenRouter/DeepSeek"
+fi
+
 # OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)
 if python3 -c '
 import json, sys

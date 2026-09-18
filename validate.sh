@@ -350,6 +350,31 @@ if oc:
         err("provider.venice must not embed apiKey / {env:VENICE} — use opencode auth + .env")
     else:
         ok("venice is a first-party provider (api.venice.ai, no key in JSON)")
+    venice_thinking_ok = True
+    for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
+        if not isinstance(vcfg, dict):
+            continue
+        if ((vcfg.get("options") or {}).get("disable_thinking") is not True):
+            err(f"venice/{vm} options.disable_thinking must be true (Pro/Flash fill max_tokens with reasoning_content)")
+            venice_thinking_ok = False
+        for vn, vv in (vcfg.get("variants") or {}).items():
+            if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
+                err(f"venice/{vm} variants.{vn}.disable_thinking must be true")
+                venice_thinking_ok = False
+    or_models_chk = (((oc.get("provider") or {}).get("openrouter") or {}).get("models")) or {}
+    for mid, m in or_models_chk.items() if isinstance(or_models_chk, dict) else []:
+        o = (m or {}).get("options") or {}
+        if o.get("disable_thinking") is True:
+            err(f"openrouter {mid}: disable_thinking is Venice-only — do not set it on OpenRouter/GLM")
+            venice_thinking_ok = False
+    ds_models_chk = (((oc.get("provider") or {}).get("deepseek") or {}).get("models")) or {}
+    for mid, m in ds_models_chk.items() if isinstance(ds_models_chk, dict) else []:
+        o = (m or {}).get("options") or {}
+        if o.get("disable_thinking") is True:
+            err(f"deepseek {mid}: disable_thinking is Venice-only — native DeepSeek stays separate")
+            venice_thinking_ok = False
+    if venice_thinking_ok:
+        ok("venice models pin disable_thinking (OpenRouter/native DeepSeek do not)")
     or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
     venice_slugs = {"deepseek-v4-pro-0813", "deepseek-v4-pro", "deepseek-v4-1-flash"}
     leaked_venice = sorted(x for x in or_wl if x in venice_slugs or str(x).startswith("venice/"))

@@ -407,6 +407,17 @@ if isinstance(venice_models, dict):
             if vcfg.get(field) != default:
                 vcfg[field] = default
                 changes.append(f"venice.models.{vm}.{field} -> {default!r}")
+        # Venice DeepSeek spends max_tokens in reasoning_content unless thinking
+        # is off (docs.venice.ai disable_thinking). Model/variant options merge
+        # into the openai-compatible body — OpenRouter/GLM are untouched.
+        vopts = vcfg.setdefault("options", {})
+        if isinstance(vopts, dict) and vopts.get("disable_thinking") is not True:
+            vopts["disable_thinking"] = True
+            changes.append(f"venice.models.{vm}.options.disable_thinking -> true")
+        for vn, vv in list((vcfg.get("variants") or {}).items()):
+            if isinstance(vv, dict) and vv.get("disable_thinking") is not True:
+                vv["disable_thinking"] = True
+                changes.append(f"venice.models.{vm}.variants.{vn}.disable_thinking -> true")
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
     changes.append("removed provider.openai (OpenRouter-only)")

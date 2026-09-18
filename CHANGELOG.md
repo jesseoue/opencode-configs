@@ -6,6 +6,10 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 ## [1.5.80] — 2026-09-15
 
+### Venice `disable_thinking`
+
+- Venice DeepSeek Pro / Flash can spend the whole `max_tokens` budget in `reasoning_content` unless the raw API gets `disable_thinking: true`. OpenCode pins that on `provider.venice` **model + variant options** only (openai-compatible body merge — not OpenRouter, not native DeepSeek). `oc fix` / `oc validate` enforce it.
+
 ### Clone stays config-only
 
 - OmO runtime moved **out of the git worktree** to sibling `/Users/Shared/opencode-runtime`. `~/.omo` points there. `opencode-configs/.runtime` is a purity violation (`oc validate` / `oc fix` / `oc cleanup` remove it).
