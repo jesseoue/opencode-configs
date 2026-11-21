@@ -333,8 +333,10 @@ if oc:
         err("venice must expose deepseek-v4-1-flash (content-aware-fast / V4.1 Flash)")
     else:
         ok("venice exposes deepseek-v4-1-flash for content-aware-fast")
-    vwl = ((((oc.get("provider") or {}).get("venice") or {}).get("whitelist")) or [])
-    if set(vwl) != vmodels:
+    vwl = (((oc.get("provider") or {}).get("venice") or {}).get("whitelist"))
+    if vwl is None:
+        ok("venice has no whitelist (full Venice catalog; curated models{} keep overrides)")
+    elif set(vwl) != vmodels:
         err("venice whitelist must match venice.models (keeps T3 Variant/Agent on curated slugs)")
     else:
         ok("venice whitelist matches curated models")
@@ -349,6 +351,7 @@ if oc:
     else:
         ok("venice is a first-party provider (api.venice.ai, no key in JSON)")
     venice_thinking_ok = True
+    venice_uncensored_ok = True
     for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
         if not isinstance(vcfg, dict):
             continue
@@ -360,6 +363,9 @@ if oc:
         if vp.get("disable_thinking") is not True:
             err(f"venice/{vm} options.venice_parameters.disable_thinking must be true (top-level disable_thinking is an unrecognized key)")
             venice_thinking_ok = False
+        if vp.get("include_venice_system_prompt") is not False:
+            err(f"venice/{vm} options.venice_parameters.include_venice_system_prompt must be false (Venice system prompt re-adds content guidance)")
+            venice_uncensored_ok = False
         for vn, vv in (vcfg.get("variants") or {}).items():
             if not isinstance(vv, dict):
                 continue
@@ -369,6 +375,9 @@ if oc:
             if (vv.get("venice_parameters") or {}).get("disable_thinking") is not True:
                 err(f"venice/{vm} variants.{vn}.venice_parameters.disable_thinking must be true")
                 venice_thinking_ok = False
+            if (vv.get("venice_parameters") or {}).get("include_venice_system_prompt") is not False:
+                err(f"venice/{vm} variants.{vn}.venice_parameters.include_venice_system_prompt must be false (variant must stay uncensored even if merge semantics change)")
+                venice_uncensored_ok = False
     or_models_chk = (((oc.get("provider") or {}).get("openrouter") or {}).get("models")) or {}
     for mid, m in or_models_chk.items() if isinstance(or_models_chk, dict) else []:
         o = (m or {}).get("options") or {}
@@ -383,6 +392,8 @@ if oc:
             venice_thinking_ok = False
     if venice_thinking_ok:
         ok("venice models pin venice_parameters.disable_thinking (OpenRouter/native DeepSeek do not)")
+    if venice_uncensored_ok:
+        ok("venice models + variants pin include_venice_system_prompt=false (direct lane stays uncensored)")
     or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
     venice_slugs = {"deepseek-v4-pro-0813", "deepseek-v4-pro", "deepseek-v4-1-flash"}
     leaked_venice = sorted(x for x in or_wl if x in venice_slugs or str(x).startswith("venice/"))
@@ -1431,8 +1442,8 @@ else:
     else:
         ok("agents/content-aware-fast.md present (edit deny)")
     md_model = re.search(r"(?m)^model:\s*(\S+)", body)
-    if not md_model or md_model.group(1) != "venice/deepseek-v4-1-flash":
-        err("agents/content-aware-fast.md model must be venice/deepseek-v4-1-flash")
+    if not md_model or md_model.group(1) != "venice/deepseek-v4-1-flash-1017-uncensored":
+        err("agents/content-aware-fast.md model must be venice/deepseek-v4-1-flash-1017-uncensored")
     else:
         ok(f"agents/content-aware-fast.md model={md_model.group(1)}")
 if not os.path.isfile(ca_prof):
@@ -1457,9 +1468,9 @@ else:
 if omo:
     ca_want = {
         ("agents", "content-aware-research"): "venice/deepseek-v4-pro-0813",
-        ("agents", "content-aware-fast"): "venice/deepseek-v4-1-flash",
-        ("categories", "content-aware-fast"): "venice/deepseek-v4-1-flash",
-        ("categories", "content-aware-deep"): "venice/deepseek-v4-pro-0813",
+        ("agents", "content-aware-fast"): "venice/deepseek-v4-1-flash-1017-uncensored",
+        ("categories", "content-aware-fast"): "venice/deepseek-v4-1-flash-1017-uncensored",
+        ("categories", "content-aware-deep"): "venice/abliteration-abliterated-model-large-v2",
     }
     for (sec, ca_name), want in ca_want.items():
         ca = ((omo.get(sec) or {}).get(ca_name) or {})
@@ -1681,7 +1692,8 @@ else:
         blob = json.dumps(t3)
         if "sk-" in blob or "VENICE_" in blob or "apiKey" in blob:
             err("t3-opencode.json must not contain keys or apiKey fields")
-        or_wl = set((((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist")) or [])
+        _orp = (oc.get("provider") or {}).get("openrouter") or {}
+        or_wl = set(_orp.get("whitelist") or _orp.get("models") or {})
         venice_models = set(((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}))
         extras = []
         for m in (t3.get("catalogModels") or []) + (t3.get("customModels") or []):

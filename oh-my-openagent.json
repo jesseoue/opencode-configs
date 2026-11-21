@@ -33,8 +33,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "hephaestus": {
@@ -51,7 +51,6 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/qwen/qwen3.8-max-0902",
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/meituan/longcat-2.0"
       ]
     },
@@ -64,9 +63,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "low",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "atlas": {
@@ -78,9 +77,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "low",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "oracle": {
@@ -99,7 +98,6 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/qwen/qwen3.8-max-0902",
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/meituan/longcat-2.0"
       ]
     },
@@ -119,8 +117,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "explore": {
@@ -139,8 +137,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "multimodal-looker": {
@@ -169,9 +167,9 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "medium",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "momus": {
@@ -183,7 +181,6 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "xhigh",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
@@ -219,7 +216,7 @@
       "fallback_models": [
         "deepseek/deepseek-flash",
         "openrouter/qwen/qwen3.8-max-0902",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "sisyphus-deepseek-junior": {
@@ -235,7 +232,7 @@
       "fallback_models": [
         "deepseek/deepseek-v4-pro",
         "openrouter/qwen/qwen3.8-max-0902",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "sisyphus-venice-deepseek": {
@@ -254,6 +251,7 @@
       "reasoning": "low",
       "fallback_models": [
         "venice/deepseek-v4-pro",
+        "venice/abliteration-abliterated-model-large-v2",
         "venice/deepseek-v4-1-flash"
       ]
     },
@@ -268,6 +266,7 @@
       "model": "venice/deepseek-v4-1-flash",
       "reasoning": "low",
       "fallback_models": [
+        "venice/deepseek-v4-1-flash-1017-uncensored",
         "venice/deepseek-v4-pro-0813",
         "venice/deepseek-v4-pro"
       ]
@@ -289,6 +288,7 @@
       "model": "venice/deepseek-v4-pro-0813",
       "reasoning": "high",
       "fallback_models": [
+        "venice/abliteration-abliterated-model-large-v2",
         "venice/deepseek-v4-pro",
         "venice/deepseek-v4-1-flash"
       ]
@@ -305,13 +305,14 @@
       },
       "prompt_append": "file://~/.config/opencode/prompts/agents/content-aware-fast.md",
       "color": "#FF9100",
-      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash (edit denied). Venice only.",
+      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash 1017 Uncensored (edit denied). Venice only.",
       "maxTokens": 8192,
-      "model": "venice/deepseek-v4-1-flash",
+      "model": "venice/deepseek-v4-1-flash-1017-uncensored",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-pro-0813",
-        "venice/deepseek-v4-pro"
+        "venice/deepseek-v4-1-flash",
+        "venice/e2ee-deepseek-v4-1-flash-1017-abliterated",
+        "venice/deepseek-v4-pro-0813"
       ]
     },
     "context-aware-hermes": {
@@ -332,8 +333,8 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     }
   },
@@ -356,7 +357,6 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "xhigh",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
@@ -369,7 +369,7 @@
       "fallback_models": [
         "openrouter/z-ai/glm-5.3",
         "openrouter/qwen/qwen3.8-max-0902",
-        "openrouter/poolside/laguna-s-2.1"
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "artistry": {
@@ -412,7 +412,6 @@
       "model": "openrouter/z-ai/glm-5.3",
       "reasoning": "high",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/qwen/qwen3.8-max-0902",
         "openrouter/meituan/longcat-2.0"
       ]
@@ -423,9 +422,9 @@
       "model": "openrouter/google/gemini-3.8-flash",
       "reasoning": "medium",
       "fallback_models": [
-        "openrouter/poolside/laguna-s-2.1",
         "openrouter/minimax/minimax-m3",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "bug-hunt": {
@@ -436,8 +435,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "refactor-safe": {
@@ -448,8 +447,8 @@
       "reasoning": "low",
       "fallback_models": [
         "openrouter/moonshotai/kimi-k2.7-code",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "arch-review": {
@@ -460,30 +459,32 @@
       "reasoning": "high",
       "fallback_models": [
         "openrouter/minimax/minimax-m3",
-        "openrouter/poolside/laguna-s-2.1",
-        "openrouter/qwen/qwen3.8-max-0902"
+        "openrouter/qwen/qwen3.8-max-0902",
+        "openrouter/meituan/longcat-2.0"
       ]
     },
     "content-aware-fast": {
-      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash: endpoints, misconfigs, deps.",
+      "description": "Flash attack-surface recon on Venice DeepSeek V4.1 Flash 1017 Uncensored: endpoints, misconfigs, deps.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-fast.md",
       "maxTokens": 8192,
-      "model": "venice/deepseek-v4-1-flash",
+      "model": "venice/deepseek-v4-1-flash-1017-uncensored",
       "reasoning": "low",
       "fallback_models": [
-        "venice/deepseek-v4-pro-0813",
-        "venice/deepseek-v4-pro"
+        "venice/deepseek-v4-1-flash",
+        "venice/e2ee-deepseek-v4-1-flash-1017-abliterated",
+        "venice/deepseek-v4-pro-0813"
       ]
     },
     "content-aware-deep": {
       "description": "Deep vuln research. Each finding: CVSS, evidence, repro, fix.",
       "prompt_append": "file://~/.config/opencode/prompts/categories/content-aware-deep.md",
       "maxTokens": 32768,
-      "model": "venice/deepseek-v4-pro-0813",
+      "model": "venice/abliteration-abliterated-model-large-v2",
       "reasoning": "high",
       "fallback_models": [
+        "venice/deepseek-v4-pro-0813",
         "venice/deepseek-v4-pro",
-        "venice/deepseek-v4-1-flash"
+        "venice/abliteration-abliterated-model-large-flash"
       ]
     }
   },
@@ -497,19 +498,156 @@
     "modelConcurrency": {
       "openrouter/z-ai/glm-5.3": 8,
       "openrouter/z-ai/glm-5.3-flash": 10,
-      "openrouter/poolside/laguna-s-2.1": 10,
       "openrouter/meituan/longcat-2.0": 8,
-      "openrouter/minimax/minimax-m3": 8,
       "openrouter/google/gemini-3.1-pro-preview": 5,
+      "openrouter/minimax/minimax-m3": 8,
+      "openrouter/moonshotai/kimi-k2.7-code": 5,
       "openrouter/google/gemini-3.8-flash": 10,
       "openrouter/qwen/qwen3.8-max-0902": 5,
-      "openrouter/moonshotai/kimi-k2.7-code": 5,
       "openrouter/deepseek/deepseek-v4-pro-0813": 8,
       "openrouter/deepseek/deepseek-v4.1-flash": 5,
       "openrouter/nousresearch/hermes-4-405b": 2,
       "venice/deepseek-v4-pro-0813": 5,
       "venice/deepseek-v4-pro": 5,
+      "venice/deepseek-v4-1-flash-1017": 5,
+      "venice/gemini-4-argon": 5,
+      "venice/gemini-3-6-flash": 5,
+      "venice/gemini-3-7-flash": 5,
+      "venice/gemini-3-8-flash": 5,
+      "venice/gemini-3-5-flash-lite": 5,
+      "venice/z-ai-glm-5-3": 5,
+      "venice/z-ai-glm-5-3-flash": 5,
+      "venice/zai-org-glm-5-2": 5,
+      "venice/zai-org-glm-5-1": 5,
+      "venice/zai-org-glm-5": 5,
+      "venice/z-ai-glm-5-turbo": 5,
+      "venice/z-ai-glm-5v-turbo": 5,
+      "venice/olafangensan-glm-4.7-flash-heretic": 5,
+      "venice/zai-org-glm-4.6": 5,
+      "venice/zai-org-glm-4.7": 5,
+      "venice/venice-uncensored-1-2": 5,
+      "venice/venice-uncensored-role-play": 5,
+      "venice/qwen-3-8-2-4t-a95b": 5,
+      "venice/qwen-3-8-max": 5,
+      "venice/qwen-3-8-27b": 5,
+      "venice/qwen-3-8-flash": 5,
+      "venice/qwen-3-7-max": 5,
+      "venice/qwen-3-7-plus": 5,
+      "venice/qwen-3-6-plus": 5,
+      "venice/qwen3-6-27b": 5,
+      "venice/qwen3-6-35b-a3b": 5,
+      "venice/qwen3-5-397b-a17b": 5,
+      "venice/qwen3-5-35b-a3b": 5,
+      "venice/qwen3-235b-a22b-thinking-2507": 5,
+      "venice/qwen3-235b-a22b-instruct-2507": 5,
+      "venice/qwen3-next-80b": 5,
+      "venice/qwen3-vl-235b-a22b": 5,
+      "venice/qwen3-coder-480b-a35b-instruct-turbo": 5,
+      "venice/google-gemma-4-26b-a4b-it": 5,
+      "venice/google-gemma-4-31b-it": 5,
+      "venice/gemma-4-uncensored": 5,
+      "venice/google-gemma-3-27b-it": 5,
+      "venice/grok-4-3": 5,
+      "venice/grok-4-5": 5,
+      "venice/grok-4-6": 5,
+      "venice/grok-4-7": 5,
+      "venice/grok-4-20": 5,
+      "venice/grok-4-20-multi-agent": 5,
+      "venice/grok-build-0-1": 5,
+      "venice/mistral-small-3-2-24b-instruct": 5,
+      "venice/gemini-3-1-pro-preview": 5,
+      "venice/gemini-3-5-flash": 5,
+      "venice/gemini-3-flash-preview": 5,
+      "venice/claude-fable-5": 5,
+      "venice/claude-fable-5-1": 5,
+      "venice/claude-opus-5": 5,
+      "venice/claude-opus-5-fast": 5,
+      "venice/claude-opus-5-5": 5,
+      "venice/claude-opus-5-5-fast": 5,
+      "venice/claude-opus-4-8": 5,
+      "venice/claude-opus-4-8-fast": 5,
+      "venice/claude-opus-4-7": 5,
+      "venice/claude-opus-4-6": 5,
+      "venice/claude-opus-4-5": 5,
+      "venice/claude-sonnet-5": 5,
+      "venice/claude-sonnet-5-5": 5,
+      "venice/claude-haiku-5-5": 5,
+      "venice/claude-sonnet-4-6": 5,
+      "venice/openai-gpt-oss-120b": 5,
+      "venice/kimi-k3-1-pro": 5,
+      "venice/kimi-k3-1-pro-highspeed": 5,
+      "venice/kimi-k3": 5,
+      "venice/kimi-k3-fast-api": 5,
+      "venice/kimi-k2-7-code": 5,
+      "venice/kimi-k2-6": 5,
+      "venice/kimi-k2-5": 5,
+      "venice/xiaomi-mimo-v2-5": 5,
+      "venice/xiaomi-mimo-v2-6-flash": 5,
+      "venice/deepseek-v4-flash": 5,
+      "venice/deepseek-v4-flash-0731": 5,
       "venice/deepseek-v4-1-flash": 5,
+      "venice/deepseek-v4-1-flash-uncensored": 5,
+      "venice/deepseek-v4-1-flash-1017-uncensored": 5,
+      "venice/deepseek-v4-1-flash-1017-ultrafast": 5,
+      "venice/deepseek-v3.2": 5,
+      "venice/seed-2-1-turbo": 5,
+      "venice/deepseek-v4-flash-0731-fast": 5,
+      "venice/aion-labs-aion-3-0": 5,
+      "venice/aion-labs-aion-3-0-mini": 5,
+      "venice/aion-labs-aion-3-5": 5,
+      "venice/aion-labs-aion-3-5-mini": 5,
+      "venice/abliteration-abliterated-model-large-v2": 5,
+      "venice/abliteration-abliterated-model-large-flash": 5,
+      "venice/llama-3.2-3b": 5,
+      "venice/llama-3.3-70b": 5,
+      "venice/muse-wonder": 5,
+      "venice/muse-spark-open": 5,
+      "venice/openai-gpt-52": 5,
+      "venice/openai-gpt-53-codex": 5,
+      "venice/openai-gpt-54": 5,
+      "venice/openai-gpt-54-pro": 5,
+      "venice/openai-gpt-54-mini": 5,
+      "venice/openai-gpt-55": 5,
+      "venice/openai-gpt-55-pro": 5,
+      "venice/openai-gpt-56-luna": 5,
+      "venice/openai-gpt-56-luna-pro": 5,
+      "venice/openai-gpt-56-terra": 5,
+      "venice/openai-gpt-56-terra-pro": 5,
+      "venice/openai-gpt-56-sol": 5,
+      "venice/openai-gpt-56-sol-pro": 5,
+      "venice/openai-gpt-6-astra": 5,
+      "venice/openai-gpt-6-astra-pro": 5,
+      "venice/openai-gpt-6-luna": 5,
+      "venice/openai-gpt-6-sol": 5,
+      "venice/openai-gpt-61-sol": 5,
+      "venice/openai-gpt-61-sol-ultrafast": 5,
+      "venice/openai-gpt-61-terra": 5,
+      "venice/openai-gpt-4o-2024-11-20": 5,
+      "venice/openai-gpt-4o-mini-2024-07-18": 5,
+      "venice/minimax-m3-preview": 5,
+      "venice/minimax-m3-1-flash": 5,
+      "venice/minimax-m25": 5,
+      "venice/minimax-m27": 5,
+      "venice/mercury-2": 5,
+      "venice/mercury-2-5": 5,
+      "venice/mercury-3": 5,
+      "venice/nvidia-nemotron-3-nano-30b-a3b": 5,
+      "venice/nvidia-nemotron-3-5-super-vl-120b-a12b": 5,
+      "venice/nvidia-nemotron-3-ultra-550b-a55b": 5,
+      "venice/e2ee-gemma-4-26b-a4b-uncensored-p": 5,
+      "venice/e2ee-glm-5-2-p": 5,
+      "venice/e2ee-glm-5-3-p": 5,
+      "venice/e2ee-gpt-oss-120b-p": 5,
+      "venice/e2ee-kimi-k3-p": 5,
+      "venice/e2ee-qwen-2-5-7b-p": 5,
+      "venice/e2ee-qwen3-vl-30b-a3b-p": 5,
+      "venice/e2ee-qwen3-6-35b-a3b": 5,
+      "venice/e2ee-deepseek-v4-flash": 5,
+      "venice/e2ee-deepseek-v4-1-flash-1017-abliterated": 5,
+      "venice/e2ee-glm-5-3-flash": 5,
+      "venice/e2ee-qwen3-8-27b": 5,
+      "venice/e2ee-kimi-k2-6": 5,
+      "venice/hy4-preview": 5,
       "deepseek/deepseek-v4-pro": 4,
       "deepseek/deepseek-flash": 6
     },

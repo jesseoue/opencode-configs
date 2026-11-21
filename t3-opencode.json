@@ -18,7 +18,6 @@
   "catalogModels": [
     "openrouter/z-ai/glm-5.3",
     "openrouter/z-ai/glm-5.3-flash",
-    "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
     "openrouter/minimax/minimax-m3",
     "openrouter/google/gemini-3.1-pro-preview",
@@ -30,6 +29,10 @@
     "openrouter/nousresearch/hermes-4-405b",
     "venice/deepseek-v4-pro-0813",
     "venice/deepseek-v4-pro",
-    "venice/deepseek-v4-1-flash"
+    "venice/deepseek-v4-1-flash",
+    "venice/deepseek-v4-1-flash-1017-uncensored",
+    "venice/e2ee-deepseek-v4-1-flash-1017-abliterated",
+    "venice/abliteration-abliterated-model-large-v2",
+    "venice/abliteration-abliterated-model-large-flash"
   ]
 }

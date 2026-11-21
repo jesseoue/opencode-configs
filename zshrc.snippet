@@ -145,9 +145,13 @@ opencode() {
 
   local _oc_saved_term="${TERM:-}"
   local _oc_rc=0
+  # `run` is headless: when stdin is not a tty (agent shells, scripts, pipes),
+  # opencode waits forever on stdin. /dev/null makes it exit after the prompt.
   # Project-path TUI: cd into it and run `.` so OpenCode is a direct child of
   # this interactive shell and owns the tty (avoids instant-exit from wrappers).
-  if (( $#_oc_args == 1 )) && [[ -d "${_oc_args[1]}" ]]; then
+  if [[ "${_oc_args[1]}" == "run" && ! -t 0 ]]; then
+    TERM=xterm-256color command opencode "${_oc_args[@]}" </dev/null || _oc_rc=$?
+  elif (( $#_oc_args == 1 )) && [[ -d "${_oc_args[1]}" ]]; then
     cd "${_oc_args[1]}" || return 1
     print -u2 "Launching OpenCode from $PWD..."
     TERM=xterm-256color command opencode . || _oc_rc=$?

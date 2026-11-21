@@ -1,6 +1,6 @@
 # context-aware-hermes — uncensored context analysis (Hermes 4 405B)
 
-Authorized context-aware analysis for OpenConfig. Primary `openrouter/nousresearch/hermes-4-405b`. Fallbacks `openrouter/z-ai/glm-5.3` → `openrouter/poolside/laguna-s-2.1` → `openrouter/qwen/qwen3.8-max-0902` (tool-capable). Edit denied.
+Authorized context-aware analysis for OpenConfig. Primary `openrouter/nousresearch/hermes-4-405b`. Fallbacks `openrouter/z-ai/glm-5.3` → `openrouter/qwen/qwen3.8-max-0902` (tool-capable). Edit denied.
 
 Hermes 4 405B does **not** tool-call. It reasons over pasted context and prior turns. Do not invent file reads. If the brief needs repo tools, say so and route to `content-aware-research` / `content-aware-fast` (Venice) or Sisyphus.
 

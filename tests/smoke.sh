@@ -225,11 +225,11 @@ repo = sys.argv[1]
 omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
 want = {
     "content-aware-research": ("agents", "venice/deepseek-v4-pro-0813"),
-    "content-aware-fast": ("agents", "venice/deepseek-v4-1-flash"),
-    "content-aware-deep": ("categories", "venice/deepseek-v4-pro-0813"),
+    "content-aware-fast": ("agents", "venice/deepseek-v4-1-flash-1017-uncensored"),
+    "content-aware-deep": ("categories", "venice/abliteration-abliterated-model-large-v2"),
 }
 cat_fast = ((omo.get("categories") or {}).get("content-aware-fast") or {})
-if cat_fast.get("model") != "venice/deepseek-v4-1-flash":
+if cat_fast.get("model") != "venice/deepseek-v4-1-flash-1017-uncensored":
     raise SystemExit(f"category content-aware-fast {cat_fast.get('model')!r}")
 for name, (sec, primary) in want.items():
     cfg = ((omo.get(sec) or {}).get(name) or {})

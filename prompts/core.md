@@ -6,7 +6,7 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 
 - **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` / `:nitro` catalog slugs — tool requests already get [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto).
 - **Optional Sisyphus leads** → `sisyphus-deepseek` (native `DEEPSEEK_API_KEY`) · `sisyphus-venice-deepseek` (`VENICE_API_KEY`). Default lead stays GLM `sisyphus`.
-- **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash`. Fallbacks stay `venice/*` (`-pro`, `-1-flash`). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
+- **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash-1017-uncensored`; `content-aware-deep` on `venice/abliteration-abliterated-model-large-v2`. Fallbacks stay `venice/*` (`-1-flash`, e2ee-abliterated, `-pro`, large-flash). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
 - **Context-aware Hermes** → `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b` (tool-less, edit denied). Fallbacks GLM 5.3 · Laguna · Qwen. Consult only — not a team-mailbox member. Venice `content-aware-*` stays the tool-using research lane.
 - Implementation → use an edit-capable category/member; never send edit work to content-aware-research, context-aware-hermes, or explore (edit denied).
 

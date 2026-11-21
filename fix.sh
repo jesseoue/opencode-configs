@@ -148,7 +148,6 @@ CORE_TOOLS = (
     "context7_query-docs", "context7_resolve-library-id",
     "grep_app_searchGitHub", "websearch_web_search_exa",
 )
-oc["permission"] = perm
 for t in TEAM_TOOLS + CORE_TOOLS:
     if perm.get(t) != "allow":
         perm[t] = "allow"
@@ -249,6 +248,8 @@ if oc.get("subagent_depth") != 1:
     oc["subagent_depth"] = 1; changes.append("subagent_depth -> 1 (OpenCode default; no nested Task storms)")
 comp = oc.setdefault("compaction", {})
 if isinstance(comp, dict):
+    if comp.get("auto") is not True:
+        comp["auto"] = True; changes.append("compaction.auto -> true")
     if comp.get("auto") is not True:
         comp["auto"] = True; changes.append("compaction.auto -> true")
     if comp.get("prune") is not True:
@@ -410,6 +411,9 @@ if isinstance(venice_models, dict):
         # Venice DeepSeek spends max_tokens in reasoning_content unless thinking
         # is off. disable_thinking is a venice_parameters key — top-level is
         # unrecognized and 400s (Flash and Pro). OpenRouter/native DeepSeek stay clean.
+        # include_venice_system_prompt=false on every model + variant keeps Venice's
+        # injected system prompt (and its content guidance) off the direct lane —
+        # enforced here so repairs can never silently re-enable it.
         vopts = vcfg.setdefault("options", {})
         if isinstance(vopts, dict):
             if "disable_thinking" in vopts:
@@ -419,6 +423,9 @@ if isinstance(venice_models, dict):
             if isinstance(vp, dict) and vp.get("disable_thinking") is not True:
                 vp["disable_thinking"] = True
                 changes.append(f"venice.models.{vm}.options.venice_parameters.disable_thinking -> true")
+            if isinstance(vp, dict) and vp.get("include_venice_system_prompt") is not False:
+                vp["include_venice_system_prompt"] = False
+                changes.append(f"venice.models.{vm}.options.venice_parameters.include_venice_system_prompt -> false (uncensored: no Venice system prompt)")
         for vn, vv in list((vcfg.get("variants") or {}).items()):
             if not isinstance(vv, dict):
                 continue
@@ -429,6 +436,9 @@ if isinstance(venice_models, dict):
             if isinstance(vvp, dict) and vvp.get("disable_thinking") is not True:
                 vvp["disable_thinking"] = True
                 changes.append(f"venice.models.{vm}.variants.{vn}.venice_parameters.disable_thinking -> true")
+            if isinstance(vvp, dict) and vvp.get("include_venice_system_prompt") is not False:
+                vvp["include_venice_system_prompt"] = False
+                changes.append(f"venice.models.{vm}.variants.{vn}.venice_parameters.include_venice_system_prompt -> false (uncensored: no Venice system prompt)")
 if isinstance(prov_root, dict) and "openai" in prov_root:
     del prov_root["openai"]
     changes.append("removed provider.openai (OpenRouter-only)")
@@ -547,14 +557,18 @@ RECON_PRIMARY = {
     "deep": "openrouter/deepseek/deepseek-v4-pro-0813",
     "arch-review": "openrouter/z-ai/glm-5.3",
     "content-aware-research": "venice/deepseek-v4-pro-0813",
-    "content-aware-deep": "venice/deepseek-v4-pro-0813",
-    "content-aware-fast": "venice/deepseek-v4-1-flash",
+    "content-aware-deep": "venice/abliteration-abliterated-model-large-v2",
+    "content-aware-fast": "venice/deepseek-v4-1-flash-1017-uncensored",
 }
 # content-aware-research is Venice-only (never OpenRouter / Hermes).
 # hermes-4-405b is NOT in RECON_FALLBACKS: it cannot tool-call.
 CONTENT_AWARE_FALLBACKS = [
     "venice/deepseek-v4-pro",
     "venice/deepseek-v4-1-flash",
+    "venice/deepseek-v4-1-flash-1017-uncensored",
+    "venice/e2ee-deepseek-v4-1-flash-1017-abliterated",
+    "venice/abliteration-abliterated-model-large-v2",
+    "venice/abliteration-abliterated-model-large-flash",
 ]
 VENICE_SISYPHUS = {
     "sisyphus-venice-deepseek",
@@ -574,7 +588,6 @@ def _venice_lane(n, a=None):
 RECON_FALLBACKS = [
     "openrouter/deepseek/deepseek-v4-pro-0813",
     "openrouter/z-ai/glm-5.3",
-    "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
 FAST_PRIMARY = "openrouter/z-ai/glm-5.3-flash"
@@ -653,7 +666,6 @@ for n, keys in OMO_READONLY.items():
 HERMES_PRIMARY = "openrouter/nousresearch/hermes-4-405b"
 HERMES_FALLBACKS = [
     "openrouter/z-ai/glm-5.3",
-    "openrouter/poolside/laguna-s-2.1",
     "openrouter/qwen/qwen3.8-max-0902",
 ]
 hermes = (omo.get("agents") or {}).get("context-aware-hermes")
@@ -696,13 +708,11 @@ GPT_MARKERS = ("openai/gpt", "/gpt-5", "/gpt-4")
 DEEP_PRIMARY = "openrouter/z-ai/glm-5.3"
 DEEP_FALLBACKS = [
     "openrouter/qwen/qwen3.8-max-0902",
-    "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
 MAX_PRIMARY = "openrouter/z-ai/glm-5.3"
 MAX_FALLBACKS = [
     "openrouter/qwen/qwen3.8-max-0902",
-    "openrouter/poolside/laguna-s-2.1",
     "openrouter/meituan/longcat-2.0",
 ]
 MAX_ROUTES = {"momus", "ultrabrain", "unspecified-high"}
@@ -871,7 +881,9 @@ if isinstance(bt, dict):
             if any(x in low for x in ("sonnet", "sol", "terra", "gemini-3.1-pro", "qwen3.8-max", "kimi-k2.7")):
                 return 5
             return 2
-        wl = (oc.get("provider") or {}).get("openrouter", {}).get("whitelist") or []
+        _orp = (oc.get("provider") or {}).get("openrouter", {})
+        # No whitelist = full OpenRouter catalog; cap the curated models{} entries.
+        wl = _orp.get("whitelist") or list(_orp.get("models") or {})
         # Cap against the full OpenRouter id. Passing the whitelist slug
         # (deepseek/deepseek-v4-pro-0813) falsely matched the native
         # deepseek/ prefix and stamped 4 instead of the shared-route 8.

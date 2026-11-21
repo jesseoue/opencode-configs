@@ -1204,7 +1204,8 @@ for section in ("agents", "categories"):
                 if isinstance(fb, str): ids.add(fb)
                 elif isinstance(fb, dict) and isinstance(fb.get("model"), str): ids.add(fb["model"])
 try:
-    oc_wl = ((oc.get("provider") or {}).get("openrouter") or {}).get("whitelist") or []
+    _orp = (oc.get("provider") or {}).get("openrouter") or {}
+    oc_wl = _orp.get("whitelist") or list(_orp.get("models") or {})
     for w in oc_wl:
         if isinstance(w, str):
             ids.add(w)
@@ -1356,10 +1357,10 @@ if not isinstance(fast, dict):
     print("BAD|agents.content-aware-fast missing (oc run -a content-aware-fast)")
 else:
     print("OK|agent content-aware-fast defined")
-    if fast.get("model") != "venice/deepseek-v4-1-flash":
-        print("BAD|content-aware-fast model must be venice/deepseek-v4-1-flash")
+    if fast.get("model") != "venice/deepseek-v4-1-flash-1017-uncensored":
+        print("BAD|content-aware-fast model must be venice/deepseek-v4-1-flash-1017-uncensored")
     else:
-        print("OK|content-aware-fast model=venice/deepseek-v4-1-flash")
+        print("OK|content-aware-fast model=venice/deepseek-v4-1-flash-1017-uncensored")
     if (fast.get("permission") or {}).get("edit") != "deny":
         print("BAD|content-aware-fast.permission.edit must be deny")
 md = os.path.join(repo, "agents", "content-aware-research.md")
