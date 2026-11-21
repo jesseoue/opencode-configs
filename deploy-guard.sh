@@ -189,46 +189,13 @@ enter_quarantine() {
   echo "$timestamp|quarantine|$reason" >> "$ALERT_LOG"
   printf "  ${c_r}⚠ ENTERING QUARANTINE MODE — %s${c_0}\n" "$reason"
 
-  # Switch to cost-saving models
-  if [[ -f "$REPO/oh-my-openagent.json" ]]; then
-    python3 -c "
-import json, sys
-omo = json.load(open('$REPO/oh-my-openagent.json'))
-changes = 0
-# Swap primary agents to cheapest models
-for section in ('agents', 'categories'):
-    for name, cfg in (omo.get(section, {}) or {}).items():
-        if not isinstance(cfg, dict): continue
-        model = cfg.get('model', '')
-        # Content-aware is Venice-only. Never rewrite venice/* onto OpenRouter.
-        if str(name).startswith('content-aware') or str(model).startswith('venice/'):
-            continue
-        if 'deepseek-v4-pro' in str(model) and '0813' not in str(model):
-            cfg['model'] = 'openrouter/deepseek/deepseek-v4-pro-0813'
-            changes += 1
-            print(f'  quarantine: {section}.{name} → deepseek-v4-pro-0813 (cheaper GA)')
-        if 'claude-opus-5' in str(model) and 'fast' not in str(model):
-            cfg['model'] = 'openrouter/deepseek/deepseek-v4-pro-0813'
-            changes += 1
-            print(f'  quarantine: {section}.{name} → deepseek-v4-pro-0813 (opus swap)')
-if changes:
-    json.dump(omo, open('$REPO/oh-my-openagent.json', 'w'), indent=2)
-    print(f'  Quarantine: {changes} model(s) downgraded to cost-saving')
-else:
-    print('  Quarantine: already on cost-saving models, no changes')
-" 2>&1
-  fi
+  # Agents are static markdown in this stack; quarantine records the alert and
+  # asks the operator to switch to the cheap profile.
+  printf "  Switch to a cost-saving profile: oc new --profile low, or set default_agent to junior.\n"
 }
 
 exit_quarantine() {
-  info "Exiting quarantine — restoring from repo (git checkout)"
-
-  if git -C "$REPO" diff --quiet oh-my-openagent.json 2>/dev/null; then
-    ok "oh-my-openagent.json already at repo state"
-  else
-    git -C "$REPO" checkout -- oh-my-openagent.json 2>/dev/null
-    ok "oh-my-openagent.json restored from repo"
-  fi
+  info "Exiting quarantine"
 
   local timestamp
   timestamp=$(date -u +%s)

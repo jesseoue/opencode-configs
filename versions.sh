@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # versions.sh — Audit OpenConfig package pins against upstream.
 #
-# Compares local OpenCode CLI, OmO plugin pin, @opencode-ai/plugin peer,
+# Compares local OpenCode CLI, @opencode-ai/plugin peer,
 # and versions.json floors to live npm + GitHub releases. Also scans
 # projects home (projects.json / OC_PROJECTS_DIR) for other opencode.json overlays.
 #
@@ -83,9 +83,6 @@ def status(kind, msg):
 
 versions = json.load(open(os.path.join(repo, "versions.json"), encoding="utf-8"))
 oc = json.load(open(os.path.join(repo, "opencode.json"), encoding="utf-8"))
-pins = [p for p in (oc.get("plugin") or []) if isinstance(p, str) and "oh-my-openagent@" in p]
-omo_pin = pins[0].split("@", 1)[1] if pins else ""
-omo_want = (versions.get("oh_my_openagent") or {}).get("pin") or ""
 oc_min = (versions.get("opencode") or {}).get("min") or ""
 product = versions.get("opencode_configs") or ""
 
@@ -101,15 +98,9 @@ out["local"] = {
     "openconfig": product,
     "opencode_cli": cli_ver or None,
     "opencode_min": oc_min,
-    "omo_pin": omo_pin,
-    "omo_versions_json": omo_want,
     "opencode_ai_plugin": peer or None,
 }
 
-if omo_pin and omo_want and omo_pin != omo_want:
-    status("bad", f"opencode.json OmO pin {omo_pin} != versions.json {omo_want}")
-elif omo_pin:
-    status("ok", f"OmO pin aligned ({omo_pin})")
 
 if cli_ver and oc_min:
     if tup(cli_ver) < tup(oc_min):
@@ -169,27 +160,15 @@ for root in scan_roots:
         })
 out["other_opencode_json"] = others[:20]
 if others:
-    status("ok", f"scanned {len(others)} other opencode.json (project overlays; OmO pin is global)")
+    status("ok", f"scanned {len(others)} other opencode.json (project overlays)")
 else:
-    status("ok", "no other project opencode.json with local plugin pins (global stack owns OmO)")
+    status("ok", "no other project opencode.json with local plugin pins ")
 
 if mode == "local":
     print(json.dumps(out, indent=2))
     raise SystemExit(0)
 
 # Upstream
-try:
-    omo_latest, omo_vers = npm_latest("oh-my-openagent")
-    out["upstream"]["oh-my-openagent"] = omo_latest
-    if omo_pin and omo_latest:
-        if omo_pin == omo_latest:
-            status("ok", f"OmO pin {omo_pin} = npm latest")
-        elif omo_pin in omo_vers and omo_latest != omo_pin:
-            status("warn", f"OmO pin {omo_pin} behind npm latest {omo_latest}")
-        elif omo_pin not in omo_vers:
-            status("bad", f"OmO pin {omo_pin} not on npm registry")
-except Exception as e:
-    status("warn", f"npm oh-my-openagent lookup failed: {e}")
 
 try:
     plugin_latest, plugin_vers = npm_latest("@opencode-ai/plugin")
@@ -223,17 +202,6 @@ try:
 except Exception as e:
     status("warn", f"GitHub OpenCode latest lookup failed: {e}")
 
-try:
-    rel = json.loads(get("https://api.github.com/repos/code-yeongyu/oh-my-openagent/releases/latest"))
-    tag = (rel.get("tag_name") or "").lstrip("v")
-    out["upstream"]["omo_github"] = tag or None
-    if omo_pin and tag:
-        if omo_pin == tag:
-            status("ok", f"OmO pin {omo_pin} = GitHub latest")
-        else:
-            status("warn", f"OmO pin {omo_pin} vs GitHub latest {tag}")
-except Exception as e:
-    status("warn", f"GitHub OmO latest lookup failed: {e}")
 
 print(json.dumps(out, indent=2))
 PY
@@ -263,7 +231,7 @@ else
 import json,sys
 d=json.loads(sys.argv[1])
 loc=d.get("local") or {}
-for k in ("openconfig","opencode_cli","opencode_min","omo_pin","omo_versions_json","opencode_ai_plugin"):
+for k in ("openconfig","opencode_cli","opencode_min","opencode_ai_plugin"):
     print(f"LOC|{k}={loc.get(k)}")
 up=d.get("upstream") or {}
 for k,v in up.items():
@@ -302,13 +270,6 @@ PY
   else
     info "no plugin peer fix needed"
   fi
-  # Stale OmO sibling caches make bunx doctor report "Loaded old, latest pin"
-  _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
-  if [[ -n "$_pruned" ]]; then
-    ok "pruned stale OmO cache(s): $(printf '%s' "$_pruned" | tr '\n' ' ')"
-  fi
-  unset _pruned
-  oc_ensure_omo_plugin_cache >/dev/null 2>&1 && ok "OmO pin cache healthy" || warn "OmO pin cache ensure failed — run: oc setup"
 fi
 
 python3 -c 'import json,sys; d=json.loads(sys.argv[1]); sys.exit(0 if d.get("ok") else 1)' "$REPORT"

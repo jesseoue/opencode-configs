@@ -5,7 +5,7 @@
 # Usage: ./maintain.sh [--check] [--clean] [--plans]
 #   --check   audit only, don't change anything
 #   --clean   archive stale sessions to ~/.opencode-backups/, prune caches
-#   --plans   collect and summarize plan strategies from .omo/plans/
+#   --plans   collect and summarize plan strategies from .opencode/plans/
 
 set -euo pipefail
 
@@ -98,30 +98,6 @@ else
 fi
 echo ""
 
-# ─── 3. .omo runtime cleanup ─────────────────────────────────────
-echo "Runtime files:"
-OMO_DIR="$HOME/.omo"
-if [ -d "$OMO_DIR" ]; then
-  # Count non-teams files
-  runtime=$(find "$OMO_DIR" -type f -not -path "*/teams/*" 2>/dev/null | wc -l | tr -d ' ')
-  teams=$(find "$OMO_DIR/teams" -type f 2>/dev/null | wc -l | tr -d ' ')
-  size=$(du -sh "$OMO_DIR" 2>/dev/null | awk '{print $1}')
-  echo "  Runtime files: $runtime ($size)"
-  echo "  Team specs: $teams"
-  if [ "$runtime" -gt 100 ]; then
-    opt "Large runtime dir — consider cleaning"
-    if $CLEAN; then
-      find "$OMO_DIR" -type f -not -path "*/teams/*" -not -path "*/codegraph/*" -delete 2>/dev/null
-      ok "Cleaned runtime files (kept teams + codegraph)"
-    fi
-  else
-    ok "Runtime size reasonable"
-  fi
-else
-  info "No .omo directory"
-fi
-echo ""
-
 # ─── 4. Log rotation ─────────────────────────────────────────────
 echo "Log files:"
 LOG_FILE="$HOME/.local/share/opencode/log/opencode.log"
@@ -158,7 +134,7 @@ echo ""
 if $PLANS; then
   echo "Plan strategies:"
   PLANS_DIR=""
-  for d in "$REPO/.omo/plans" "$HOME/.omo/plans" "$(pwd)/.omo/plans"; do
+  for d in "$REPO/.opencode/plans" "$(pwd)/.opencode/plans"; do
     if [ -d "$d" ]; then
       PLANS_DIR="$d"
       break
@@ -180,14 +156,6 @@ if $PLANS; then
   fi
   echo ""
 
-  # Show available team strategies
-  echo "  Available team strategies:"
-  for d in "$REPO"/teams/*/; do
-    [ -d "$d" ] || continue
-    name=$(basename "$d")
-    desc=$(python3 -c "import json; print(json.load(open('$d/config.json')).get('description','')[:60])" 2>/dev/null || echo "")
-    echo "    $name: $desc"
-  done
   echo ""
 
   # Show available profiles

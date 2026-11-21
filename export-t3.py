@@ -13,8 +13,8 @@ source = Path(__file__).resolve().parent
 target = args.output.resolve()
 target.mkdir(parents=True, exist_ok=True)
 runtime = f"{args.home}/.config/opencode"
-files = [source / name for name in ("AGENTS.md", "opencode.json", "oh-my-openagent.json", "versions.json")]
-for directory in ("agents", "prompts", "profiles", "skills", "teams"):
+files = [source / name for name in ("AGENTS.md", "opencode.json", "versions.json")]
+for directory in ("agents", "prompts", "profiles", "skills"):
     files.extend(p for p in (source / directory).rglob("*") if p.is_file() and p.suffix in (".md", ".json"))
 manifest = {}
 for path in sorted(files):

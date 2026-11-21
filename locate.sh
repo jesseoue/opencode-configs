@@ -2,7 +2,7 @@
 # locate.sh — Discover where OpenConfig / OpenCode pieces live (read-only).
 #
 # Searches the filesystem for the config repo, CLI, symlinks, env keys (presence
-# only — never prints secrets), projects home, terminals, teams, caches, and
+# only — never prints secrets), projects home, terminals, caches, and
 # leftover copies. Safe to run anytime; writes nothing.
 #
 # Usage:
@@ -34,7 +34,6 @@ LINK="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 SESSIONS="${XDG_DATA_HOME:-$HOME/.local/share}/opencode"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/opencode"
 BACKUP="${OC_BACKUP_ROOT:-$HOME/.opencode-backups}"
-OMO_TEAMS="${OMO_TEAMS_DIR:-$HOME/.omo/teams}"
 TMUX_CONF="${HOME}/.tmux.conf"
 GHOSTTY_CONF="${HOME}/.config/ghostty/config"
 ZSHRC="${HOME}/.zshrc"
@@ -122,28 +121,6 @@ if [[ -f "$ZSHRC" ]]; then
   fi
 fi
 
-# ── Plugin pin / cache ──
-PIN="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
-PIN_VER="${PIN##*@}"
-CACHE_HIT=0
-[[ -n "$PIN_VER" && -d "$CACHE/packages/oh-my-openagent@$PIN_VER" ]] && CACHE_HIT=1
-
-# ── Teams ──
-TEAM_OK=0
-TEAM_TOTAL=0
-if [[ -d "$REPO/teams" ]]; then
-  for d in "$REPO"/teams/*/; do
-    [[ -d "$d" ]] || continue
-    TEAM_TOTAL=$((TEAM_TOTAL + 1))
-    name="$(basename "$d")"
-    if [[ -L "$OMO_TEAMS/$name" ]] && oc_link_points_to "$OMO_TEAMS/$name" "${d%/}"; then
-      TEAM_OK=$((TEAM_OK + 1))
-    elif [[ -L "$OMO_TEAMS/$name" ]]; then
-      : # wrong
-    fi
-  done
-fi
-
 # ── Leftover search ──
 LEFTOVERS=()
 if [[ $SEARCH -eq 1 ]]; then
@@ -176,8 +153,6 @@ if [[ $JSON -eq 1 ]]; then
     OC_LOCATE_LINK_TGT="${LINK_TGT:-}" OC_LOCATE_BIN="$OPENCODE_BIN" OC_LOCATE_VER="$OPENCODE_VER" \
     OC_LOCATE_ENV="$ENV_EXISTS" OC_LOCATE_PROJECTS="$PROJECTS_DIR" OC_LOCATE_PROFILE="$DEFAULT_PROFILE" \
     OC_LOCATE_TMUX="$tmux_state" OC_LOCATE_GHOSTTY="$ghostty_state" OC_LOCATE_ZSH="$zsh_state" \
-    OC_LOCATE_PIN="$PIN" OC_LOCATE_CACHE_HIT="$CACHE_HIT" \
-    OC_LOCATE_TEAM_OK="$TEAM_OK" OC_LOCATE_TEAM_TOTAL="$TEAM_TOTAL" \
     OC_LOCATE_SESSIONS="$SESSIONS" OC_LOCATE_CACHE="$CACHE" OC_LOCATE_BACKUP="$BACKUP" \
     OC_LOCATE_KEYS_SET="${KEYS_SET[*]-}" OC_LOCATE_KEYS_MISSING="${KEYS_MISSING[*]-}" \
     OC_LOCATE_LEFTOVERS="${LEFTOVERS[*]-}" OC_LOCATE_STRAYS="${STRAYS[*]-}"
@@ -207,12 +182,6 @@ out = {
   "tmux": os.environ.get("OC_LOCATE_TMUX", ""),
   "ghostty": os.environ.get("OC_LOCATE_GHOSTTY", ""),
   "zshrc": os.environ.get("OC_LOCATE_ZSH", ""),
-  "plugin_pin": os.environ.get("OC_LOCATE_PIN", "") or None,
-  "plugin_cache_hit": os.environ.get("OC_LOCATE_CACHE_HIT") == "1",
-  "teams": {
-    "ok": int(os.environ.get("OC_LOCATE_TEAM_OK") or 0),
-    "total": int(os.environ.get("OC_LOCATE_TEAM_TOTAL") or 0),
-  },
   "sessions_dir": os.environ.get("OC_LOCATE_SESSIONS", ""),
   "cache_dir": os.environ.get("OC_LOCATE_CACHE", ""),
   "backup_dir": os.environ.get("OC_LOCATE_BACKUP", ""),
@@ -315,14 +284,6 @@ case "$zsh_state" in
   no_snippet) warn "zshrc present but no OpenConfig snippet" ;;
   *) info "zshrc missing" ;;
 esac
-
-sec "Plugin & teams"
-if [[ -n "$PIN" ]]; then
-  if [[ $CACHE_HIT -eq 1 ]]; then ok "pin $PIN (cache hit)"; else warn "pin $PIN (cache miss)"; fi
-else
-  bad "no oh-my-openagent pin in opencode.json"
-fi
-ok "teams linked: $TEAM_OK / $TEAM_TOTAL → $OMO_TEAMS"
 
 sec "Runtime paths"
 info "sessions: $SESSIONS$([ -d "$SESSIONS" ] && echo '' || echo ' (absent)')"

@@ -4,6 +4,15 @@ All notable changes to **OpenConfig** (`opencode-configs` / `oc`) are documented
 
 **Current routing (1.5.80):** OpenRouter is the default gateway (GLM 5.3 + DeepSeek V4.1 Flash housekeeping). Cheap/fast DeepSeek is **V4.1 Flash only** — `deepseek-v4-flash-0731` is retired. Tool loops use **Auto Exacto**. Optional Sisyphus leads: native DeepSeek and Venice DeepSeek. Content-aware stays **Venice only**. Older bullets that mention Flash 0731 as a live pin, Hermes-as-content-aware, `e2ee-deepseek-v4-flash`, Gemini 3.7 Flash, or bare `qwen3.8-max` are historical.
 
+## 2.0.0 — OpenConfig 2
+
+- Separated from `opencode-configs` as a standalone repo with no upstream.
+- Removed the oh-my-openagent plugin, `oh-my-openagent.json`, `teams/`, `prompts/agents/`, `prompts/categories/` and `prompts/goal.md`.
+- Added 11 native agents in `agents/`, default `lead`, on the OpenCode 1.19.5 config format.
+- Added Exa as a remote MCP server for web search.
+- Updated `oc`, setup, fix, doctor, validate, run and tests for the vanilla stack.
+- Removed six Venice `e2ee-` models that Venice retired (404); every remaining Venice model answers.
+
 ## [1.5.80] — 2026-09-15
 
 ### Venice `disable_thinking`

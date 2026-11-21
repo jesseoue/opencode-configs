@@ -2,7 +2,7 @@
 # oc — OpenConfig CLI (`oc`)
 #
 # Dispatcher for the OpenConfig stack (repo: opencode-configs).
-# Pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO).
+# Pinned stack for vanilla OpenCode + OpenRouter + Venice + DeepSeek.
 # Zero dependencies — just bash. Add ~/.config/opencode to PATH
 # (zshrc.snippet does this) and `oc` works from anywhere.
 #
@@ -12,7 +12,7 @@
 # Commands (see `oc help` for full list + aliases):
 #   install [--quick|--yes|--full]        Full-stack install / refresh
 #   check [--fix] | heal [--ai|--no-ai]   Readiness + probe-first self-repair
-#   doctor [--quick|--json|--fix]         Full readiness (keys, skills, teams, MCP)
+#   doctor [--quick|--json|--fix]         Full readiness (keys, skills, MCP)
 #   validate [--quiet] | fix | cleanup     Config repair + reconcile
 #   test [smoke|idempotency|runtime]      Self-test suite
 #   models [--probe|--moderation|…]       OpenRouter catalog + live probes
@@ -76,9 +76,9 @@ ${c_b}${c_bold}── Install & self-heal ──${c_0}
   ${c_g}test${c_0}      [smoke|idempotency|runtime]   Self-test suite (safe)
 
 ${c_b}${c_bold}── Setup & health ──${c_0}
-  ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (teams → live config, LSP, projects)
+  ${c_g}setup${c_0}     [--check|--force|--sync-env]   Idempotent provision (LSP, projects)
   ${c_g}doctor${c_0}    [--quick|--json|--fix|--harden|--ai-fix]
-                                         Full readiness. Keys via oc secrets. Teams follow ~/.config/opencode.
+                                         Full readiness. Keys via oc secrets.
   ${c_g}validate${c_0}  [--quiet]                      Config validator + footgun detector
   ${c_g}diagnose${c_0}  [--no-ai|--fix|--agent-fix]    AI-assisted deep diagnostics
 
@@ -92,7 +92,6 @@ ${c_b}${c_bold}── Models & admin ──${c_0}
                                          Fast parallel probes · moderation catalog · routing
   ${c_g}versions${c_0}  [--check|--local|--fix|--json]
                                          Package pins vs npm + GitHub (+ other repos)
-  ${c_g}plugin${c_0}    [doctor|cache|--fix]         OmO plugin doctor / pin cache
   ${c_g}admin${c_0}     [status|health|ratelimit|…]    OpenRouter account admin
 
 ${c_b}${c_bold}── Run & launch ──${c_0}
@@ -115,7 +114,7 @@ ${c_b}${c_bold}── Aliases ──${c_0}
   ${c_dim}health, ready${c_0}  → check          ${c_dim}repair${c_0} → heal
   ${c_dim}verify${c_0}          → validate       ${c_dim}where, discover${c_0} → locate
   ${c_dim}sig${c_0}             → signature      ${c_dim}pins${c_0} → versions
-  ${c_dim}omo${c_0}             → plugin         ${c_dim}opencode${c_0} → launch
+  ${c_dim}opencode${c_0} → launch
 
 ${c_b}${c_bold}── Admin subcommands ──${c_0}
   status       Account overview (credits, keys, spend)
@@ -144,7 +143,6 @@ ${c_b}${c_bold}── Examples ──${c_0}
   oc doctor --fix                 Repair configs + re-check
   oc versions                    Pins vs npm/GitHub + other opencode.json
   oc versions --fix               Align ~/.opencode @opencode-ai/plugin to CLI
-  oc plugin doctor               Upstream OmO plugin doctor (pin cache)
   oc fix                         Restore agent colors + footguns
   oc validate                    Structural / footgun checks
   oc run "Fix the failing tests" Headless: run to completion
@@ -165,120 +163,6 @@ ${c_b}${c_bold}── Auto ──${c_0}
 HELP
 }
 
-# ── OmO plugin doctor / cache (oc plugin doctor) ──
-do_plugin() {
-  local sub="${1:-doctor}" do_fix=0 pin pin_ver cdir ver dout loaded latest cache_ver a
-  [[ $# -gt 0 ]] && shift
-  for a in "$sub" "$@"; do
-    [[ "$a" == "--fix" || "$a" == "fix" ]] && do_fix=1
-  done
-  case "$sub" in
-    --fix|fix) sub=doctor ;;
-  esac
-
-  case "$sub" in
-    -h|--help|help)
-      cat <<PLUGINHELP
-${c_bold}oc plugin${c_0} — OmO (oh-my-openagent) pin cache + upstream doctor
-
-${c_bold}Usage:${c_0}
-  ${c_g}oc plugin doctor${c_0} [--fix]   bunx oh-my-openagent@pin doctor
-  ${c_g}oc plugin cache${c_0}            pin path + installed version
-  ${c_g}oc plugin --fix${c_0}              prune stale caches + ensure pin
-
-${c_dim}Full stack:${c_0} ${c_g}oc doctor${c_0}   ${c_dim}Pins:${c_0} ${c_g}oc versions${c_0}
-PLUGINHELP
-      return 0
-      ;;
-    cache|status)
-      pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
-      cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
-      oc_section "OmO plugin cache"
-      info "pin: ${pin:-none}"
-      info "path: ${cdir:-?}"
-      if [[ -n "$cdir" && -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
-        ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
-        ok "installed v${ver:-?}"
-      else
-        bad "cache empty/broken — run: oc plugin --fix"
-      fi
-      printf '\n'
-      return 0
-      ;;
-    doctor|check) ;;
-    *)
-      header
-      printf "  ${c_r}Unknown plugin subcommand: %s${c_0}\n\n" "$sub"
-      do_plugin --help
-      exit 1
-      ;;
-  esac
-
-  pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null || true)"
-  pin_ver="${pin#oh-my-openagent@}"
-  if [[ -z "$pin" ]]; then
-    header
-    bad "no oh-my-openagent@… pin in opencode.json"
-    exit 1
-  fi
-
-  if [[ $do_fix -eq 1 ]]; then
-    printf "\n${c_b}${c_bold}== OmO plugin fix ==${c_0}\n"
-    _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
-    if [[ -n "$_pruned" ]]; then
-      ok "pruned: $(printf '%s' "$_pruned" | tr '\n' ' ')"
-    else
-      info "no stale sibling caches"
-    fi
-    unset _pruned
-    if oc_ensure_omo_plugin_cache; then
-      ok "pin cache healthy ($pin)"
-    else
-      bad "could not ensure pin cache — check bun / network"
-      exit 1
-    fi
-  fi
-
-  if ! command -v bunx >/dev/null 2>&1; then
-    bad "bun/bunx required for plugin doctor"
-    exit 1
-  fi
-
-  printf "\n${c_b}${c_bold}== OmO plugin doctor ==${c_0} ${c_dim}$pin${c_0}\n"
-  cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
-  if [[ -f "${cdir:-}/node_modules/oh-my-openagent/package.json" ]]; then
-    ver="$(python3 -c "import json;print(json.load(open('${cdir}/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
-    ok "cache → v${ver:-?}"
-  else
-    opt "pin cache missing — run: oc plugin --fix"
-  fi
-
-  dout="$(bunx "$pin" doctor 2>&1)" || true
-  if printf '%s' "$dout" | grep -q "System OK"; then
-    ok "$(printf '%s' "$dout" | grep -iE 'System OK' | head -1 | sed 's/^[^A-Za-z]*//')"
-  elif printf '%s' "$dout" | grep -qi "outdated"; then
-    loaded="$(printf '%s' "$dout" | sed -nE 's/.*Loaded ([0-9][0-9.]*).*/\1/p' | head -1)"
-    latest="$(printf '%s' "$dout" | sed -nE 's/.*[Ll]atest ([0-9][0-9.]*).*/\1/p' | head -1)"
-    cache_ver="$(python3 -c "import json,os; p=os.path.join('${cdir}','node_modules/oh-my-openagent/package.json'); print(json.load(open(p)).get('version','') if os.path.isfile(p) else '')" 2>/dev/null || true)"
-    if [[ -n "$cache_ver" && "$cache_ver" == "$pin_ver" ]]; then
-      if [[ -n "$latest" && "$latest" != "$pin_ver" ]]; then
-        opt "pin $pin_ver behind npm latest $latest — bump versions.json + opencode.json"
-      else
-        info "bunx outdated noise — pin cache is v$pin_ver"
-        tip "oc plugin --fix   # prune stale sibling caches"
-      fi
-    else
-      opt "loaded ${loaded:-?} · pin $pin_ver · cache ${cache_ver:-?} — oc plugin --fix"
-    fi
-  else
-    printf '%s\n' "$dout" | sed 's/^/  /'
-  fi
-  printf '\n'
-  tip "stack health: oc doctor · pins: oc versions"
-  return 0
-}
-
-# ── Terminal-safe launch (thin wrapper → opencode.sh) ──
 do_launch() {
   # Help stays here so `oc launch --help` matches the oc UX; body lives once in opencode.sh.
   if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -564,7 +448,7 @@ What it creates:
   <projects>/<name>/
   ├── .git/
   ├── .gitignore
-  ├── .omo/plans/
+  ├── .opencode/plans/
   ├── opencode.json          Project config (profile defaults + local AGENTS.md)
   ├── .opencode/profile.json Symlink → global profiles/<p>.json (reference)
   ├── AGENTS.md
@@ -638,9 +522,9 @@ NEWHELP
   info "parent: $parent"
   info "profile: $profile"
 
-  mkdir -p "$target_dir/.omo/plans" "$target_dir/.opencode" "$target_dir/skills"
+  mkdir -p "$target_dir/.opencode/plans" "$target_dir/.opencode" "$target_dir/skills"
   : >"$target_dir/skills/.gitkeep"
-  ok ".omo/plans/ + skills/ created"
+  ok ".opencode/plans/ + skills/ created"
 
   ( cd "$target_dir" && git init --quiet )
   ok "git initialized"
@@ -663,8 +547,6 @@ build/
 !.env.example
 
 # OpenCode runtime
-.omo/run-continuation/
-.omo/ralph-loop*
 
 # macOS
 .DS_Store
@@ -790,7 +672,7 @@ do_install() {
 oc install — OpenConfig full-stack installer
 
 The single command to install / refresh the entire stack:
-  OpenCode CLI · configs · keys · zsh · tmux · Ghostty · teams · LSP · doctor
+  OpenCode CLI · configs · keys · zsh · tmux · Ghostty · LSP · doctor
 
 Usage:
   oc install --quick      ★ One command — non-interactive full + validate + doctor (+ auto-heal)
@@ -949,7 +831,6 @@ oc heal — Unattended self-repair for OpenConfig (idempotent)
 Probe-first — writes only when something is actually wrong:
   1. signature + locate
   2. validate → fix (if needed) → cleanup (if needed)
-  3. OmO plugin cache reinstall if empty (agents like prometheus vanish otherwise)
   4. merge missing .env keys (never clobber values)
   5. re-validate
   6. if still broken → diagnose --yes --fix
@@ -1052,19 +933,6 @@ HEALHELP
       printf '%s\n' "$clean_dry" | tail -5 | tee -a "$log" >/dev/null
     else
       _heal_run "3/8 cleanup --yes" "$REPO/cleanup.sh" --yes || true
-    fi
-  fi
-
-  # 3b. OmO plugin cache — empty/broken cache = agents (prometheus/sisyphus/…) vanish
-  if oc_omo_plugin_cache_ok 2>/dev/null; then
-    ok "plugin cache healthy" | tee -a "$log"
-  else
-    bad "plugin cache empty/broken — reinstalling (agents were not loading)" | tee -a "$log"
-    if _heal_run "3b/8 plugin cache install" oc_ensure_omo_plugin_cache; then
-      ok "plugin cache restored" | tee -a "$log"
-    else
-      bad "plugin cache install failed — agents will not load" | tee -a "$log"
-      rc=1
     fi
   fi
 
@@ -1197,7 +1065,7 @@ Usage:
   oc test                 smoke + idempotency + runtime diagnostics
   oc test smoke           validate, locate, dry-runs, setup --check
   oc test idempotency     sandbox: .env/symlink never-clobber + fix no-op
-  oc test runtime         sandbox: team/cache/log diagnostic regressions
+  oc test runtime         sandbox: log diagnostic regressions
 
 Safe: smoke is read-mostly; other suites use mktemp (never overwrite live .env).
 TESTHELP
@@ -1236,7 +1104,6 @@ case "$cmd" in
   maintain)   dispatch maintain.sh "$@" ;;
   models)     dispatch models.sh "$@" ;;
   versions|pins) dispatch versions.sh "$@" ;;
-  plugin|omo) do_plugin "$@" ;;
   run)        dispatch run.sh "$@" ;;
   diagnose)   dispatch diagnose.sh "$@" ;;
   opencode)   dispatch opencode.sh "$@" ;;
@@ -1273,7 +1140,7 @@ case "$cmd" in
   version|-v|--version)
     printf "OpenConfig (oc) %s\n" "$OC_VERSION"
     printf "repo: %s\n" "$REPO"
-    printf "stack: OpenCode · OpenRouter · oh-my-openagent\n"
+    printf "stack: vanilla OpenCode · OpenRouter · Venice · DeepSeek\n"
     ;;
 
   *)

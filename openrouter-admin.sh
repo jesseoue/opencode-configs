@@ -285,19 +285,5 @@ for k in sorted(keys, key=lambda x: x.get('usage', 0), reverse=True):
       info "No management key — key usage disabled"
     fi
     echo ""
-    python3 -c "
-import json
-try:
-    omo = json.load(open('$REPO/oh-my-openagent.json'))
-    mc = omo.get('background_task', {}).get('providerConcurrency', {})
-    bt = omo.get('background_task', {})
-    dc = bt.get('defaultConcurrency', '?')
-    print(f'  Concurrency: {dc} default')
-    for m, c in sorted(mc.items(), key=lambda x: x[1], reverse=True):
-        short = m.replace('openrouter/', '') if isinstance(m, str) else m
-        print(f'    {short}: {c} concurrent')
-except:
-    print('  (could not read concurrency config)')
-" 2>&1
     ;;
 esac

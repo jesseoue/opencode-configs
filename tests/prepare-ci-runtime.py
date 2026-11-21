@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Prepare a credential-free installed configuration for repository CI checks."""
 import argparse
-import json
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -15,12 +14,4 @@ if config.exists() or config.is_symlink():
         raise SystemExit("Refusing to replace another installed configuration")
 else:
     config.symlink_to(repo, target_is_directory=True)
-omo = args.home / ".omo/omo.jsonc"
-omo.parent.mkdir(parents=True, exist_ok=True)
-plugin = json.loads((repo / "oh-my-openagent.json").read_text())
-payload = json.dumps({"$schema": plugin["$schema"], "[opencode]": plugin}, indent=2) + "\n"
-if omo.exists() and omo.read_text() != payload:
-    raise SystemExit("Refusing to replace an existing OmO configuration")
-omo.write_text(payload)
-omo.chmod(0o600)
 print("Prepared credential-free OpenConfig runtime fixture")

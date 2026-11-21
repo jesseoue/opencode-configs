@@ -4,7 +4,7 @@
 # Gets this repo working as ~/.config/opencode.
 # Safe to run multiple times. Won't clobber existing .env or working symlinks.
 # From a secondary checkout: does NOT retarget a healthy live install
-# (~/.config/opencode → another OpenConfig tree). Team links heal to the live tree.
+# (~/.config/opencode → another OpenConfig tree). 
 #
 # Usage:
 #   ./setup.sh              # full setup (idempotent)
@@ -18,7 +18,6 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=lib/common.sh
 source "$REPO/lib/common.sh"
 LINK="${OC_CONFIG_LINK}"
-OMO_TEAMS="$HOME/.omo/teams"
 OC_VERSION="$(oc_versions_get opencode_configs 2>/dev/null || echo "1.5.0")"
 
 CHECK_ONLY=false
@@ -34,10 +33,6 @@ for arg in "$@"; do
 done
 
 SYNC_ENV="${SYNC_ENV:-false}"
-if ! $CHECK_ONLY; then
-  oc_ensure_omo_runtime "$REPO" || true
-fi
-
 fix(){ $CHECK_ONLY && return 0; "$@"; }
 
 # Colors (respect non-tty)
@@ -56,9 +51,9 @@ tip(){ printf "  ${c_b}${c_bold}↳${c_0} ${c_dim}%s${c_0}\n" "$*"; }
 LIVE_ROOT="$(oc_live_config_root 2>/dev/null || true)"
 IS_LIVE=false
 oc_is_live_config "$REPO" && IS_LIVE=true
-TEAM_ROOT="$REPO"
+CONF_ROOT="$REPO"
 if ! $IS_LIVE && [[ -n "$LIVE_ROOT" ]]; then
-  TEAM_ROOT="$LIVE_ROOT"
+  CONF_ROOT="$LIVE_ROOT"
 fi
 
 oc_banner "$OC_VERSION"
@@ -147,64 +142,6 @@ else
 fi
 echo ""
 
-# ─── 4. Team specs ────────────────────────────────────────────────
-echo "Step 4: Team mode specs (~/.omo/teams → live config)"
-if $IS_LIVE; then
-  info "healing team links → $TEAM_ROOT/teams"
-elif [[ -n "$LIVE_ROOT" ]]; then
-  info "live install is $LIVE_ROOT — will not retarget teams to this checkout"
-fi
-mkdir -p "$OMO_TEAMS"
-# Prune stale/broken symlinks (e.g. retired build-crew) against the live tree
-for existing in "$OMO_TEAMS"/*; do
-  [ -e "$existing" ] || [ -L "$existing" ] || continue
-  name="$(basename "$existing")"
-  if [ ! -d "$TEAM_ROOT/teams/$name" ]; then
-    if [ -L "$existing" ]; then
-      fix rm -f "$existing"
-      ok "removed stale team link '$name'"
-    else
-      opt "orphan path $existing (not a symlink — leave alone)"
-    fi
-  fi
-done
-for spec_dir in "$TEAM_ROOT"/teams/*/; do
-  [ -d "$spec_dir" ] || continue
-  team_name="$(basename "$spec_dir")"
-  team_link="$OMO_TEAMS/$team_name"
-  target="${spec_dir%/}"
-  if [ -L "$team_link" ]; then
-    _got=""
-    if command -v realpath >/dev/null 2>&1; then
-      _got="$(realpath "$team_link" 2>/dev/null || true)"
-    fi
-    if oc_same_path "${_got:-}" "$target" || [ "$(readlink "$team_link" 2>/dev/null || true)" = "$target" ]; then
-      ok "team '$team_name' → live"
-      unset _got
-      continue
-    fi
-    unset _got
-  fi
-  # Real directory copies (or wrong links) must be replaced — macOS ln -sfn
-  # will nest a symlink *inside* an existing directory instead of replacing it.
-  if [ -d "$team_link" ] && [ ! -L "$team_link" ]; then
-    if $CHECK_ONLY; then
-      opt "team '$team_name' is a directory copy (not symlink) — run oc setup from the live install"
-      continue
-    fi
-    fix rm -rf "$team_link"
-  elif [ -e "$team_link" ] || [ -L "$team_link" ]; then
-    if $CHECK_ONLY; then
-      opt "team '$team_name' drift — run oc setup from the live install"
-      continue
-    fi
-    fix rm -f "$team_link"
-  fi
-  fix ln -sfn "$target" "$team_link"
-  ok "team '$team_name' → $target"
-done
-echo ""
-
 # ─── 5. LSP servers ───────────────────────────────────────────────
 echo "Step 5: LSP servers"
 need_install=false
@@ -217,47 +154,6 @@ if $need_install && ! $CHECK_ONLY; then
   command -v basedpyright-langserver >/dev/null 2>&1 || pip install basedpyright 2>/dev/null || true
   command -v gopls >/dev/null 2>&1 || go install golang.org/x/tools/gopls@latest 2>/dev/null || true
 fi
-echo ""
-
-# ─── 5b. CodeGraph (OmO code intelligence) ────────────────────────
-echo "Step 5b: CodeGraph"
-CG_BIN="${HOME}/.omo/codegraph/bin/codegraph"
-CG_WANT="$(oc_version_get codegraph.pin 2>/dev/null || true)"
-if [[ -x "$CG_BIN" ]]; then
-  CG_HAVE="$($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r')"
-  if [[ -n "$CG_WANT" && "$CG_HAVE" != "$CG_WANT" ]]; then
-    opt "codegraph $CG_HAVE != OmO pin $CG_WANT (next OmO session auto-provisions it)"
-  else
-    ok "codegraph $CG_HAVE"
-  fi
-elif [[ -x "${HOME}/.omo/codegraph/bin/codegraph" ]]; then
-  ok "codegraph present"
-else
-  opt "codegraph binary missing at ~/.omo/codegraph/bin/codegraph"
-  if ! $CHECK_ONLY; then
-    # OmO auto_provision on first session; try CLI install if available via bunx
-    info "Will auto-provision on first OpenCode/OmO session (codegraph.auto_provision=true)"
-  fi
-fi
-# Ensure config does not point at a non-default broken install_dir
-python3 - "$REPO" <<'PY' 2>/dev/null || true
-import json, os, sys
-repo=sys.argv[1]
-p=os.path.join(repo,"oh-my-openagent.json")
-omo=json.load(open(p))
-cg=omo.get("codegraph") or {}
-bad=cg.get("install_dir")
-if bad and ("/.cache/opencode/codegraph" in str(bad) or str(bad).startswith("~/.cache")):
-    print(f"  ⚠ codegraph.install_dir={bad!r} is wrong — OmO default is ~/.omo/codegraph")
-elif cg.get("enabled") is False:
-    print("  ⚠ codegraph.enabled is false")
-elif cg.get("auto_provision") is not True:
-    print("  ⚠ codegraph.auto_provision must be true")
-elif cg.get("daemon") is not True:
-    print("  ⚠ codegraph.daemon must be true")
-else:
-    print("  ✓ codegraph config OK (managed daemon, default ~/.omo/codegraph)")
-PY
 echo ""
 
 # ─── 6. Formatters ────────────────────────────────────────────────
@@ -274,7 +170,7 @@ echo ""
 
 # ─── 7. Tmux + Ghostty + Zshrc ────────────────────────────────
 echo "Step 7: Terminal configs"
-_conf_src="$TEAM_ROOT"
+_conf_src="$CONF_ROOT"
 if command -v tmux >/dev/null 2>&1; then
   TMUX_CONF="$HOME/.tmux.conf"
   if oc_runtime_conf_ok "$TMUX_CONF" tmux.conf; then
@@ -293,7 +189,7 @@ if command -v tmux >/dev/null 2>&1; then
     ok "tmux.conf → live"
   fi
 else
-  opt "tmux not installed (team mode tmux_visualization won't work)"
+  opt "tmux not installed "
   tip "install: brew install tmux"
 fi
 echo ""
@@ -399,34 +295,11 @@ if $SYNC_ENV; then
 fi
 
 
-# ─── 8b. Plugin platform binary ────────────────────────────────
-# The oh-my-openagent plugin needs a platform-specific optionalDependency.
-# Pre-install into OpenCode's plugin cache so agents (sisyphus/prometheus/…) resolve.
-# Do NOT run postinstall.mjs — it calls invalidateOpenCodePluginCache() and deletes the cache.
-if $CHECK_ONLY; then
-  if oc_omo_plugin_cache_ok; then
-    ok "plugin cache healthy ($(python3 -c "import json; p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my-openagent@' in x]; print(p[0] if p else '?')" 2>/dev/null))"
-  else
-    opt "plugin cache missing/broken — agents will not load until: oc setup"
-  fi
-else
-  if oc_omo_plugin_cache_ok; then
-    ok "plugin cache healthy"
-  else
-    info "Installing OmO plugin cache (oh-my-openagent + platform binary)…"
-    if oc_ensure_omo_plugin_cache; then
-      ok "plugin + platform binary installed"
-    else
-      opt "plugin cache install failed — agents will NOT load (retry: oc setup · oc heal)"
-    fi
-  fi
-fi
 # ─── 8c. @ast-grep/cli native binary ───────────────────────────
 # Global npm @ast-grep/cli ships JS shims for `ast-grep`/`sg`. Its postinstall
 # replaces those shims with the native binary from the platform optionalDep.
 # If postinstall was skipped, every invocation prints:
 #   [warn] postinstall script did not run; falling back to runtime binary resolution.
-# (oh-my-openagent doctor probes sg/ast-grep, so the warn shows up there too.)
 if ! $CHECK_ONLY; then
   AST_GREP_CLI=""
   if command -v npm >/dev/null 2>&1; then

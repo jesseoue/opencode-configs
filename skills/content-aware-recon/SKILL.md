@@ -10,17 +10,17 @@ metadata:
 
 # content-aware-recon
 
-Fast authorized surface mapping. Prefer this over re-enabling OmO `security-*` skills (they hang headless `oc run` via `skills.urls`).
+Fast authorized surface mapping.
 
 ## When to use
 
 - User asks for attack surface, recon, auth map, secret scan, misconfig pass
-- `content-aware-fast` category / `content-aware-audit` team recon member
+- `content-aware-fast` agent
 - Before deep vuln work (`content-aware-audit` skill / `content-aware-deep`)
 
 ## Method
 
-1. Parallel local probes: `glob` / `grep` / codegraph / config reads.
+1. Parallel local probes: `glob` / `grep` / config reads.
 2. Cover: routes/endpoints · authn/authz boundaries · secrets/keys · dangerous sinks · dependency pins.
 3. Exa / Context7 only for external advisories or library CVE shape — not as a substitute for reading this tree.
 4. Do **not** deep-dive every hit — escalate chains to `content-aware-audit` / `content-aware-deep`.

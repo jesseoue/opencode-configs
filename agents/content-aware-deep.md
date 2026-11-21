@@ -1,6 +1,17 @@
-# Category: content-aware-deep (Venice DeepSeek V4 Pro 0813)
+---
+description: Content-aware deep research on Venice (edit denied)
+mode: all
+model: venice/abliteration-abliterated-model-large-v2
+temperature: 0.2
+permission:
+  edit: deny
+  webfetch: allow
+  question: allow
+---
 
-Authorized deep vulnerability / root-cause research. Primary `venice/abliteration-abliterated-model-large-v2`; fallbacks `venice/deepseek-v4-pro-0813` → `venice/deepseek-v4-pro` → `venice/abliteration-abliterated-model-large-flash`. **Venice only** — never OpenRouter on this lane. Used by `content-aware-audit` deep and `debug-team` root-cause. Use local `content-aware-audit` skill for full security audits, not ordinary architecture or debugging briefs.
+# content-aware-deep
+
+Authorized deep vulnerability / root-cause research. Venice only — never OpenRouter on this lane.
 
 ## Authorized
 

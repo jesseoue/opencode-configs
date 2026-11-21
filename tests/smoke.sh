@@ -22,7 +22,7 @@ for arg in "$@"; do
   esac
 done
 
-# GitHub Actions / OC_CI=1: skip doctor, setup, live team links, key-backed probes.
+# GitHub Actions / OC_CI=1: skip doctor, setup, key-backed probes.
 if [[ "${OC_CI:-}" == "1" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
   export OC_CI=1
   export OC_VALIDATE_OFFLINE="${OC_VALIDATE_OFFLINE:-1}"
@@ -98,7 +98,7 @@ if any(len(l) > 72 for l in mark):
 if mark[1].find("OpenConfig") != 14 or mark[2].find("Pinned") != 14:
     raise SystemExit("wordmark misaligned")
 readme = open(os.path.join(repo, "README.md"), encoding="utf-8").read()
-if "    │oc │──── OpenConfig\n    ╰───╯     Pinned stack for OpenCode · OpenRouter · OmO" not in readme:
+if "    │oc │──── OpenConfig\n    ╰───╯     Pinned stack for vanilla OpenCode" not in readme:
     raise SystemExit("README mark != CLI")
 PY
 then
@@ -164,7 +164,7 @@ else
 fi
 
 # Helpers exist
-for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_omo_teams_canonical oc_omo_teams_ok oc_runtime_conf_ok oc_banner oc_section oc_infisical_dir oc_openrouter_key_configured oc_telemetry_off; do
+for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure_symlink oc_verify_signature oc_secrets_sync oc_export_vault_allowlist oc_vault_merged_json oc_vault_op_refs oc_live_config_root oc_is_live_config oc_runtime_conf_ok oc_banner oc_section oc_infisical_dir oc_openrouter_key_configured oc_telemetry_off; do
   if grep -q "${fn}()" "$REPO/lib/common.sh"; then
     ok "helper $fn"
   else
@@ -172,157 +172,63 @@ for fn in oc_set_env_key_if_unset oc_ensure_env_file oc_link_points_to oc_ensure
   fi
 done
 
-# /goal disabled + no ralph_loop + footgun doc (OmO 4.19.x breaks /start-work when goal is on)
-if [[ -f "$REPO/prompts/goal.md" ]] \
-  && grep -q 'prompts/goal.md' "$REPO/opencode.json" \
-  && python3 -c '
-import json,sys
-omo=json.load(open(sys.argv[1]))
-g=omo.get("goal") or {}
-dm=omo.get("default_mode") or {}
-ok=(g.get("enabled") is False and g.get("auto_start") is False
-    and dm.get("goal") is False and "ralph_loop" not in omo)
-sys.exit(0 if ok else 1)
-' "$REPO/oh-my-openagent.json" \
-  && grep -q 'plugins' "$REPO/.gitignore" \
-  && grep -qE '^/\*$' "$REPO/.gitignore" \
-  && grep -q '!prompts/' "$REPO/.gitignore" \
-  && grep -q '!.github/' "$REPO/.gitignore" \
-  && ! grep -qE '/Users/[A-Za-z0-9_-]+/' "$REPO/zshrc.snippet" \
-  && grep -q 'plugins' "$REPO/lib/common.sh"; then
-  ok "goal off + ralph removed + plugins scrubbed + deny-all gitignore + no host paths"
+# Vanilla stack: no plugin pin, no OmO config, deny-all gitignore, no host paths
+if python3 - "$REPO" <<'PY'
+import json, os, sys
+repo = sys.argv[1]
+for name in ("opencode.json", "tui.json"):
+    if any("oh-my-" in str(p) for p in (json.load(open(os.path.join(repo, name))).get("plugin") or [])):
+        raise SystemExit(f"{name}: oh-my plugin pinned")
+if os.path.exists(os.path.join(repo, "oh-my-openagent.json")):
+    raise SystemExit("oh-my-openagent.json still present")
+if not open(os.path.join(repo, ".gitignore")).read().count("/*"):
+    raise SystemExit(".gitignore default deny missing")
+PY
+then
+  ok "no OmO plugin or config + deny-all gitignore"
 else
-  bad "goal/ralph/plugins hygiene incomplete (goal must be off; ralph_loop must be gone)"
+  bad "OmO plugin or config still present — run: oc fix"
 fi
 
-# Fast concurrency pins (background_task + provider caps)
-if python3 -c '
-import json, sys
-omo=json.load(open(sys.argv[1]))
-bt=omo.get("background_task") or {}
-pc=bt.get("providerConcurrency") or {}
-mc=bt.get("modelConcurrency") or {}
-ok=(bt.get("defaultConcurrency")==10
-    and pc.get("openrouter")==12 and pc.get("venice")==6 and pc.get("deepseek")==6
-    and "openai" not in pc and "anthropic" not in pc
-    and mc.get("openrouter/deepseek/deepseek-v4-pro-0813")==8
-    and mc.get("openrouter/deepseek/deepseek-v4.1-flash")==5
-    and mc.get("venice/deepseek-v4-pro-0813")==5
-    and mc.get("venice/deepseek-v4-1-flash")==5
-    and mc.get("deepseek/deepseek-v4-pro")==4
-    and mc.get("deepseek/deepseek-flash")==6)
-sys.exit(0 if ok else 1)
-' "$REPO/oh-my-openagent.json"; then
-  ok "fast concurrency pins (default=10 openrouter=12 venice=6 deepseek=6)"
-else
-  bad "concurrency drift — run: oc fix"
-fi
-
-# Content-aware is Venice-only (OmO + profile + agent md + quarantine skip)
+# Content-aware is Venice-only (agent md + profile + quarantine skip)
 if python3 - "$REPO" <<'PY'
 import json, os, re, sys
 repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
 want = {
-    "content-aware-research": ("agents", "venice/deepseek-v4-pro-0813"),
-    "content-aware-fast": ("agents", "venice/deepseek-v4-1-flash-1017-uncensored"),
-    "content-aware-deep": ("categories", "venice/abliteration-abliterated-model-large-v2"),
+    "content-aware-research": "venice/deepseek-v4-pro-0813",
+    "content-aware-fast": "venice/deepseek-v4-1-flash-1017-uncensored",
+    "content-aware-deep": "venice/abliteration-abliterated-model-large-v2",
+    "context-aware-hermes": "openrouter/nousresearch/hermes-4-405b",
 }
-cat_fast = ((omo.get("categories") or {}).get("content-aware-fast") or {})
-if cat_fast.get("model") != "venice/deepseek-v4-1-flash-1017-uncensored":
-    raise SystemExit(f"category content-aware-fast {cat_fast.get('model')!r}")
-for name, (sec, primary) in want.items():
-    cfg = ((omo.get(sec) or {}).get(name) or {})
-    if cfg.get("model") != primary:
-        raise SystemExit(f"{name} model {cfg.get('model')!r}")
-    for fb in cfg.get("fallback_models") or []:
-        if not str(fb).startswith("venice/") or "openrouter/" in str(fb).lower():
-            raise SystemExit(f"{name} fallback {fb!r}")
-gp = json.load(open(os.path.join(repo, "profiles", "content-aware.json")))
-if not str(gp.get("model") or "").startswith("venice/"):
-    raise SystemExit("profile model not venice")
-if not str(gp.get("small_model") or "").startswith("venice/"):
-    raise SystemExit("profile small_model not venice")
-body = open(os.path.join(repo, "agents", "content-aware-research.md"), encoding="utf-8").read()
-m = re.search(r"(?m)^model:\s*(\S+)", body)
-if not m or not m.group(1).startswith("venice/"):
-    raise SystemExit("agent md not venice")
-guard = open(os.path.join(repo, "deploy-guard.sh"), encoding="utf-8").read()
-if "content-aware" not in guard or "startswith('venice/')" not in guard:
-    raise SystemExit("deploy-guard missing Venice skip")
-hermes = ((omo.get("agents") or {}).get("context-aware-hermes") or {})
-if hermes.get("model") != "openrouter/nousresearch/hermes-4-405b":
-    raise SystemExit(f"context-aware-hermes {hermes.get('model')!r}")
-if (hermes.get("permission") or {}).get("edit") != "deny":
-    raise SystemExit("context-aware-hermes must deny edit")
-for fb in hermes.get("fallback_models") or []:
-    if "hermes" in str(fb).lower():
-        raise SystemExit(f"hermes fallback {fb!r}")
-hmd = open(os.path.join(repo, "agents", "context-aware-hermes.md"), encoding="utf-8").read()
-if "openrouter/nousresearch/hermes-4-405b" not in hmd:
-    raise SystemExit("hermes agent md missing model")
+for name, model in want.items():
+    md = open(os.path.join(repo, "agents", f"{name}.md"), encoding="utf-8").read()
+    if f"model: {model}" not in md:
+        raise SystemExit(f"{name}: expected {model}")
+    if not re.search(r"^\s+edit: deny", md, re.M):
+        raise SystemExit(f"{name}: edit must be denied")
+gp = json.load(open(os.path.join(repo, "profiles", "content-aware.json"), encoding="utf-8"))
+if not str(gp.get("model") or "").startswith("venice/") or not str(gp.get("small_model") or "").startswith("venice/"):
+    raise SystemExit("content-aware profile must stay on venice")
 PY
 then
-  ok "content-aware Venice-only (OmO + profile + quarantine skip)"
+  ok "content-aware Venice-only (agents + profile)"
 else
-  bad "content-aware left Venice — run: oc fix"
+  bad "content-aware left Venice — restore agents/ or profiles/content-aware.json"
 fi
 
-# Native OpenCode agent must not duplicate OmO Venice/DeepSeek agents (TUI crash)
-if python3 -c '
-import json, sys
-oc=json.load(open(sys.argv[1]))
-blocked={"content-aware-research","content-aware-fast",
-         "sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
-         "sisyphus-deepseek","sisyphus-deepseek-junior"}
-hit=sorted(blocked & set((oc.get("agent") or {})))
-sys.exit(1 if hit else 0)
-' "$REPO/opencode.json" \
-  && [[ ! -e "$REPO/cursor-venice.json" ]] \
-  && [[ ! -e "$REPO/cursor.sh" ]] \
-  && [[ ! -e "$REPO/cursor-openrouter.json" ]] \
-  && python3 -c '
-import json,sys
-omo=json.load(open(sys.argv[1]))
-for name in ("sisyphus-venice-deepseek","sisyphus-venice-deepseek-flash-junior",
-             "content-aware-research","content-aware-fast"):
-    a=(omo.get("agents") or {}).get(name) or {}
-    if not str(a.get("model") or "").startswith("venice/"):
-        raise SystemExit(name)
-    for fb in a.get("fallback_models") or []:
-        if not str(fb).startswith("venice/") or "openrouter/" in str(fb).lower():
-            raise SystemExit(f"{name} fallback {fb}")
-' "$REPO/oh-my-openagent.json"; then
-  ok "no OmO agent duplicates in opencode.json + Venice stays on venice/*"
+# No duplicate agent definitions between opencode.json and agents/*.md (TUI crash)
+if python3 - "$REPO" <<'PY'
+import glob, json, os, sys
+repo = sys.argv[1]
+md = {os.path.basename(p)[:-3] for p in glob.glob(os.path.join(repo, "agents", "*.md"))}
+dupes = md & set(json.load(open(os.path.join(repo, "opencode.json"))).get("agent") or {})
+if dupes or os.path.exists(os.path.join(repo, "cursor.sh")):
+    raise SystemExit(f"duplicate agents: {sorted(dupes)}")
+PY
+then
+  ok "no duplicate native agent definitions"
 else
   bad "duplicate native agents or leftover oc cursor files"
-fi
-
-if python3 -c '
-import json,sys
-oc=json.load(open(sys.argv[1]))
-for vm, vcfg in ((((oc.get("provider") or {}).get("venice") or {}).get("models")) or {}).items():
-    opts = (vcfg.get("options") or {})
-    if opts.get("disable_thinking") is True:
-        raise SystemExit(f"{vm} top-level")
-    if (opts.get("venice_parameters") or {}).get("disable_thinking") is not True:
-        raise SystemExit(vm)
-    for vn, vv in (vcfg.get("variants") or {}).items():
-        if not isinstance(vv, dict):
-            continue
-        if vv.get("disable_thinking") is True:
-            raise SystemExit(f"{vm}.{vn} top-level")
-        if (vv.get("venice_parameters") or {}).get("disable_thinking") is not True:
-            raise SystemExit(f"{vm}.{vn}")
-for pname in ("openrouter", "deepseek"):
-    for mid, m in ((((oc.get("provider") or {}).get(pname) or {}).get("models")) or {}).items():
-        o = (m or {}).get("options") or {}
-        if o.get("disable_thinking") is True or (o.get("venice_parameters") or {}).get("disable_thinking") is True:
-            raise SystemExit(f"{pname}/{mid}")
-' "$REPO/opencode.json"; then
-  ok "venice venice_parameters.disable_thinking pinned (OpenRouter/native DeepSeek clean)"
-else
-  bad "venice thinking pin missing, top-level, or leaked onto OpenRouter/DeepSeek"
 fi
 
 # OpenRouter attribution (marketplace categories are hyphenated; cli,agent is dropped)
@@ -342,65 +248,6 @@ else
   bad "openrouter attribution headers — run: oc fix"
 fi
 
-# Team mode schema + ~/.omo/teams → live ~/.config/opencode (not this checkout)
-if python3 - "$REPO" <<'PY'
-import json, os, sys
-repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-tm = omo.get("team_mode") or {}
-need = [
-    "enabled", "tmux_visualization", "max_parallel_members", "max_members",
-    "max_messages_per_run", "max_wall_clock_minutes", "max_member_turns",
-    "base_dir", "message_payload_max_bytes", "recipient_unread_max_bytes",
-    "mailbox_poll_interval_ms",
-]
-if tm.get("enabled") is not True or any(k not in tm for k in need):
-    sys.exit(1)
-tx = omo.get("tmux") or {}
-if tx.get("enabled") is not True or tx.get("layout") != "main-vertical":
-    sys.exit(2)
-if os.environ.get("OC_CI") == "1":
-    sys.exit(0)
-
-def is_openconfig(path):
-    sig_p = os.path.join(path, "signature.json")
-    if not (os.path.isfile(os.path.join(path, "opencode.json")) and os.path.isdir(os.path.join(path, "teams")) and os.path.isfile(sig_p)):
-        return False
-    try:
-        sig = json.load(open(sig_p, encoding="utf-8"))
-    except Exception:
-        return False
-    return sig.get("product") == "OpenConfig" and sig.get("cli") == "oc" and sig.get("id") == "jesseoue/opencode-configs"
-
-xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.join(os.path.expanduser("~"), ".config")
-link = os.path.join(xdg, "opencode")
-live = os.path.realpath(link) if os.path.lexists(link) else ""
-canonical = live if live and is_openconfig(live) else os.path.realpath(repo)
-base = tm.get("base_dir") or "~/.omo"
-if base.startswith("~/"):
-    base = os.path.join(os.path.expanduser("~"), base[2:])
-ldir = os.path.join(base, "teams")
-tdir = os.path.join(canonical, "teams")
-for name in os.listdir(tdir):
-    if not os.path.isfile(os.path.join(tdir, name, "config.json")):
-        continue
-    linkp = os.path.join(ldir, name)
-    if not os.path.islink(linkp):
-        sys.exit(3)
-    if os.path.realpath(linkp) != os.path.realpath(os.path.join(tdir, name)):
-        sys.exit(4)
-sys.exit(0)
-PY
-then
-  if [[ "${OC_CI:-}" == "1" ]]; then
-    ok "team mode schema (live ~/.omo/teams skipped — OC_CI=1)"
-  else
-    ok "team mode schema + ~/.omo/teams → live config"
-  fi
-else
-  bad "team mode incomplete — run: oc setup from the live install"
-fi
-
 # signature.version must match versions.json (heal/test identity)
 if python3 - "$REPO" <<'PY'
 import json, sys
@@ -410,14 +257,11 @@ ver = json.load(open(f"{repo}/versions.json", encoding="utf-8"))
 s, v = str(sig.get("version") or "").strip(), str(ver.get("opencode_configs") or "").strip()
 if not s or s != v:
     raise SystemExit(f"{s!r} != {v!r}")
-asset = ((ver.get("oh_my_openagent") or {}).get("schema_asset") or "")
-if asset != "omo.schema.json":
-    raise SystemExit(f"schema_asset={asset!r}")
 PY
 then
-  ok "signature.version == versions.json + schema_asset=omo.schema.json"
+  ok "signature.version == versions.json"
 else
-  bad "signature.version / schema_asset drift — run: oc signature --refresh"
+  bad "signature.version drift — run: oc signature --refresh"
 fi
 
 # .env.example assignment names ⊆ OC_ENV_ALLOWLIST; allowlist names documented

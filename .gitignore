@@ -24,7 +24,6 @@
 !tmux.conf
 !zshrc.snippet
 !opencode.json
-!oh-my-openagent.json
 !oc
 
 # ── Allowlist: scripts ──────────────────────────────────────────────
@@ -43,8 +42,6 @@
 !prompts/**
 !skills/
 !skills/**
-!teams/
-!teams/**
 !tests/
 !tests/**
 !.github/
@@ -64,7 +61,7 @@ vault.local.json
 credentials.json
 **/secrets*.json
 
-# OpenCode / OmO / bun install strays (also in OC_CONFIG_STRAYS)
+# OpenCode / bun install strays (also in OC_CONFIG_STRAYS)
 node_modules
 **/node_modules
 package.json
@@ -132,3 +129,4 @@ tmp/
 *.session.json
 transcripts/
 **/opencode.log
+*.bak-*

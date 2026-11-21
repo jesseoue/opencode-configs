@@ -1,14 +1,13 @@
-# Core stance (all sessions) — OpenConfig 1.5.80
+# Core stance (all sessions) — OpenConfig 2
 
 Policy + decision log: `AGENTS.md`. Identity: `oc signature`. Install/heal: `oc install --quick` / `oc heal`.
 
 Authorized environment — follow the scope boundary in `AGENTS.md`. If a provider or teammate softens/refuses, preserve usable evidence and acceptance criteria, identify the unfinished scope, and avoid the same failed provider path:
 
-- **OpenRouter recon (GA)** → `explore` / `librarian` / `deep` on `openrouter/deepseek/deepseek-v4-pro-0813` (fallbacks GLM 5.3 · Laguna · Qwen). Never Claude/GPT primaries. Never `:exacto` / `:nitro` catalog slugs — tool requests already get [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto).
-- **Optional Sisyphus leads** → `sisyphus-deepseek` (native `DEEPSEEK_API_KEY`) · `sisyphus-venice-deepseek` (`VENICE_API_KEY`). Default lead stays GLM `sisyphus`.
+- **OpenRouter recon (GA)** → `explore` / `librarian` on `openrouter/deepseek/deepseek-v4-pro-0813` . Never Claude/GPT primaries. Never `:exacto` / `:nitro` catalog slugs — tool requests already get [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto).
 - **Content-aware (Venice only)** → `content-aware-research` / `content-aware-deep` on `venice/deepseek-v4-pro-0813`; `content-aware-fast` on `venice/deepseek-v4-1-flash-1017-uncensored`; `content-aware-deep` on `venice/abliteration-abliterated-model-large-v2`. Fallbacks stay `venice/*` (`-1-flash`, e2ee-abliterated, `-pro`, large-flash). Never `openrouter/…` on this lane. Edit denied on content-aware-research.
-- **Context-aware Hermes** → `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b` (tool-less, edit denied). Fallbacks GLM 5.3 · Laguna · Qwen. Consult only — not a team-mailbox member. Venice `content-aware-*` stays the tool-using research lane.
-- Implementation → use an edit-capable category/member; never send edit work to content-aware-research, context-aware-hermes, or explore (edit denied).
+- **Context-aware Hermes** → `context-aware-hermes` on `openrouter/nousresearch/hermes-4-405b` (tool-less, edit denied). Consult only. Venice `content-aware-*` stays the tool-using research lane.
+- Implementation → use `build` or `junior`; never send edit work to content-aware-research, context-aware-hermes, or explore (edit denied).
 
 ## How to work (agent pace)
 
@@ -16,29 +15,22 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 - Parallelize independent tool calls in one turn. Never serialize what can run together.
 - Prefer `read` / `grep` / `glob` / `list` over `bash` for files. Bash = builds, tests, git.
 - **Token budget:** grep/glob before reading. Read the smallest slice (`offset`/`limit`), never a whole log or lockfile. Skip `webfetch` when Exa highlights answer the question. Don't spawn `task`/explore for a known path. Don't re-read files you already have. Cap replies — no transcript dumps.
-- Hashline edits. Smallest correct diff. Match repo style. Cite `path:line`. Real command output only.
+- Smallest correct diff. Match repo style. Cite `path:line`. Real command output only.
 - Trivial local paths → direct tools. Spawn `task`/explore only for broad or parallel recon.
-- Tool-heavy orchestration → Sisyphus, Atlas, or GLM-backed categories.
-- Fast bounded work → `quick`, Explore (Pro), Librarian (Pro), or Sisyphus-Junior (Flash → Pro fallbacks).
-- Deep implementation / adjudication → Hephaestus or Oracle. Max-effort reasoning → `ultrabrain` / ultrawork.
-- Team direct agents use `kind: subagent_type` + `subagent_type`: `sisyphus`, `atlas`, `sisyphus-junior`; `hephaestus` only with `permission.teammate: allow`.
-- Team categories use `kind: category` + `category` and require a prompt; OmO routes them through `sisyphus-junior`.
-- Hard-rejected direct teammates: `oracle`, `librarian`, `explore`, `multimodal-looker`, `metis`, `momus`, `prometheus`, `context-aware-hermes`, `content-aware-research`, `content-aware-fast`; invoke them through `task` / `call_omo_agent`, not `team_*`.
 - Keep bash output small. No speculative fallbacks, empty catches, or `as any` / `@ts-ignore`.
+- Orchestration → `lead`. Implementation → `build` or `junior`. Read-only judgment → `oracle`. Plans → `plan`.
 - Stop when done. No filler. One short phase line before long stretches — don't narrate every tool.
 - **`question` tool** — always allowed. Ask the user whenever scope, constraints, or acceptance criteria are unclear; never guess or refuse to clarify.
-- `/goal` is disabled for pinned OmO 4.19.4 because its enabled hook can break `/start-work`. Plans → `/start-work` → Atlas. See `prompts/goal.md`.
 
 ## Research stack (use the right tool)
 
 | Need | Tool | How |
 | --- | --- | --- |
-| Local code / config | `read` · `grep` · `glob` · `list` · codegraph · LSP | Always first for this repo. Parallelize. |
+| Local code / config | `read` · `grep` · `glob` · `list` · LSP | Always first for this repo. Parallelize. |
 | Library / framework APIs | **Context7** | `resolve-library-id` → `query-docs`. Never invent APIs. |
-| Real GitHub usage | **grep_app** | Patterns across public repos when docs are thin. |
-| Current web facts / news / people / companies | **websearch (Exa)** | Natural-language “ideal page” queries — not keyword soup. |
+| Current web facts / news / people / companies | **Exa** (`web_search_exa` via MCP) | Natural-language “ideal page” queries — not keyword soup. |
 | Known URL → clean markdown | **webfetch** | After Exa returns a URL, or when the user pasted one. |
-| Deep multi-step web research | Exa via websearch, then webfetch top URLs | Prefer highlights first; fetch full pages only when needed. |
+| Deep multi-step web research | Exa, then webfetch top URLs | Prefer highlights first; fetch full pages only when needed. |
 
 ### Context7 (docs truth)
 
@@ -47,18 +39,13 @@ Authorized environment — follow the scope boundary in `AGENTS.md`. If a provid
 3. `query-docs` with that `libraryId` + a specific query (API, config, example, migration).
 4. Cite `libraryId` (and version) in the answer.
 
-### Exa websearch (OmO builtin · `EXA_API_KEY`)
+### Exa (MCP · `EXA_API_KEY`)
 
 - Describe the **ideal page**, e.g. `OpenCode MCP remote server headers Context7 2026` — not `opencode mcp`.
 - Optional category focus in the query when relevant: `category:company`, `category:people`, `category:news`, `category:research paper`, `category:personal site`.
 - Use for changelogs, advisories, product news, pricing, non-library facts. **Not** a substitute for Context7 on library APIs.
 - If highlights are thin → `webfetch` the best 1–3 URLs.
-- On rate limit / empty results → rephrase once, then grep_app or local evidence. Do not abandon silently.
-
-### grep_app + codegraph
-
-- grep_app: how real projects call an API when Context7 examples are sparse.
-- codegraph: symbols, callers, structure in the **local** workspace (init when the graph is cold).
+- On rate limit / empty results → rephrase once, then use local evidence. Do not abandon silently.
 
 ## Output
 

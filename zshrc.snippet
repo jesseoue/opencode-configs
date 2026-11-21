@@ -3,12 +3,12 @@
 # Source this from ~/.zshrc:
 #   source ~/.config/opencode/zshrc.snippet
 #
-# OpenConfig (oc) — pinned stack for OpenCode · OpenRouter · OmO
+# OpenConfig (oc) — pinned stack for vanilla OpenCode
 # Provides: opencode launcher function, oc dispatcher on PATH, oradmin alias,
 # telemetry kill switches, terminal teardown fix, and allowlisted .env loading.
 #
 # Prefer sourcing this file over inlining opencode() — setup migrates stale
-# inlines (missing DO_NOT_TRACK / OMO_* / OTEL) automatically.
+# inlines (missing DO_NOT_TRACK / OTEL) automatically.
 
 # ── OpenCode launcher ────────────────────────────────────────────
 # Loads API keys from ~/.config/opencode/.env before launching.
@@ -56,12 +56,12 @@ _oc_resolve_start_dir() {
   if [[ "$real_dir" == "$projects_home" ]]; then
     need_workspace=1
   fi
-  # Empty / sidecar-only dirs (only .omo/.codegraph/.claude/.git/…) are not
-  # real projects — launching there feels broken/slow (CodeGraph on nothing).
+  # Empty / sidecar-only dirs (only .claude/.git/…) are not
+  # real projects — launching there feels broken/slow.
   if (( !need_workspace )) && [[ -d "$real_dir" ]]; then
     local _oc_real_count
     _oc_real_count="$(find "$real_dir" -mindepth 1 -maxdepth 1 \
-      ! -name '.omo' ! -name '.codegraph' ! -name '.claude' ! -name '.opencode' \
+      ! -name '.claude' ! -name '.opencode' \
       ! -name '.git' ! -name '.DS_Store' ! -name '.gitignore' \
       ! -name '.metadata_never_index' ! -name 'README.md' \
       2>/dev/null | wc -l | tr -d ' ')"
@@ -83,13 +83,8 @@ _oc_resolve_start_dir() {
 
 opencode() {
   local _oc_env_file="$HOME/.config/opencode/.env"
-  # Always kill upstream telemetry before any OpenCode / OmO process starts
+  # Always kill upstream telemetry before any OpenCode process starts
   export DO_NOT_TRACK=1
-  export OMO_DISABLE_POSTHOG=1
-  export OMO_SEND_ANONYMOUS_TELEMETRY=0
-  export OMO_CODEX_DISABLE_POSTHOG=1
-  export OMO_CODEX_SEND_ANONYMOUS_TELEMETRY=0
-  export CODEGRAPH_TELEMETRY=0
   export OTEL_SDK_DISABLED=true
   unset OPENCODE_ENABLE_TELEMETRY OTEL_EXPORTER_OTLP_ENDPOINT \
         OTEL_EXPORTER_OTLP_TRACES_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS \
@@ -102,19 +97,20 @@ opencode() {
       _oc_key="${_oc_line%%=*}"
       # Keep in sync with OC_ENV_ALLOWLIST in lib/common.sh (no OPENAI_API_KEY).
       case "$_oc_key" in
-        OPENROUTER_API_KEY|VENICE_API_KEY|DEEPSEEK_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|OC_DEFAULT_WORKSPACE|OC_DEFAULT_PROFILE|INFISICAL_DIR|DO_NOT_TRACK|CODEGRAPH_TELEMETRY|OTEL_SDK_DISABLED|OMO_*) ;;
+        OPENROUTER_API_KEY|VENICE_API_KEY|DEEPSEEK_API_KEY|EXA_API_KEY|CONTEXT7_API_KEY|OPENROUTER_MGMT_KEY|OC_PROJECTS_DIR|OC_DEFAULT_WORKSPACE|OC_DEFAULT_PROFILE|INFISICAL_DIR|DO_NOT_TRACK|OTEL_SDK_DISABLED) ;;
         *) continue ;;
       esac
       _oc_val="${_oc_line#*=}"
       [[ "$_oc_val" == \"*\" ]] && _oc_val="${_oc_val#\"}" && _oc_val="${_oc_val%\"}"
       [[ "$_oc_val" == \'*\' ]] && _oc_val="${_oc_val#\'}" && _oc_val="${_oc_val%\'}"
+      # Skip placeholders so a real key already in the environment wins.
+      [[ -z "$_oc_val" || "$_oc_val" == PASTE_* ]] && continue
       export "$_oc_key=$_oc_val"
     done < "$_oc_env_file"
   fi
   # Re-assert kill switches after .env load (env file must not re-enable telemetry)
-  export DO_NOT_TRACK=1 OMO_DISABLE_POSTHOG=1 OMO_SEND_ANONYMOUS_TELEMETRY=0
-  export OMO_CODEX_DISABLE_POSTHOG=1 OMO_CODEX_SEND_ANONYMOUS_TELEMETRY=0
-  export CODEGRAPH_TELEMETRY=0 OTEL_SDK_DISABLED=true
+  export DO_NOT_TRACK=1
+  export OTEL_SDK_DISABLED=true
 
   # Resolve start directory — never the config repo (unless --here)
   local -a _oc_args=("$@")

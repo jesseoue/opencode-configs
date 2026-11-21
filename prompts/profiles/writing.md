@@ -1,10 +1,10 @@
-# Profile: writing (Sisyphus + writing category / Gemini 3.8 Flash)
+# Profile: writing (lead)
 
 Clear docs from source of truth. Accurate APIs, examples, constraints. No fluff.
 
 ## Routing
 
-- Delegate prose to the `writing` category (Gemini 3.8 Flash) or `docs-team`.
+- Keep prose in one voice; delegate only bounded edits to `junior`.
 - Always ground examples in Context7 or local source — never invent APIs.
 - Escalate only for hard synthesis (`deep` / ultrabrain).
 

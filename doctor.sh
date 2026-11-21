@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # doctor.sh — Full OpenConfig readiness check.
 # Covers CLI, config link, signature, plugin (+ peer skew), LSP, formatters,
-# keys, prompts, colors, models, MCP, permissions, concurrency/loops, teams,
-# OmO 4.19 goal/ralph footguns, content-aware + local skills, terminal,
+# keys, models, MCP, permissions, content-aware + local skills, terminal,
 # telemetry, compaction, runtime log WARN/ERROR signatures, and external-source
 # hardening.
 #
@@ -16,7 +15,7 @@
 # Exit: 0 = no critical issues (optional/soft advisories allowed)
 #       1 = critical issues present
 #
-# Teams + keys: compare to the live ~/.config/opencode tree when that is
+# Keys: compare to the live ~/.config/opencode tree when that is
 # OpenConfig. A secondary checkout is check-only (no retarget, no key-critical
 # unless this tree *is* the live install). Never prints secrets.
 # Related: oc check · oc validate · oc heal · oc diagnose · oc secrets
@@ -94,7 +93,7 @@ if [[ $IS_LIVE -eq 1 ]]; then
   ok "$LINK → $REPO (live)"
 elif [[ -n "$LIVE_ROOT" ]]; then
   ok "live install: $LINK → $LIVE_ROOT"
-  info "this checkout: $REPO (check-only — teams/keys follow the live tree)"
+  info "this checkout: $REPO (check-only — keys follow the live tree)"
 elif [[ -L "$LINK" ]]; then
   tgt="$(readlink "$LINK")"
   opt "$LINK → $tgt (not an OpenConfig tree; run: oc setup from the intended install)"
@@ -152,175 +151,6 @@ if [[ -x "$REPO/validate.sh" ]]; then
   else bad "validation errors — run ./validate.sh"; fi
 else opt "validate.sh missing"; fi
 
-# ─── Plugin ──────────────────────────────────────────────────────────
-sec "oh-my-openagent plugin"
-pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my' in x];print(p[0] if p else '')" 2>/dev/null)"
-pin_ver="${pin##*@}"
-# The pin must resolve to a real install (node_modules/oh-my-openagent), else agents silently vanish.
-cdir="$(oc_omo_plugin_cache_dir "$pin" 2>/dev/null || true)"
-_cache_ver=""
-_stale_caches=""
-if [[ -n "$pin" ]]; then
-  if oc_omo_plugin_cache_ok "$pin"; then
-    _cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
-    ok "plugin cache ready ($pin → main + native v${_cache_ver:-?}; $cdir)"
-  elif [[ -f "$cdir/node_modules/oh-my-openagent/package.json" ]]; then
-    _cache_ver="$(python3 -c "import json;print(json.load(open('$cdir/node_modules/oh-my-openagent/package.json')).get('version',''))" 2>/dev/null || true)"
-    bad "plugin cache broken for $pin (main=${_cache_ver:-missing}; native launcher/version missing) — agents may vanish"
-    tip "repair: oc setup   # or: oc heal"
-  elif [[ -d "$cdir" ]]; then
-    bad "plugin cache EMPTY/broken for $pin — agents will NOT load (fix: oc setup · oc heal)"
-    tip "OpenCode may leave an empty ~/.cache/opencode/packages/$pin after a failed install/postinstall wipe"
-  else
-    info "plugin cache not built yet for $pin — run: oc setup  (or oc heal)"
-  fi
-  # Sibling caches confuse bunx doctor ("Loaded 4.19.0" while pin is 4.19.1)
-  _stale_caches="$(python3 - "$pin_ver" <<'PY' 2>/dev/null || true
-import os, sys
-want = sys.argv[1]
-root = os.path.join(os.path.expanduser(os.environ.get("XDG_CACHE_HOME") or "~/.cache"), "opencode", "packages")
-stale = []
-if os.path.isdir(root):
-    for name in sorted(os.listdir(root)):
-        if not name.startswith("oh-my-openagent@"):
-            continue
-        ver = name.split("@", 1)[-1]
-        if want and ver != want:
-            stale.append(name)
-print(",".join(stale))
-PY
-)"
-  if [[ -n "$_stale_caches" ]]; then
-    soft "stale OmO plugin cache(s): ${_stale_caches//,/, } — bunx doctor may report 'outdated' falsely"
-    tip "prune: oc cleanup --yes   # keeps only $pin"
-  fi
-fi
-# NOTE: We deliberately do NOT run `bunx oh-my-openagent doctor` here.
-# Running the OmO CLI triggers its config-migration, which treats the repo's
-# oh-my-openagent.json as a legacy source and MOVES it into a backup, then
-# regenerates ~/.omo/omo.jsonc from it. That's redundant with `oc fix` (which
-# already syncs omo.jsonc canonically) and can leave a stale agents.*.models
-# array behind. Static checks above (pin match + cache version) are sufficient.
-if [[ -z "$pin" ]]; then
-  bad "no oh-my-openagent@… pin in opencode.json"
-elif [[ -z "${OMOCLI_DOCTOR_ALLOWED:-}" ]]; then
-  ok "plugin verified statically (pin=$pin cache=v${_cache_ver:-?}) — OmO CLI migration avoided by design"
-fi
-# OpenCode background-installs @opencode-ai/plugin@$CLI into the config dir.
-# When npm lags the CLI by a patch → WARN spam, not fatal. Align with: oc versions --fix
-_cli_ver="$(oc_tool_version opencode 2>/dev/null || true)"
-_plugin_pin="$(python3 -c "
-import json, os
-p=os.path.expanduser('~/.opencode/package.json')
-if not os.path.isfile(p): raise SystemExit
-d=json.load(open(p)).get('dependencies') or {}
-print(d.get('@opencode-ai/plugin') or '')
-" 2>/dev/null || true)"
-if [[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" != "$_plugin_pin" ]]; then
-  soft "@opencode-ai/plugin npm pin $_plugin_pin ≠ CLI $_cli_ver (known lag — OK if OmO cache populated)"
-  tip "align: oc versions --fix   # or wait for npm; scrub config package.json with oc cleanup if it appears there"
-elif [[ -n "$_cli_ver" && -n "$_plugin_pin" ]]; then
-  ok "@opencode-ai/plugin $_plugin_pin matches OpenCode CLI"
-fi
-# Export for runtime-log section (suppress historical npm-miss when peer is aligned)
-OC_DOCTOR_PLUGIN_PEER_OK=0
-[[ -n "$_cli_ver" && -n "$_plugin_pin" && "$_cli_ver" == "$_plugin_pin" ]] && OC_DOCTOR_PLUGIN_PEER_OK=1
-unset _cli_ver _plugin_pin _cache_ver _stale_caches pin_ver
-
-# ─── Static agent readiness ──────────────────────────────────────────
-# Declaration and verified cache readiness are deterministic. Runtime visibility
-# is a separate bounded probe below and must not be inferred from these checks.
-sec "Agent declaration & cache readiness"
-default_agent="$(python3 -c "import json;print(json.load(open('$REPO/opencode.json')).get('default_agent',''))" 2>/dev/null)"
-if [[ -z "$default_agent" ]]; then
-  info "no default_agent set (opencode uses 'build')"
-else
-  defined="$(python3 -c "
-import json
-omo=json.load(open('$REPO/oh-my-openagent.json'))
-native={'build','plan','general','atlas','sisyphus','hephaestus','prometheus'}
-print('yes' if ('$default_agent' in (omo.get('agents') or {}) or '$default_agent' in native) else 'no')
-" 2>/dev/null)"
-  cache_ok=0
-  oc_omo_plugin_cache_ok "$pin" && cache_ok=1
-  if [[ "$defined" == "yes" && "$cache_ok" -eq 1 ]]; then
-    ok "declared: default_agent '$default_agent'"
-    ok "cache-ready: verified main + native packages for $pin"
-  elif [[ "$defined" != "yes" ]]; then
-    bad "default_agent '$default_agent' is not defined in oh-my-openagent.json — opencode will fall back to 'build'"
-  else
-    bad "default_agent '$default_agent' defined but plugin cache empty — it will NOT load until: oc setup"
-  fi
-fi
-
-# `agent list` loads configuration but never starts an agent or calls a model.
-# Bound it tightly because plugin startup has historically stalled.
-#
-# NOTE: We do NOT run `opencode agent list` here at all. Loading the OmO plugin
-# triggers its config-migration, which treats the repo's canonical
-# oh-my-openagent.json as a legacy source and MOVES it into a backup, then
-# regenerates ~/.omo/omo.jsonc from it. That's redundant with `oc fix` (which
-# already syncs omo.jsonc canonically) and can leave a stale agents.*.models
-# array behind. Static agent/category checks above are sufficient.
-sec "Runtime agent visibility"
-info "runtime 'opencode agent list' probe skipped — loading OmO triggers its config-migration (self-sabotage); static checks cover agent visibility"
-
-if [[ $DO_QUICK -eq 0 ]]; then
-  stale_runtime="$(python3 - "$REPO" "$cdir" <<'PY' 2>/dev/null || true
-import os, subprocess, sys, time
-repo, cache = sys.argv[1:3]
-paths = [
-    os.path.join(repo, "opencode.json"),
-    os.path.join(repo, "oh-my-openagent.json"),
-    os.path.join(cache, "node_modules", "oh-my-openagent", "package.json"),
-]
-mtimes = [os.path.getmtime(p) for p in paths if os.path.isfile(p)]
-if not mtimes:
-    raise SystemExit
-changed_age = max(0, time.time() - max(mtimes))
-
-def elapsed_seconds(raw):
-    days = 0
-    if "-" in raw:
-        day, raw = raw.split("-", 1)
-        days = int(day)
-    parts = [int(p) for p in raw.split(":")]
-    if len(parts) == 2:
-        hours, minutes, seconds = 0, parts[0], parts[1]
-    else:
-        hours, minutes, seconds = parts
-    return days * 86400 + hours * 3600 + minutes * 60 + seconds
-
-out = subprocess.run(["ps", "-axo", "pid=,etime=,command="], capture_output=True, text=True).stdout
-stale = []
-for line in out.splitlines():
-    fields = line.strip().split(None, 2)
-    if len(fields) != 3:
-        continue
-    pid, elapsed, command = fields
-    low = command.lower()
-    argv0 = command.split(None, 1)[0]
-    is_opencode = os.path.basename(argv0) == "opencode" or argv0.endswith("/opencode/bin/opencode")
-    if not is_opencode or "agent list" in low:
-        continue
-    try:
-        age = elapsed_seconds(elapsed)
-    except Exception:
-        continue
-    if age > changed_age + 2:
-        stale.append(pid)
-if stale:
-    print(",".join(stale[:8]))
-PY
-)"
-  if [[ -n "$stale_runtime" ]]; then
-    opt "running OpenCode process(es) predate config/cache update (pid ${stale_runtime//,/, })"
-    tip "finish active work, close those sessions, then relaunch so Sisyphus/team routes activate"
-  else
-    ok "no stale running OpenCode process predates the latest config/cache update"
-  fi
-fi
-
 # ─── LSP servers (derived from opencode.json) ────────────────────────
 sec "LSP servers (code intelligence)"
 _lsp_miss=0
@@ -353,41 +183,6 @@ for k,cmd in enabled:
 " 2>/dev/null)
 # _lsp_miss already counted via opt(); do not double-add
 unset _lsp_miss
-
-# ─── CodeGraph ───────────────────────────────────────────────────────
-sec "CodeGraph (OmO)"
-CG_BIN="$HOME/.omo/codegraph/bin/codegraph"
-CG_WANT="$(oc_version_get codegraph.pin 2>/dev/null || true)"
-if [[ -x "$CG_BIN" ]]; then
-  CG_HAVE="$($CG_BIN --version 2>/dev/null | head -1 | tr -d '\r')"
-  if [[ -n "$CG_WANT" && "$CG_HAVE" != "$CG_WANT" ]]; then
-    opt "binary: $CG_BIN ($CG_HAVE; OmO pin $CG_WANT — start one OmO session to auto-provision)"
-  else
-    ok "binary: $CG_BIN ($CG_HAVE)"
-  fi
-else
-  opt "binary missing — first OmO session should auto_provision to ~/.omo/codegraph"
-  tip "or run: oc setup   # provisions codegraph + teams + LSP"
-fi
-cg_line="$(python3 -c "
-import json
-cg=json.load(open('$REPO/oh-my-openagent.json')).get('codegraph') or {}
-id=cg.get('install_dir')
-if cg.get('enabled') is False:
-    print('BAD enabled=false')
-elif cg.get('auto_provision') is not True:
-    print('BAD auto_provision=false')
-elif cg.get('daemon') is not True:
-    print('BAD daemon=false')
-elif id and 'cache/opencode/codegraph' in str(id):
-    print('BAD install_dir='+str(id))
-else:
-    print('enabled=%s auto_init=%s auto_provision=%s daemon=%s telemetry=%s' % (
-        cg.get('enabled', True), cg.get('auto_init', True),
-        cg.get('auto_provision', True), cg.get('daemon', True), cg.get('telemetry')))
-" 2>/dev/null)"
-if [[ "$cg_line" == BAD* ]]; then bad "codegraph config: $cg_line"
-else ok "config: $cg_line"; fi
 
 # ─── Formatters ──────────────────────────────────────────────────────
 sec "Formatters"
@@ -441,7 +236,7 @@ if [[ -f "$ENV_FILE" ]]; then
           tip "https://venice.ai  ·  oc secrets sync"
           ;;
         DEEPSEEK_API_KEY)
-          opt "$k unset (native sisyphus-deepseek lane unavailable)"
+          opt "$k unset (native DeepSeek provider unavailable)"
           tip "https://platform.deepseek.com  ·  oc secrets sync"
           ;;
       esac
@@ -555,123 +350,6 @@ if [[ -n "$_pd" ]]; then
 else
   opt "could not resolve projects dir"
 fi
-
-# ─── Prompts ─────────────────────────────────────────────────────────
-sec "Prompts"
-prompt_report="$(python3 - "$REPO" <<'PY'
-import json, os, sys
-repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-
-def resolve_file_uri(uri: str):
-    if not isinstance(uri, str):
-        return None
-    u = uri.strip()
-    if u.startswith("file://"):
-        u = u[7:]
-    if u.startswith("~/"):
-        u = os.path.join(os.path.expanduser("~"), u[2:])
-    elif not os.path.isabs(u):
-        u = os.path.join(repo, u)
-    return u
-
-missing = []
-empty = []
-checked = 0
-for section in ("agents", "categories"):
-    for name, cfg in (omo.get(section) or {}).items():
-        if not isinstance(cfg, dict):
-            continue
-        pa = (cfg.get("prompt_append") or cfg.get("prompt") or "").strip()
-        if not pa:
-            empty.append(f"{section}.{name}")
-            continue
-        checked += 1
-        if pa.startswith("file://") or pa.endswith(".md"):
-            path = resolve_file_uri(pa)
-            alt = os.path.join(repo, "prompts", section, f"{name}.md")
-            if path and not os.path.isfile(path) and not os.path.isfile(alt):
-                missing.append(f"{section}.{name} -> {pa}")
-
-for pj in sorted(os.listdir(os.path.join(repo, "profiles"))):
-    if not pj.endswith(".json"):
-        continue
-    name = pj[:-5]
-    pmd = os.path.join(repo, "prompts", "profiles", f"{name}.md")
-    checked += 1
-    if not os.path.isfile(pmd):
-        missing.append(f"profiles/{name} -> prompts/profiles/{name}.md")
-
-core = os.path.join(repo, "prompts", "core.md")
-print(("OK" if os.path.isfile(core) else "BAD") + "|prompts/core.md " + ("present" if os.path.isfile(core) else "missing"))
-agents_md = os.path.join(repo, "AGENTS.md")
-print(("OK" if os.path.isfile(agents_md) else "BAD") + "|AGENTS.md " + ("present" if os.path.isfile(agents_md) else "missing"))
-if empty:
-    print("BAD|empty prompt_append: " + ", ".join(empty))
-if missing:
-    shown = ", ".join(missing[:8]) + ("…" if len(missing) > 8 else "")
-    print("BAD|missing prompt files: " + shown)
-if not empty and not missing:
-    print(f"OK|{checked} prompt refs resolve (agents/categories/profiles)")
-PY
-)"
-while IFS='|' read -r st msg; do
-  [[ -z "$msg" ]] && continue
-  case "$st" in
-    OK) ok "$msg" ;;
-    BAD) bad "$msg"; tip "restore from repo or run: oc fix / oc cleanup --yes" ;;
-  esac
-done <<< "$prompt_report"
-
-# ─── Agent / category colors ─────────────────────────────────────────
-sec "Agent & category colors"
-color_report="$(python3 - "$REPO" <<'PY'
-import json, os, sys, re
-repo = sys.argv[1]
-hexre = re.compile(r"^#[0-9A-Fa-f]{6}$")
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-miss_a, bad_a, ok_a = [], [], 0
-for n, a in (omo.get("agents") or {}).items():
-    c = (a or {}).get("color")
-    if c is None:
-        miss_a.append(n)
-    elif not hexre.match(str(c)):
-        bad_a.append(f"{n}={c}")
-    else:
-        ok_a += 1
-miss_c, bad_c, ok_c = [], [], 0
-for n, a in (omo.get("categories") or {}).items():
-    if not isinstance(a, dict):
-        continue
-    c = a.get("color")
-    if c is None:
-        miss_c.append(n)
-    elif not hexre.match(str(c)):
-        bad_c.append(f"{n}={c}")
-    else:
-        ok_c += 1
-if bad_a or bad_c:
-    print("BAD|non-hex colors: " + ", ".join(bad_a + bad_c))
-if miss_a or miss_c:
-    ma = ",".join(miss_a) if miss_a else "—"
-    mc = ",".join(miss_c[:6]) + ("…" if len(miss_c) > 6 else "") if miss_c else "—"
-    print(f"OPT|missing colors (TUI tabs dull): agents={ma} categories={mc}")
-    print("TIP|restore: oc fix   # assigns Tokyonight hex colors")
-if ok_a or ok_c:
-    print(f"OK|{ok_a} agents + {ok_c} categories have valid #RRGGBB colors")
-if not (miss_a or miss_c or bad_a or bad_c):
-    print("OK|all agent/category colors set")
-PY
-)"
-while IFS='|' read -r st msg; do
-  [[ -z "$msg" ]] && continue
-  case "$st" in
-    OK) ok "$msg" ;;
-    OPT) opt "$msg" ;;
-    BAD) bad "$msg" ;;
-    TIP) tip "$msg" ;;
-  esac
-done <<< "$color_report"
 
 # ─── Model routing (live probe: would catch "all providers ignored") ──
 # Sends a 1-token request per model with its EXACT configured provider block.
@@ -792,13 +470,7 @@ _sk_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
 import json, os, re, sys
 repo = sys.argv[1]
 oc = json.load(open(os.path.join(repo, "opencode.json")))
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
 paths = set((oc.get("skills") or {}).get("paths") or [])
-for s in (omo.get("skills") or {}).get("sources") or []:
-    if isinstance(s, dict) and s.get("path"):
-        paths.add(s["path"])
-    elif isinstance(s, str):
-        paths.add(s)
 allowed = {"~/.config/opencode/skills", "./skills"}
 home = os.path.expanduser("~")
 
@@ -847,15 +519,10 @@ missing = [n for n in required if n not in found]
 if missing:
     for n in missing:
         print("BAD|required skill missing: skills/%s/SKILL.md" % n)
-    print("TIP|restore from repo - replaces disabled OmO security-* skills")
+    print("TIP|restore from repo")
 else:
     print("OK|required content-aware skills present (%s)" % ", ".join(required))
 
-disabled = {str(s).lower() for s in (omo.get("disabled_skills") or [])}
-if {"security-research", "security-review"} <= disabled:
-    print("OK|OmO security-* skills stay disabled (use local content-aware skills)")
-else:
-    print("BAD|OmO security-research/security-review must stay disabled")
 PY
 )"
 if [[ -z "$_sk_report" ]]; then
@@ -946,486 +613,11 @@ if [[ -f "$LOG" ]]; then
       info "stale @opencode-ai/plugin npm-miss WARNs in log ($plugin_miss) — peer now matches CLI; ignore"
     else
       soft "recent @opencode-ai/plugin npm miss ($plugin_miss WARN) — CLI ahead of registry"
-      tip "align peer: oc versions --fix   # harmless if OmO cache populated"
+      tip "align peer: oc versions --fix   "
     fi
-  fi
-  goal_boom="$(printf '%s\n' "$tailn" | grep -c 'InvalidObjectiveError' 2>/dev/null || true)"
-  if [[ "${goal_boom:-0}" -gt 0 ]]; then
-    _goal_on="$(python3 -c "import json;g=json.load(open('$REPO/oh-my-openagent.json')).get('goal') or {};print('yes' if g.get('enabled') is True else 'no')" 2>/dev/null || echo no)"
-    if [[ "$_goal_on" == "yes" ]]; then
-      bad "InvalidObjectiveError in log ($goal_boom) AND goal.enabled=true — run: oc fix"
-      tip "OmO 4.19 goal hook + /start-work template → see prompts/goal.md"
-    else
-      info "stale InvalidObjectiveError in log ($goal_boom) — goal is off now; safe to ignore"
-    fi
-    unset _goal_on
   fi
 else
   info "no opencode log yet ($LOG)"
-fi
-
-# ─── Team mode ───────────────────────────────────────────────────────
-# Parallel multi-agent coordination. Optional: a warn here never blocks the
-# ready verdict, it just means team_* tools have nothing to spawn yet.
-sec "Team mode"
-tm_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
-import json, os, sys
-repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-tm = omo.get("team_mode") or {}
-if not tm.get("enabled"):
-    print("OPT|team_mode disabled — set team_mode.enabled=true to use team_* tools"); sys.exit()
-print("OK|enabled (%d parallel / %d max)" % (tm.get("max_parallel_members", 4), tm.get("max_members", 8)))
-# team_* + core tools permissioned in opencode.json
-REQUIRED_TEAM = (
-    "team_create", "team_delete", "team_list", "team_status", "team_send_message",
-    "team_shutdown_request", "team_approve_shutdown", "team_reject_shutdown",
-    "team_task_create", "team_task_get", "team_task_list", "team_task_update",
-)
-try:
-    oc = json.load(open(os.path.join(repo, "opencode.json")))
-    perms = (oc.get("permission") or {})
-    missing = [t for t in REQUIRED_TEAM if perms.get(t) != "allow"]
-    if not missing: print("OK|%d team_* tools allowed" % len(REQUIRED_TEAM))
-    else: print("BAD|team_* not allow: %s — run: oc fix" % ", ".join(missing))
-    for t in ("task", "call_omo_agent", "edit", "external_directory", "doom_loop"):
-        if perms.get(t) != "allow":
-            print("BAD|permission.%s must be allow (got %r) — run: oc fix" % (t, perms.get(t)))
-        else:
-            print("OK|%s = allow" % t)
-except Exception as e:
-    print("BAD|could not read opencode.json permissions (%s)" % e)
-# eligible agents present
-agents = omo.get("agents") or {}
-eligible = [a for a in ("sisyphus", "atlas", "sisyphus-junior", "hephaestus") if a in agents]
-print("OK|eligible agents: %s" % ", ".join(eligible) if eligible else "OPT|no eligible team agents defined")
-heph = agents.get("hephaestus") or {}
-if heph and (heph.get("permission") or {}).get("teammate") != "allow":
-    print("BAD|hephaestus lacks permission.teammate=allow — cannot be a team member — run: oc fix")
-else:
-    print("OK|hephaestus.permission.teammate = allow")
-# declared specs — ~/.omo/teams must symlink to the live OpenConfig tree
-def _is_openconfig_tree(path):
-    if not path or not os.path.isdir(path):
-        return False
-    sig_p = os.path.join(path, "signature.json")
-    if not (
-        os.path.isfile(os.path.join(path, "opencode.json"))
-        and os.path.isdir(os.path.join(path, "teams"))
-        and os.path.isfile(sig_p)
-    ):
-        return False
-    try:
-        sig = json.load(open(sig_p, encoding="utf-8"))
-    except Exception:
-        return False
-    return (
-        sig.get("product") == "OpenConfig"
-        and sig.get("cli") == "oc"
-        and sig.get("id") == "jesseoue/opencode-configs"
-    )
-
-live_root = os.environ.get("OC_LIVE_CONFIG") or ""
-if live_root:
-    live_root = os.path.realpath(live_root)
-repo_real = os.path.realpath(repo)
-if live_root and _is_openconfig_tree(live_root):
-    canonical = live_root
-else:
-    canonical = repo_real
-base = (tm.get("base_dir") or "~/.omo").replace("~", os.path.expanduser("~"))
-tracked = []
-tdir = os.path.join(repo, "teams")
-if os.path.isdir(tdir):
-    tracked = [d for d in os.listdir(tdir) if os.path.isfile(os.path.join(tdir, d, "config.json"))]
-provisioned = []
-ldir = os.path.join(base, "teams")
-if os.path.isdir(ldir):
-    provisioned = [d for d in os.listdir(ldir) if os.path.isfile(os.path.join(ldir, d, "config.json")) or os.path.islink(os.path.join(ldir, d))]
-if tracked: print("OK|%d team spec(s) tracked in repo/teams: %s" % (len(tracked), ", ".join(sorted(tracked))))
-else: print("OPT|no team specs in repo/teams — nothing for team_create to spawn")
-for name in sorted(tracked):
-    try:
-        spec = json.load(open(os.path.join(tdir, name, "config.json"), encoding="utf-8"))
-        lead = spec.get("lead") or {}
-        lead_route = "%s:%s" % (
-            "agent" if lead.get("kind") == "subagent_type" else "category",
-            lead.get("subagent_type") or lead.get("category") or "?",
-        )
-        members = []
-        for member in spec.get("members") or []:
-            route = member.get("subagent_type") or member.get("category") or "?"
-            kind = "agent" if member.get("kind") == "subagent_type" else "category"
-            members.append("%s=%s:%s" % (member.get("name") or "?", kind, route))
-        print("OK|route %s: lead=%s; %s" % (name, lead_route, ", ".join(members)))
-    except Exception as exc:
-        print("BAD|route %s unreadable: %s" % (name, exc))
-missing = [t for t in tracked if t not in provisioned]
-if missing:
-    print("OPT|tracked but not provisioned to %s/teams: %s — run: oc setup from the live install" % (base, ", ".join(sorted(missing))))
-copies = []
-wrong = []
-for t in tracked:
-    link = os.path.join(ldir, t)
-    want = os.path.realpath(os.path.join(canonical, "teams", t))
-    if not os.path.lexists(link):
-        continue
-    if not os.path.islink(link):
-        copies.append(t)
-        continue
-    try:
-        got = os.path.realpath(link)
-        if got != want:
-            wrong.append(t)
-    except OSError:
-        wrong.append(t)
-if copies:
-    print("BAD|team specs are directory copies (not symlinks): %s — run: oc setup from the live install" % ", ".join(sorted(copies)))
-elif wrong:
-    print("BAD|team symlinks drift from live %s: %s — run: oc setup from the live install" % (canonical, ", ".join(sorted(wrong))))
-elif tracked and not missing:
-    print("OK|all %d team specs → live %s/teams" % (len(tracked), canonical))
-# schema completeness (OmO 4.19 team_mode)
-for key in (
-    "tmux_visualization", "max_messages_per_run", "max_member_turns",
-    "message_payload_max_bytes", "recipient_unread_max_bytes", "mailbox_poll_interval_ms",
-):
-    if key not in tm:
-        print("OPT|team_mode.%s missing — run: oc fix" % key)
-if isinstance(tm.get("mailbox_poll_interval_ms"), int) and tm["mailbox_poll_interval_ms"] >= 500:
-    print("OK|team_mode.mailbox_poll_interval_ms=%s" % tm["mailbox_poll_interval_ms"])
-tx = omo.get("tmux") or {}
-if tx.get("enabled") is True and tx.get("layout") == "main-vertical":
-    print("OK|tmux enabled (layout=%s isolation=%s)" % (tx.get("layout"), tx.get("isolation")))
-else:
-    print("OPT|tmux not fully configured for team panes — want enabled + main-vertical")
-
-# hyperplan readiness (inline team — no repo team spec; uses category members + plan handoff)
-kd = (omo.get("keyword_detector") or {}).get("enabled_expansions") or []
-if "hyperplan" in kd:
-    disabled = {str(a).lower() for a in (omo.get("disabled_agents") or [])}
-    cats = omo.get("categories") or {}
-    sa = omo.get("sisyphus_agent") or {}
-    req = ["unspecified-low", "unspecified-high", "ultrabrain", "artistry"]
-    missing_cats = [c for c in req if c not in cats]
-    if missing_cats:
-        print("FAIL|hyperplan missing categories: %s" % ", ".join(missing_cats))
-    else:
-        print("OK|hyperplan categories present%s" % (" (+deep)" if "deep" in cats else " (no deep)"))
-    if "plan" in disabled:
-        print("FAIL|plan is in disabled_agents — hyperplan Phase 6 handoff will fail")
-    elif sa.get("replace_plan") is not False and sa.get("planner_enabled") is not False:
-        print("OK|plan demoted for hyperplan handoff (replace_plan + not disabled)")
-    else:
-        print("OPT|plan callable but replace_plan/planner_enabled off — check sisyphus_agent")
-    if "hyperplan-ultrawork" in kd:
-        print("OK|hyperplan-ultrawork combo expansion enabled")
-    print("OK|trigger: say hyperplan / hpp, or /hyperplan (from sisyphus, not prometheus)")
-else:
-    print("OPT|hyperplan keyword expansion not enabled")
-PY
-)"
-if [[ -z "$tm_report" ]]; then
-  info "could not evaluate team-mode config (python3?)"
-else
-  while IFS='|' read -r kind msg; do
-    [[ -z "$kind" ]] && continue
-    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; FAIL|BAD) bad "$msg" ;; *) info "$msg" ;; esac
-  done <<< "$tm_report"
-fi
-
-# ─── Concurrency, loops, content-aware ───────────────────────────
-sec "Concurrency & loops"
-conc_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
-import json, os, sys
-repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-oc = json.load(open(os.path.join(repo, "opencode.json")))
-bt = omo.get("background_task") or {}
-pc = bt.get("providerConcurrency") or {}
-mc = bt.get("modelConcurrency") or {}
-tm = omo.get("team_mode") or {}
-goal = omo.get("goal") or {}
-exp = omo.get("experimental") or {}
-
-def bad(m): print("BAD|" + m)
-def ok(m): print("OK|" + m)
-def opt(m): print("OPT|" + m)
-def soft(m): print("SOFT|" + m)
-def tip(m): print("TIP|" + m)
-
-dc = bt.get("defaultConcurrency")
-if not isinstance(dc, int) or dc < 1:
-    bad("background_task.defaultConcurrency missing/invalid")
-elif dc > 10:
-    bad("defaultConcurrency=%s (>10) — runaway risk; run: oc fix" % dc)
-elif dc != 10:
-    bad("defaultConcurrency=%s (want 10) — run: oc fix" % dc)
-else:
-    ok("defaultConcurrency=%s" % dc)
-
-want_pc = (("openrouter", 12), ("venice", 6), ("deepseek", 6))
-for prov, cap in want_pc:
-    v = pc.get(prov)
-    if not isinstance(v, int):
-        bad("providerConcurrency.%s missing" % prov)
-    elif v > cap:
-        bad("providerConcurrency.%s=%s (cap %s) — run: oc fix" % (prov, v, cap))
-    elif v != cap:
-        bad("providerConcurrency.%s=%s (want %s) — run: oc fix" % (prov, v, cap))
-    else:
-        ok("providerConcurrency.%s=%s" % (prov, v))
-extra_pc = sorted(k for k in pc if k not in {p for p, _ in want_pc})
-if extra_pc:
-    bad("providerConcurrency extra keys not allowed: %s" % ", ".join(extra_pc))
-
-# Referenced models = agents/categories (+fallbacks) + OpenCode whitelist.
-# Aliases: openai/X ↔ openrouter/openai/X (both keys are intentional for dual lane).
-def aliases(mid):
-    out = {mid}
-    if mid.startswith("openrouter/"):
-        bare = mid[len("openrouter/"):]
-        out.add(bare)
-        if bare.startswith("openai/"):
-            out.add(bare)
-    elif mid.startswith("openai/"):
-        out.add("openrouter/" + mid)
-    elif "/" in mid:
-        out.add("openrouter/" + mid)
-    return out
-
-ids = set()
-for section in ("agents", "categories"):
-    for cfg in (omo.get(section) or {}).values():
-        if isinstance(cfg, dict) and isinstance(cfg.get("model"), str):
-            ids.add(cfg["model"])
-        if isinstance(cfg, dict):
-            for fb in cfg.get("fallback_models") or cfg.get("fallbacks") or []:
-                if isinstance(fb, str): ids.add(fb)
-                elif isinstance(fb, dict) and isinstance(fb.get("model"), str): ids.add(fb["model"])
-try:
-    _orp = (oc.get("provider") or {}).get("openrouter") or {}
-    oc_wl = _orp.get("whitelist") or list(_orp.get("models") or {})
-    for w in oc_wl:
-        if isinstance(w, str):
-            ids.add(w)
-except Exception:
-    pass
-covered = set()
-for mid in ids:
-    covered |= aliases(mid)
-mc_keys = set(mc)
-missing_mc = sorted(i for i in ids if not (aliases(i) & mc_keys))
-orphan_mc = sorted(k for k in mc if k not in covered)
-if missing_mc:
-    shown = ", ".join(missing_mc[:6]) + ("…" if len(missing_mc) > 6 else "")
-    opt("modelConcurrency missing for: %s" % shown)
-else:
-    ok("modelConcurrency covers %d referenced models" % len(ids))
-if orphan_mc:
-    shown = ", ".join(orphan_mc[:4]) + ("…" if len(orphan_mc) > 4 else "")
-    soft("modelConcurrency spare keys (not agent/whitelist-referenced): %s" % shown)
-    tip("safe if intentional dual-lane caps; remove with oc fix only when pruning unused models")
-
-mp = tm.get("max_parallel_members")
-mm = tm.get("max_members")
-if not isinstance(mp, int) or mp < 1 or mp > 4:
-    bad("team_mode.max_parallel_members=%s (want 1–4)" % mp)
-else:
-    ok("team parallel=%s / members=%s" % (mp, mm if isinstance(mm, int) else "?"))
-if isinstance(mm, int) and mm < 5:
-    bad("team_mode.max_members=%s (<5 hyperplan floor)" % mm)
-
-# OmO 4.19: Goals replace Ralph — ralph_loop is deprecated/ignored when goal is explicit
-if "ralph_loop" in omo:
-    opt("ralph_loop still in config — deprecated on OmO 4.19 (ignored; /ralph-loop removed) — run: oc fix")
-    tip("continuous work: /start-work → Atlas (Goal stays OFF in OpenConfig)")
-else:
-    ok("no ralph_loop (OmO 4.19 Goal replaced Ralph)")
-
-# Goal loop — DISABLED on OmO 4.19.x (chat hook treats /start-work template as objective)
-goal_md = os.path.join(repo, "prompts", "goal.md")
-oc_instr = oc.get("instructions") or []
-dm = omo.get("default_mode") or {}
-if goal.get("enabled") is True:
-    bad("goal.enabled=true breaks /start-work on OmO 4.19.x (5541-char template > 2000-char objective cap)")
-    tip("run: oc fix   # forces goal.enabled=false + default_mode.goal=false")
-    if goal.get("auto_start") is True:
-        bad("goal.auto_start=true — must be false")
-    if dm.get("goal") is True:
-        bad("default_mode.goal=true — must be false while OmO goal hook is unsafe")
-else:
-    ok("goal disabled (protects /start-work from InvalidObjectiveError)")
-    if dm.get("goal") is True:
-        bad("default_mode.goal=true while goal.enabled=false — run: oc fix")
-    elif "goal" in dm and dm.get("goal") is False:
-        ok("default_mode.goal=false")
-    if goal.get("auto_start") is True:
-        bad("goal.auto_start=true while goal is disabled — run: oc fix")
-    if not os.path.isfile(goal_md):
-        bad("prompts/goal.md missing — documents why goal is off")
-    elif "prompts/goal.md" not in oc_instr:
-        bad("opencode.json instructions[] missing prompts/goal.md — run: oc fix")
-    else:
-        ok("goal footgun documented (prompts/goal.md in instructions)")
-
-# Imported Claude MCP configs must never receive sensitive environment variables.
-allow = list(omo.get("mcp_env_allowlist") or [])
-if allow:
-    bad("mcp_env_allowlist exposes secrets to imported MCPs: %s — run: oc fix" % ", ".join(allow))
-else:
-    ok("mcp_env_allowlist empty (no API keys exposed to imported MCPs)")
-
-sw = omo.get("start_work") if isinstance(omo.get("start_work"), dict) else {}
-if "start_work" not in omo:
-    opt("start_work block missing — run: oc fix (auto_commit=false)")
-else:
-    ok("start_work configured (auto_commit=%s)" % sw.get("auto_commit", "?"))
-
-mt = exp.get("max_tools")
-if isinstance(mt, int) and mt <= 32:
-    ok("experimental.max_tools=%s" % mt)
-elif isinstance(mt, int):
-    opt("experimental.max_tools=%s (high; 32 is the OpenConfig default)" % mt)
-
-# MCP / stream timeouts (opencode.json)
-mcp_t = (oc.get("experimental") or {}).get("mcp_timeout")
-if mcp_t == 30000:
-    ok("experimental.mcp_timeout=%sms" % int(mcp_t))
-else:
-    bad("experimental.mcp_timeout=%r (want 30000 to match Context7)" % mcp_t)
-for pname in ("openrouter",):
-    opts = ((oc.get("provider") or {}).get(pname) or {}).get("options") or {}
-    to = opts.get("timeout")
-    chunk = opts.get("chunkTimeout")
-    if to == 300000 and chunk == 180000:
-        ok("provider.%s timeout=300s chunkTimeout=180s" % pname)
-    else:
-        bad("provider.%s timeouts drifted (want request=300000, chunk=180000)" % pname)
-openai_block = (oc.get("provider") or {}).get("openai")
-enabled = oc.get("enabled_providers")
-if openai_block and isinstance(enabled, list) and "openai" in enabled:
-    opts = (openai_block or {}).get("options") or {}
-    to = opts.get("timeout")
-    chunk = opts.get("chunkTimeout")
-    if to == 300000 and chunk == 180000:
-        ok("provider.openai timeout=300s chunkTimeout=180s")
-    else:
-        bad("provider.openai timeouts drifted (want request=300000, chunk=180000)")
-elif not openai_block:
-    ok("provider.openai absent (OpenRouter-only)")
-PY
-)"
-if [[ -z "$conc_report" ]]; then
-  opt "could not evaluate concurrency config"
-else
-  while IFS='|' read -r kind msg; do
-    [[ -z "$kind" ]] && continue
-    case "$kind" in
-      OK) ok "$msg" ;;
-      OPT) opt "$msg" ;;
-      SOFT) soft "$msg" ;;
-      TIP) tip "$msg" ;;
-      BAD|FAIL) bad "$msg"; tip "oc fix   # re-applies concurrency ceilings + goal/ralph hygiene" ;;
-      *) info "$msg" ;;
-    esac
-  done <<< "$conc_report"
-fi
-
-sec "Content-aware research"
-ca_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
-import json, os, sys, re
-repo = sys.argv[1]
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
-agents = omo.get("agents") or {}
-cats = omo.get("categories") or {}
-ca = agents.get("content-aware-research")
-if not isinstance(ca, dict):
-    print("BAD|agents.content-aware-research missing")
-else:
-    print("OK|agent content-aware-research defined")
-    if (ca.get("permission") or {}).get("edit") != "deny":
-        print("BAD|content-aware-research.permission.edit must be deny")
-    else:
-        print("OK|OmO agent edit=deny")
-    if not str(ca.get("model") or "").startswith("venice/"):
-        print("BAD|content-aware-research model must be venice/<model>")
-    else:
-        print("OK|content-aware-research model=%s" % ca.get("model"))
-fast = agents.get("content-aware-fast")
-if not isinstance(fast, dict):
-    print("BAD|agents.content-aware-fast missing (oc run -a content-aware-fast)")
-else:
-    print("OK|agent content-aware-fast defined")
-    if fast.get("model") != "venice/deepseek-v4-1-flash-1017-uncensored":
-        print("BAD|content-aware-fast model must be venice/deepseek-v4-1-flash-1017-uncensored")
-    else:
-        print("OK|content-aware-fast model=venice/deepseek-v4-1-flash-1017-uncensored")
-    if (fast.get("permission") or {}).get("edit") != "deny":
-        print("BAD|content-aware-fast.permission.edit must be deny")
-md = os.path.join(repo, "agents", "content-aware-research.md")
-if not os.path.isfile(md):
-    print("BAD|agents/content-aware-research.md missing")
-else:
-    text = open(md).read()
-    if re.search(r"(?m)^\s*edit:\s*deny\s*$", text) or "edit: deny" in text:
-        print("OK|OpenCode-native agent MD (edit deny)")
-    else:
-        print("BAD|agents/content-aware-research.md must set edit: deny")
-fast_md = os.path.join(repo, "agents", "content-aware-fast.md")
-if not os.path.isfile(fast_md):
-    print("BAD|agents/content-aware-fast.md missing")
-else:
-    print("OK|OpenCode-native flash agent MD")
-for name in ("content-aware-fast", "content-aware-deep"):
-    if name in cats:
-        print("OK|category %s" % name)
-    else:
-        print("BAD|category %s missing" % name)
-prof = os.path.join(repo, "profiles", "content-aware.json")
-if not os.path.isfile(prof):
-    print("BAD|profiles/content-aware.json missing")
-else:
-    gp = json.load(open(prof))
-    if gp.get("default_agent") != "content-aware-research":
-        print("BAD|profile default_agent=%r (want content-aware-research)" % gp.get("default_agent"))
-    else:
-        print("OK|profile content-aware → content-aware-research")
-team = os.path.join(repo, "teams", "content-aware-audit", "config.json")
-print(("OK" if os.path.isfile(team) else "BAD") + "|team content-aware-audit " + ("present" if os.path.isfile(team) else "missing"))
-hermes = agents.get("context-aware-hermes")
-if not isinstance(hermes, dict):
-    print("BAD|agents.context-aware-hermes missing")
-else:
-    print("OK|agent context-aware-hermes defined")
-    if hermes.get("model") != "openrouter/nousresearch/hermes-4-405b":
-        print("BAD|context-aware-hermes model must be openrouter/nousresearch/hermes-4-405b")
-    else:
-        print("OK|context-aware-hermes model=openrouter/nousresearch/hermes-4-405b")
-    if (hermes.get("permission") or {}).get("edit") != "deny":
-        print("BAD|context-aware-hermes.permission.edit must be deny")
-    else:
-        print("OK|context-aware-hermes edit=deny")
-hermes_md = os.path.join(repo, "agents", "context-aware-hermes.md")
-print(("OK" if os.path.isfile(hermes_md) else "BAD") + "|agents/context-aware-hermes.md " + ("present" if os.path.isfile(hermes_md) else "missing"))
-for skill in ("content-aware-recon", "content-aware-audit"):
-    sp = os.path.join(repo, "skills", skill, "SKILL.md")
-    print(("OK" if os.path.isfile(sp) else "BAD") + "|local skill %s" % skill + (" present" if os.path.isfile(sp) else " missing"))
-# stale names
-blob = json.dumps(omo)
-if "grayhat" in blob.lower() or "security-audit" in blob:
-    print("BAD|stale grayhat/security-audit strings still in oh-my-openagent.json")
-else:
-    print("OK|no grayhat leftovers in OmO config")
-PY
-)"
-if [[ -z "$ca_report" ]]; then
-  opt "could not evaluate content-aware wiring"
-else
-  while IFS='|' read -r kind msg; do
-    [[ -z "$kind" ]] && continue
-    case "$kind" in OK) ok "$msg" ;; OPT) opt "$msg" ;; BAD|FAIL) bad "$msg"; tip "restore content-aware agent/profile/team/skills from repo" ;; *) info "$msg" ;; esac
-  done <<< "$ca_report"
 fi
 
 # ─── Shell integration ───────────────────────────────────────────
@@ -1451,15 +643,8 @@ fi
 sec "Supported versions"
 if [[ ! -f "$REPO/versions.json" ]]; then
   bad "versions.json missing"
-  tip "restore from repo — pins OpenCode / OmO / Ghostty / tmux minima"
+  tip "restore from repo — pins OpenCode / Ghostty / tmux minima"
 else
-  _omo_pin="$(python3 -c "import json;p=[x for x in json.load(open('$REPO/opencode.json')).get('plugin',[]) if 'oh-my-openagent@' in x];print(p[0].split('@',1)[1] if p else '')" 2>/dev/null || true)"
-  _omo_want="$(oc_versions_get oh_my_openagent.pin 2>/dev/null || true)"
-  if [[ -n "$_omo_pin" && -n "$_omo_want" ]]; then
-    if [[ "$_omo_pin" == "$_omo_want" ]]; then ok "oh-my-openagent pin $_omo_pin (matches versions.json)"
-    else opt "oh-my-openagent pin $_omo_pin ≠ versions.json $_omo_want — update opencode.json or versions.json"; fi
-  fi
-
   _check_ver() {
     local label="$1" tool="$2" key="$3" required="${4:-1}"
     local want have
@@ -1518,7 +703,7 @@ fi
 
 # ─── Terminal configs (tmux + Ghostty) ────────────────────────────
 sec "Terminal configs"
-# tmux binary + conf symlink + load-test + OmO-critical options
+# tmux binary + conf symlink + load-test
 if command -v tmux >/dev/null 2>&1; then
   if oc_runtime_conf_ok "$HOME/.tmux.conf" tmux.conf; then
     ok "tmux.conf → live install"
@@ -1543,12 +728,6 @@ if command -v tmux >/dev/null 2>&1; then
     [[ "$_fe" == "on" ]] && ok "focus-events on" || opt "focus-events=$_fe (want on)"
     [[ "$_ms" == "on" ]] && ok "mouse on" || info "mouse=$_ms"
     [[ -n "$_hl" && "$_hl" -ge 100000 ]] && ok "history-limit $_hl" || opt "history-limit $_hl (want ≥100000 for long sessions)"
-    if tmux -L "$_sock" list-keys -T prefix 2>/dev/null | grep -q 'select-layout main-vertical'; then
-      ok "OmO layout bind: prefix+M → main-vertical"
-    else
-      opt "missing prefix+M main-vertical bind (OmO team layout)"
-      tip "restore: oc setup --force   # or copy $REPO/tmux.conf"
-    fi
     tmux -L "$_sock" kill-server 2>/dev/null || true
   else
     bad "tmux.conf failed to load"
@@ -1556,26 +735,8 @@ if command -v tmux >/dev/null 2>&1; then
     [[ -s /tmp/oc-tmux-doctor.err ]] && info "$(head -2 /tmp/oc-tmux-doctor.err | tr '\n' ' ')"
     tmux -L "$_sock" kill-server 2>/dev/null || true
   fi
-  # OmO tmux / team visualization flags
-  _omo_tmux="$(python3 -c "
-import json
-o=json.load(open('$REPO/oh-my-openagent.json'))
-t=o.get('tmux') or {}
-tm=o.get('team_mode') or {}
-print('enabled=%s layout=%s isolation=%s viz=%s' % (
-  t.get('enabled'), t.get('layout'), t.get('isolation'),
-  tm.get('tmux_visualization')))
-" 2>/dev/null || true)"
-  if [[ -n "$_omo_tmux" ]]; then
-    info "OmO tmux: $_omo_tmux"
-    if [[ "$_omo_tmux" == *'enabled=True'* || "$_omo_tmux" == *'enabled=true'* ]]; then
-      ok "OmO tmux integration enabled"
-    else
-      opt "OmO tmux.enabled is off — team pane layout disabled"
-    fi
-  fi
 else
-  bad "tmux not installed (OmO team visualization needs it)"
+  bad "tmux not installed"
   tip "install: brew install tmux && ln -sfn \"$REPO/tmux.conf\" ~/.tmux.conf"
 fi
 
@@ -1625,7 +786,6 @@ tel_report="$(python3 - "$REPO" <<'PY' 2>/dev/null || true
 import json, os, sys
 repo = sys.argv[1]
 oc = json.load(open(os.path.join(repo, "opencode.json")))
-omo = json.load(open(os.path.join(repo, "oh-my-openagent.json")))
 checks = []
 checks.append(("OK" if oc.get("share") == "disabled" else "BAD", "share=%s" % oc.get("share")))
 checks.append(("OK" if oc.get("autoupdate") is False else "BAD", "autoupdate=%s" % oc.get("autoupdate")))
@@ -1634,14 +794,6 @@ checks.append(("OK" if (oc.get("experimental") or {}).get("openTelemetry") is Fa
                "openTelemetry=%s" % (oc.get("experimental") or {}).get("openTelemetry")))
 checks.append(("OK" if (oc.get("server") or {}).get("mdns") is False else "BAD",
                "server.mdns=%s" % (oc.get("server") or {}).get("mdns")))
-checks.append(("OK" if omo.get("telemetry") is False else "BAD", "omo.telemetry=%s" % omo.get("telemetry")))
-checks.append(("OK" if (omo.get("codegraph") or {}).get("telemetry") is False else "BAD",
-               "codegraph.telemetry=%s" % (omo.get("codegraph") or {}).get("telemetry")))
-checks.append(("OK" if (omo.get("git_master") or {}).get("include_co_authored_by") is False else "BAD",
-               "co_authored_by=%s" % (omo.get("git_master") or {}).get("include_co_authored_by")))
-checks.append(("OK" if (omo.get("experimental") or {}).get("disable_omo_env") is True else "BAD",
-               "disable_omo_env=%s" % (omo.get("experimental") or {}).get("disable_omo_env")))
-checks.append(("OK" if not omo.get("mcp_env_allowlist") else "BAD", "mcp_env_allowlist empty"))
 or_models = (((oc.get("provider") or {}).get("openrouter") or {}).get("models") or {})
 available_routes = all(
     (((m.get("options") or {}).get("provider") or {}).get("data_collection") == "allow"
@@ -1649,9 +801,6 @@ available_routes = all(
     for m in or_models.values() if isinstance(m, dict)
 )
 checks.append(("OK" if available_routes and or_models else "BAD", "OpenRouter routes unrestricted (data_collection=allow, no ZDR filter)"))
-dmcps = set(omo.get("disabled_mcps") or [])
-checks.append(("OK" if "posthog:posthog" in dmcps and "sentry:sentry" in dmcps else "BAD",
-               "posthog/sentry MCPs disabled"))
 for kind, msg in checks:
     print("%s|%s" % (kind, msg))
 PY
@@ -1670,7 +819,7 @@ else
 fi
 # Live env kill switches (from .env / process)
 _tel_env_ok=1
-for _kv in DO_NOT_TRACK=1 OMO_DISABLE_POSTHOG=1 OMO_SEND_ANONYMOUS_TELEMETRY=0 CODEGRAPH_TELEMETRY=0; do
+for _kv in DO_NOT_TRACK=1; do
   _k="${_kv%%=*}"; _want="${_kv#*=}"
   _got="$(oc_get_env_key "$REPO/.env" "$_k" 2>/dev/null || true)"
   if [[ "$_got" != "$_want" && -n "$_got" ]]; then
@@ -1694,14 +843,10 @@ import json, os, sys
 repo=sys.argv[1]
 oc=json.load(open(os.path.join(repo,"opencode.json")))
 comp=oc.get("compaction") or {}
-omo=json.load(open(os.path.join(repo,"oh-my-openagent.json")))
-oexp=omo.get("experimental") or {}
 if comp.get("auto"): print("OK|compaction.auto")
 else: print("OPT|compaction.auto not enabled")
 if comp.get("preserve_recent_tokens"):
     print("OK|preserve_recent_tokens=%s" % comp.get("preserve_recent_tokens"))
-if oexp.get("preemptive_compaction"): print("OK|omo preemptive_compaction")
-if (oexp.get("dynamic_context_pruning") or {}).get("enabled"): print("OK|omo dynamic_context_pruning")
 PY
 )"
 if [[ -z "$comp_report" ]]; then
@@ -1812,27 +957,12 @@ def outside(p):
     return ".claude" in p or ".agents" in p or (p.startswith(("~","/")) and "opencode/skills" not in p)
 oc=json.load(open(os.path.join(repo,"opencode.json")))
 ext+=[p for p in (oc.get("skills",{}) or {}).get("paths",[]) if outside(p)]
-omo=json.load(open(os.path.join(repo,"oh-my-openagent.json")))
-for s in (omo.get("skills",{}) or {}).get("sources",[]):
-    v=s.get("path") if isinstance(s,dict) else s
-    if outside(v): ext.append(v)
 print("|".join(dict.fromkeys(ext)))
 PY
 )"
 if [[ -n "$ext_skills" ]]; then
   opt "skills load from OUTSIDE OpenConfig: ${ext_skills//|/, } — run: oc fix"
 else ok "skills: ~/.config/opencode/skills + ./skills (any project cwd)"; fi
-
-# 5. Claude Code bridge — imports external MCP/commands/skills/hooks
-cc_on="$(python3 -c "
-import json
-cc=json.load(open('$REPO/oh-my-openagent.json')).get('claude_code',{}) or {}
-on=[k for k in ('mcp','commands','skills','hooks','agents','plugins') if cc.get(k) is True]
-print(','.join(on))
-" 2>/dev/null)"
-if [[ -n "$cc_on" ]]; then
-  opt "claude_code bridge imports external: $cc_on — run ./doctor.sh --fix to disable"
-else ok "claude_code bridge off (no external imports)"; fi
 
 # 6. Stale package-manager caches — the root cause of the plugin-install 404 loop.
 #    Flag only when the plugin cache is EMPTY (i.e. an install is actually failing).
@@ -1866,13 +996,11 @@ if [[ $DO_HARDEN -eq 1 ]]; then
   # also clear opencode's regenerated deps in ~/.opencode (keep the binary in bin/)
   rm -rf "$HOME/.opencode/node_modules" "$HOME/.opencode/package.json" \
          "$HOME/.opencode/package-lock.json" "$HOME/.opencode/bun.lock" 2>/dev/null
-  # omo's regenerable external caches (NOT sessions/db under ~/.local/share/opencode)
-  rm -rf "$HOME/.cache/oh-my-opencode" "$HOME/.local/share/oh-my-opencode" 2>/dev/null
-  ok "cleared ~/.opencode regenerated deps + omo external caches"
+  ok "cleared ~/.opencode regenerated deps"
   [[ $removed -eq 0 ]] && info "no desktop/app artifacts to remove"
   # disable external loading via config (idempotent)
   if [[ -x "$REPO/fix.sh" ]]; then
-    info "Disabling external loading in config (skills -> ./skills, claude_code bridge off)..."
+    info "Disabling external loading in config (skills -> ./skills)..."
     "$REPO/fix.sh" >/dev/null 2>&1 && ok "config locked to repo"
   fi
   [[ $DO_JSON -eq 0 ]] && echo ""
@@ -1883,19 +1011,6 @@ fi
 # ─── Auto-fix (optional) ─────────────────────────────────────────
 if [[ $DO_FIX -eq 1 ]]; then
   sec "Auto-fix"
-  # Prune sibling OmO caches that make bunx doctor cry "outdated"
-  _pruned="$(oc_prune_stale_omo_plugin_caches 2>/dev/null || true)"
-  if [[ -n "$_pruned" ]]; then
-    ok "pruned stale OmO cache(s): $(printf '%s' "$_pruned" | tr '\n' ' ')"
-  else
-    info "no stale OmO plugin caches to prune"
-  fi
-  unset _pruned
-  if oc_ensure_omo_plugin_cache 2>/dev/null; then
-    ok "OmO plugin cache healthy for pin"
-  else
-    soft "OmO plugin cache ensure failed — run: oc setup"
-  fi
   if [[ -x "$REPO/versions.sh" ]]; then
     info "Aligning @opencode-ai/plugin peer (oc versions --fix)..."
     "$REPO/versions.sh" --fix >/dev/null 2>&1 && ok "versions --fix ok" || soft "versions --fix reported issues (non-fatal)"

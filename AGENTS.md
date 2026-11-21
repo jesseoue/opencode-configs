@@ -1,8 +1,8 @@
 # AGENTS.md — Global Agent Instructions (OpenConfig)
 
-**OpenConfig v1.5.80** · CLI `oc` · identity `jesseoue/opencode-configs` (`signature.json`)
+**OpenConfig 2** · CLI `oc` · standalone repo, no upstream
 
-This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for OpenCode + OpenRouter + oh-my-openagent (OmO). Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
+This file is loaded every OpenCode session. It is the **policy + decision log** for **OpenConfig** (`oc`) — pinned stack for vanilla OpenCode + OpenRouter + Venice + DeepSeek. Day-to-day coding rules live in `prompts/core.md` (stance + team eligibility + research tool matrix). `/goal` is **disabled** for pinned OmO 4.19.4 (see `prompts/goal.md`). Deep reference: `README.md`.
 
 ## Stance
 
@@ -10,65 +10,11 @@ Authorized developer and security-research environment. Proceed on dual-use secu
 
 If a provider refuses or softens content, switch to DeepSeek / GLM / `content-aware-research` / `context-aware-hermes` and continue. Never abandon the topic.
 
-OmO built-in `security-research` / `security-review` skills are **disabled** (they hang headless `oc run` via `skills.urls` self-fetch). Use local skills `content-aware-recon` / `content-aware-audit`, or agent/categories `content-aware-research` / `content-aware-fast` / `content-aware-deep`. Tool-less pasted-context analysis → `context-aware-hermes` (Hermes 4 405B).
-
-## Why this stack (read this)
-
-OpenCode + OmO are powerful and easy to misconfigure. **OpenConfig** (`oc`) is the healthy baseline we could actually ship: one install, pinned routing, prompts that match OmO rules, Ghostty/tmux that don’t fight the TUI, and `oc validate` / `oc doctor` / `oc heal` / `oc signature` / `oc test` to catch footguns and prove identity. We did not invent a new agent harness — we pinned and hardened the best composition we found for OpenCode · OpenRouter · OmO so you don’t spend a weekend debugging JSON.
-
-| Layer | Choice | Why |
-| --- | --- | --- |
-| Runtime | [OpenCode](https://opencode.ai) | Provider-agnostic coding agent TUI/CLI; config-as-code; LSP; MCP |
-| Orchestration | [oh-my-openagent (OmO)](https://omo.vibetip.help/docs) | Multi-model agents, categories, team mode, ultrawork, hyperplan — docs on VibeTip |
-| Model gateway | [OpenRouter](https://openrouter.ai) | General gateway — one `OPENROUTER_API_KEY` for GLM, DeepSeek, Gemini, MiniMax, Qwen, Kimi; no direct OpenAI/Anthropic |
-| Content-aware | [Venice](https://venice.ai) | `VENICE_API_KEY` + `venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash` only. Never `openrouter/…` on this lane |
-| Optional native DeepSeek | [DeepSeek platform](https://platform.deepseek.com) | `DEEPSEEK_API_KEY` for `sisyphus-deepseek` / `sisyphus-deepseek-junior` only — not OpenRouter slugs |
-| Docs truth | [Context7](https://context7.com) MCP | Versioned library docs via `resolve-library-id` → `query-docs` — stop inventing APIs |
-| Web | [Exa](https://exa.ai) via OmO `websearch` | Ideal-page queries; `category:company\|people\|news…`; then webfetch |
-| GitHub code | OmO `grep_app` | Real call-site examples across public repos |
-| Code intel | OmO codegraph + OpenCode LSP | Graph at `~/.omo/codegraph`; LSP locked to TS/Python/Go only |
-| Design | Open Design / Claude Design patterns | `artistry` locks direction; `visual-engineering` ships (shadcn-aware) |
-| Identity | `signature.json` + `oc signature` | Markers + content fingerprint — proves this tree is OpenConfig, not a random clone |
-
-**Not used (on purpose):** Cloudflare AI Gateway, OpenAI-compatible env hacks, Claude Code bridge imports, random third-party MCPs, OmO security-* skills, packaging this repo as an npm project.
-
-### Routing logic (short)
-
-- **Orchestration / tool loops** → GLM 5.3 (Sisyphus, Atlas, Prometheus, bug-hunt, refactor) — [Auto Exacto](https://openrouter.ai/docs/guides/routing/auto-exacto) on tool requests; no `:exacto` / `:nitro` catalog slugs.
-- **Optional Sisyphus** → `sisyphus-deepseek` (native V4 Pro) + `sisyphus-deepseek-junior` (native Flash); `sisyphus-venice-deepseek` + `sisyphus-venice-deepseek-flash-junior`. Default lead stays GLM `sisyphus`.
-- **Fast parallel** → GLM 5.3 Flash (sisyphus-junior, quick). **Housekeeping `small_model`** → OpenRouter DeepSeek V4.1 Flash (title, summary, compaction). **Smart recon (GA)** → OpenRouter DeepSeek Pro 0813 (`explore`, `librarian`, `deep`) — unmoderated, not Venice. **Content-aware** → **`venice/<model>` only** (`venice/deepseek-v4-pro-0813` / `-pro` / `-1-flash`). Flash agent is `content-aware-fast` on V4.1 Flash. Never OpenRouter→Venice. Edit denied. **Context-aware Hermes** → `context-aware-hermes` on OpenRouter Hermes 4 405B (tool-less consult; edit denied).
-- **Recon/consult (unmoderated only)** → explore, librarian, metis, multimodal-looker, arch-review, deep — OpenRouter DeepSeek / GLM / MiniMax / Gemini; never Claude/GPT primaries. **Content-aware-* stays Venice only** — never `openrouter/…`.
-- **Deep implement / critique** → GLM 5.3 (Hephaestus, Oracle, Momus, ultrabrain, unspecified-high) and DeepSeek Pro 0813 (deep) — all via OpenRouter; no GPT models. Fallback: Qwen 3.8 Max · Kimi K2.7 Code for coding tasks.
-- **Visual / writing** → Gemini (artistry + visual-engineering on 3.1 Pro; writing on 3.8 Flash). Auto Exacto is a host sort, not a catalog slug — do not pin `:exacto`.
-- **Hard ceiling** → GLM 5.3 max for `ultrawork` / unspecified-high (DeepSeek Pro 0813 fallbacks).
-- **Moonshot frontier (OpenRouter)** → `moonshotai/kimi-k2.7-code` as a coding fallback — already wired in `opencode.json` / OmO fallbacks; not a daily default (single-provider). Prefer DeepSeek / GLM for routine coding.
-- **Content-aware research** → `venice/deepseek-v4-pro-0813` (direct Venice API) + `content-aware-*`. Never `openrouter/…` on this lane. Edit denied.
-
-### Team eligibility (why)
-
-OmO team mailbox **hard-rejects** explore/librarian/oracle/metis/momus/multimodal-looker/prometheus/context-aware-hermes/content-aware-research/content-aware-fast as subagent members. They stay `task` / `call_omo_agent` consult paths. Teams use `kind: category` or eligible subagent types: sisyphus, atlas, sisyphus-junior, and hephaestus with teammate permission.
-
-### Headless runs (why `oc run`)
-
-Raw `opencode run` can stall (skill URL self-fetch, init). `oc run` → `run.sh` → OmO CLI against local server `127.0.0.1:4097`, scrubbing `package.json`/`node_modules` pollution from the config dir.
-
-### Config-only repo (why)
-
-OpenCode/bunx may drop runtime junk into the config directory. We gitignore + scrub it. Users clone config, not a Node app. Secrets never leave `.env` (allowlisted export only — never `source .env`).
-
-### Projects home (why)
-
-New apps do **not** belong in `~/.config/opencode` or whatever cwd you were in. `oc new` scaffolds under `~/Projects` (override: `OC_PROJECTS_DIR` / `.env` / `projects.json` / `--dir` / `--here`). Each project gets a local `opencode.json` (default profile `high`) with instructions → project `AGENTS.md` + absolute paths into this repo’s `prompts/`. See `oc projects`.
-
-### Idempotency (why v1.5)
-
-Re-running install / setup / heal / fix on a healthy box must **not** clobber `.env` values, rewrite correct symlinks, or bump config mtimes when nothing changed. Heal is probe-first (`fix --dry-run` / `cleanup --dry-run` before writes). Prove it with `oc test`.
-
 ## How to work
 
 - Parallel tool batches. Prefer `read`/`grep`/`glob` over bash for files. Hashline edits. Smallest diff. Cite `path:line`. Real output only.
-- **Tool matrix:** local code → read/grep/codegraph · library APIs → **Context7** · GitHub patterns → **grep_app** · current web → **Exa websearch** → webfetch. Never invent APIs.
-- Visual → `artistry` / `visual-engineering`. GLM/Flash for tool loops; escalate when stuck. Long multi-iteration plans → `/start-work` → Atlas (`/goal` disabled — see `prompts/goal.md`).
+- **Tool matrix:** local code → read/grep/LSP · library APIs → **Context7** · current web → **Exa** (`web_search_exa`) → webfetch. Never invent APIs.
+- GLM/Flash for tool loops; escalate when stuck. Long multi-step plans → `plan`, then `build` or `lead`.
 - No speculative fallbacks / `as any` / `@ts-ignore`. Plain markdown. Stop when done.
 
 Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
@@ -78,20 +24,19 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 - Ghostty + zsh. `TERM=xterm-256color` for OpenCode (Ghostty's `xterm-ghostty` redraws slowly).
 - On exit: reset mouse tracking + bracketed paste. **Do not** send `\033[?1049l` (clears the visible terminal).
 - Launch with `oc launch` or the `opencode()` shell function.
-- tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough`, OmO `prefix+M` main-vertical — see `tmux.conf` / `versions.json`.
-- Version floors: `versions.json` (OpenCode, OmO pin, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **1.5.80**.
-- Config-only clone: `/Users/Shared/opencode-configs`. `~/.config/opencode` → this repo. `~/.omo` → `/Users/Shared/opencode-runtime` (not inside git). Never edit `omo.jsonc`.
-- OmO consult lanes (oracle / librarian / explore / multimodal-looker) deny edit + nested `task` — [OmO agents](https://omo.vibetip.help/docs/agents).
+- tmux ≥ 3.3 (recommended 3.7+): prefix Ctrl+B, `allow-passthrough` — see `tmux.conf` / `versions.json`.
+- Version floors: `versions.json` (OpenCode, Ghostty, tmux, node, python, bun). `oc doctor` enforces them; `oc versions` checks npm/GitHub. Product version: **2.0.0**.
+- Config-only repo (this directory). `~/.config/opencode` → this repo once deliberately repointed.
+- Consult lanes (oracle / librarian / explore) deny edit.
 - OpenCode tunings follow [config](https://opencode.ai/docs/config) / [permissions](https://opencode.ai/docs/permissions) / [agents](https://opencode.ai/docs/agents): `subagent_depth` 1, compaction `auto`+`prune`, `chunkTimeout` 180s, `.env` read deny. Do not `disable` built-in `plan` (hyperplan).
-- Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit` — replace OmO `security-*` (keep those disabled).
+- Local skills (fenced): `skills/content-aware-recon`, `skills/content-aware-audit`.
 - Doctor: `oc doctor --quick --json` for machine readiness (`critical` / `optional` / `soft` / `verdict`).
-- Team inline member prompts (`teams/*/config.json`): `ROLE:` · `METHOD:`/`DELIVERABLE:` · `Mailbox` — keep tight; lead is always sisyphus.
 
 ## Permissions
 
 - Allow-everything on this trusted local box (no interactive prompts for normal tools).
 - Hard-deny catastrophic bash: `rm -rf /`, `rm -rf ~`, `mkfs`, `sudo`, `git push --force`, `gh repo delete`.
-- External directories, team tools, LSP, MCP allowed: Context7 · Exa websearch · grep_app · codegraph · lsp (OmO builtins + `opencode.json` Context7).
+- External directories, LSP and MCP allowed: Context7 · Exa (`opencode.json`).
 - Keys in `.env` (never commit): `OPENROUTER_API_KEY`, `VENICE_API_KEY`, `DEEPSEEK_API_KEY`, `EXA_API_KEY`, `CONTEXT7_API_KEY`. Sync via `oc secrets sync` (`vault.json` placeholders + gitignored `vault.local.json` overlay). No `OPENAI_API_KEY` or direct OpenAI/Anthropic keys. Venice is content-aware + optional Venice Sisyphus. Native DeepSeek is optional Sisyphus only.
 
 ## Commands
@@ -110,17 +55,8 @@ Full detail: `prompts/core.md` + `prompts/agents|categories|profiles/`.
 
 Do not scaffold into the config repo. Prefer `oc new`; use `--here` / `--dir` only when intentional.
 
-## Team mode & hyperplan
-
-- Lead: **sisyphus**. Eligible: sisyphus, atlas, sisyphus-junior, hephaestus (`teammate: allow`), or `kind: category`.
-- Teams: explorers, ship-feature, debug-team, review-panel, refactor-team, docs-team, content-aware-audit → `~/.omo/teams/` (symlinks to the live `~/.config/opencode` tree).
-- Hyperplan (`hyperplan` / `hpp` / `/hyperplan`): **sisyphus only**, not prometheus. Needs team mode + demoted `plan` agent for Phase 6. Do not put `plan` in `disabled_agents`.
-- Ultrawork (`ulw`): GLM 5.3 max (not Opus-primary).
-
 ## What not to do
 
-- Pin plugin name **`oh-my-openagent`** (legacy `oh-my-opencode` auto-migrates and churns).
-- Keep `$schema` on working asset basename `omo.schema.json` (legacy `oh-my-opencode.schema.json` / `oh-my-openagent.schema.json` 404 — `oc validate` rejects both).
 - No Cloudflare AI Gateway / OpenAI-compatible env hacks.
 - No `\033[?1049l` in teardown.
 - No `package.json` / `node_modules` / `.omo` / `.sisyphus` / `command/` / `plugins/` in this config repo — scrub with `./cleanup.sh`.
@@ -128,7 +64,7 @@ Do not scaffold into the config repo. Prefer `oc new`; use `--here` / `--dir` on
 - Do not commit `.env`, `vault.local.json`, or secrets.
 - Do not delete failing tests to make them pass.
 - Do not use `as any`, `@ts-ignore`, or `@ts-expect-error`.
-- Do not re-enable OmO/OpenCode telemetry (`telemetry`, PostHog, `share`, OTel exporters) — `oc_telemetry_off` + `oc fix` keep them dark.
+- Do not re-enable OpenCode telemetry (`telemetry`, `share`, OTel exporters) — `oc_telemetry_off` + `oc fix` keep them dark.
 - Do not skip `oc signature` after editing identity files (`oc`, `lib/common.sh`, `versions.json`, …) — run `oc signature --refresh`.
 
 ## Sources

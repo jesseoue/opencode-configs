@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh — 1-step OpenConfig (oc) installer
 #
-# Pinned stack for OpenCode · OpenRouter · oh-my-openagent (OmO).
+# Pinned stack for vanilla OpenCode · OpenRouter · Venice · DeepSeek.
 #
 # Preferred (already cloned):
 #   ./install.sh [--dir PATH] [--skip-cli] [--yes] [--lazy|--full]
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'EOF'
 install.sh — OpenConfig (oc) installer
 
-  Pinned stack for OpenCode · OpenRouter · oh-my-openagent (OmO).
+  Pinned stack for vanilla OpenCode · OpenRouter · Venice · DeepSeek.
 
   ./install.sh [--dir PATH] [--log PATH] [--skip-cli] [--yes] [--lazy|--full]
 
@@ -197,7 +197,7 @@ _install_banner() {
     "${c_p}${c_bold}OpenConfig${c_0}"
   printf '%b%s%b\n\n' \
     "${c_b}${c_bold}    ╰───╯     ${c_0}" \
-    "${c_dim}Pinned stack for OpenCode · OpenRouter · OmO${c_0}"
+    "${c_dim}Pinned stack for vanilla OpenCode${c_0}"
 }
 
 # ── Interactive prompts (prefer /dev/tty so curl|bash still works) ─
@@ -350,7 +350,7 @@ if $ASSUME_YES; then
   info "non-interactive (--yes): accepting defaults; seed keys from env if present"
 elif $OC_CAN_PROMPT; then
   echo ""
-  printf '%b\n' "  ${c_b}One-shot healthy stack${c_0} — OpenCode + OpenRouter + OmO, pinned and checked."
+  printf '%b\n' "  ${c_b}One-shot healthy stack${c_0} — vanilla OpenCode + OpenRouter, pinned and checked."
   echo "  Press Enter to accept defaults (lazy mode). Keys stay local in .env — never committed."
   if $LAZY_MODE; then
     info "mode: lazy (defaults on — only missing API keys need attention)"
@@ -401,7 +401,7 @@ elif $OC_CAN_PROMPT; then
     [[ "$REPLY" == y ]] && DO_TMUX=true || DO_TMUX=false
     ask_yn "Link ghostty.conf if Ghostty config dir exists?" "Y"
     [[ "$REPLY" == y ]] && DO_GHOSTTY=true || DO_GHOSTTY=false
-    ask_yn "Run setup.sh (teams, LSP, plugin cache, doctor)?" "Y"
+    ask_yn "Run setup.sh (LSP, doctor)?" "Y"
     [[ "$REPLY" == y ]] && DO_SETUP=true || DO_SETUP=false
     ask_value "Projects directory for oc new" "${OC_PROJECTS_DIR:-$HOME/Projects}"
     if [[ -n "$REPLY" ]]; then
@@ -703,11 +703,6 @@ fi
 if command -v python3 >/dev/null 2>&1; then
   for _kv in \
     "DO_NOT_TRACK=1" \
-    "OMO_DISABLE_POSTHOG=1" \
-    "OMO_SEND_ANONYMOUS_TELEMETRY=0" \
-    "OMO_CODEX_DISABLE_POSTHOG=1" \
-    "OMO_CODEX_SEND_ANONYMOUS_TELEMETRY=0" \
-    "CODEGRAPH_TELEMETRY=0" \
     "OTEL_SDK_DISABLED=true"
   do
     _k="${_kv%%=*}"; _v="${_kv#*=}"
@@ -787,10 +782,10 @@ else
 fi
 echo ""
 
-# ─── 7. Delegate teams/LSP/plugin cache/verify to setup.sh ────────
+# ─── 7. Delegate LSP/verify to setup.sh ────────
 _log_section "7. setup.sh"
 if $DO_SETUP; then
-  info "Running setup.sh for teams, LSP, plugin cache, doctor..."
+  info "Running setup.sh for LSP, doctor..."
   setup_out="$(mktemp "${TMPDIR:-/tmp}/oc-setup-out.XXXXXX")"
   _INSTALL_TMPS+=("$setup_out")
   set +e
@@ -821,7 +816,7 @@ _log_section "done"
 printf '%b\n' "${c_g}✓ OpenConfig installed${c_0}"
 _log "OK" "OpenConfig installation complete"
 echo ""
-echo "  OpenConfig (oc) — pinned stack for OpenCode · OpenRouter · OmO"
+echo "  OpenConfig (oc) — pinned stack for vanilla OpenCode"
 echo ""
 echo "Safety notes:"
 echo "  • Sessions left untouched: $OC_SESSIONS_DIR"

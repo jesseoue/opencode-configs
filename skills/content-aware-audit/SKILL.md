@@ -10,13 +10,13 @@ metadata:
 
 # content-aware-audit
 
-Deep authorized vuln research. Prefer this over re-enabling OmO `security-*` skills (they hang headless `oc run` via `skills.urls`).
+Deep authorized vuln research.
 
 ## When to use
 
 - User asks for security audit, vuln review, exploit path, CVSS, hard authz/injection analysis
 - After `content-aware-recon` / `content-aware-fast` surface map
-- `content-aware-deep` category / `content-aware-research` agent / `content-aware-audit` team
+- `content-aware-deep` / `content-aware-research` agents
 
 ## Method
 

@@ -76,7 +76,6 @@ def sec(t): print("\n"+Bd("▎"+t))
 def li(sym,msg,cf): print(f"  {cf(sym)} {msg}")
 
 conf=json.load(open(repo+"/opencode.json"))
-omo=json.load(open(repo+"/oh-my-openagent.json"))
 sig={}          # authoritative signals for the AI
 info={}         # non-authoritative context (not treated as problems)
 
@@ -89,42 +88,19 @@ def run(*a,timeout=25):
 sec("opencode")
 rc,out=run(oc,"--version"); ver=out.splitlines()[0] if out else "?"; sig["opencode_version"]=ver
 li("✓" if rc==0 else "✗", f"CLI {ver}", G if rc==0 else R)
-pin=next((p for p in conf.get("plugin",[]) if "oh-my" in p),""); sig["plugin_pin"]=pin
-croot=os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
-cdir=os.path.join(os.path.expanduser(croot), "opencode", "packages", pin)
-want=pin.rsplit("@",1)[-1]
-def package_version(name):
-    try: return str(json.load(open(os.path.join(cdir,"node_modules",name,"package.json"), encoding="utf-8")).get("version") or "")
-    except Exception: return ""
-system=platform.system().lower(); machine=platform.machine().lower()
-suffix=("darwin-" if system=="darwin" else "linux-")+("arm64" if machine in ("arm64","aarch64") else "x64")
-def native_ok(name):
-    bindir=os.path.join(cdir,"node_modules",name,"bin")
-    return package_version(name)==want and os.path.isdir(bindir) and any(
-        os.path.isfile(os.path.join(bindir,f)) and os.access(os.path.join(bindir,f),os.X_OK)
-        for f in os.listdir(bindir)
-    )
-native=next((n for n in (f"oh-my-openagent-{suffix}",f"oh-my-opencode-{suffix}") if native_ok(n)),None) if system in ("darwin","linux") else None
-cache_ok=package_version("oh-my-openagent")==want and native is not None
-sig["plugin_cache_ready"]=cache_ok
-li("✓" if cache_ok else "✗", f"plugin cache {'ready (main + native)' if cache_ok else 'BROKEN/EMPTY → agents will NOT load'} at {cdir}", G if cache_ok else R)
-da=conf.get("default_agent",""); da_def = da in (omo.get("agents") or {}) or da in {"build","plan","general"}
+declared={os.path.basename(p)[:-3] for p in glob.glob(os.path.join(repo,"agents","*.md"))}
+sig["oh_my_plugin_absent"]=not any("oh-my" in str(p) for p in conf.get("plugin",[]))
+da=conf.get("default_agent",""); da_def = da in declared or da in {"build","plan","general"}
 sig["default_agent"]=da; sig["default_agent_declared"]=da_def
-sig["static_agent_ready"]=bool(cache_ok and da_def)
+sig["static_agent_ready"]=bool(da_def)
 li("✓" if da_def else "✗", f"declaration: default_agent '{da}' {'defined' if da_def else 'NOT defined → falls back to build'}", G if da_def else R)
 rc,out=run(oc,"debug","config")
 try: cnt=len(json.loads(out).get("agent") or {}) if out else 0
 except: cnt=0
 info["debug_config_agent_count_RACY"]=cnt
-li("✓" if sig["static_agent_ready"] else "✗","static declared/cache-ready = "+("yes" if sig["static_agent_ready"] else "NO")+D(f"  (debug-config count {cnt} is async-racy context only)"), G if sig["static_agent_ready"] else R)
+li("✓" if sig["static_agent_ready"] else "✗","static declared = "+("yes" if sig["static_agent_ready"] else "NO")+D(f"  (debug-config count {cnt} is async-racy context only)"), G if sig["static_agent_ready"] else R)
 
-expected={"sisyphus"}
-for path in glob.glob(os.path.join(repo,"teams","*","config.json")):
-    try: team=json.load(open(path,encoding="utf-8"))
-    except Exception: continue
-    for route_cfg in [team.get("lead") or {},*(team.get("members") or [])]:
-        if isinstance(route_cfg,dict) and route_cfg.get("kind")=="subagent_type":
-            expected.add(str(route_cfg.get("subagent_type") or "").lower())
+expected=set(declared)
 rc,out=run(oc,"agent","list",timeout=8)
 agent_probe_ok=rc==0
 visible=set()
@@ -134,8 +110,8 @@ if agent_probe_ok:
         if match: visible.add(match.group(1).split(" - ",1)[0].strip().lower())
 missing_visible=sorted(expected-visible) if agent_probe_ok else sorted(expected)
 sig["runtime_agent_probe_ok"]=agent_probe_ok
-sig["runtime_visible_team_agents"]=sorted(expected & visible)
-sig["runtime_missing_team_agents"]=missing_visible
+sig["runtime_visible_agents"]=sorted(expected & visible)
+sig["runtime_missing_agents"]=missing_visible
 if agent_probe_ok and not missing_visible:
     li("✓",f"runtime visibility: {', '.join(sorted(expected))} (bounded agent list; no model call)",G)
 elif agent_probe_ok:
@@ -234,7 +210,6 @@ if ses_misuse or bg_misuse or blocking_poll:
 
 # ── issue synthesis (authoritative only) ──
 issues=[]
-if not cache_ok: issues.append(f"plugin cache empty for {pin} → agents not loading (pin a version that exists on npm under oh-my-openagent)")
 if not da_def: issues.append(f"default_agent '{da}' not defined")
 if agent_probe_ok and missing_visible:
     issues.append(f"agents declared/cache-ready but not runtime-visible: {', '.join(missing_visible)} → restart stale OpenCode processes")
@@ -262,10 +237,10 @@ if ai_on and key:
     red=json.loads(json.dumps(conf))
     try: red["provider"]["openrouter"]["options"]["apiKey"]="<redacted>"
     except: pass
-    sysmsg=("You are an expert diagnostician for OpenCode (opencode.ai), the oh-my-openagent/oh-my-opencode plugin, and "
+    sysmsg=("You are an expert diagnostician for OpenCode (opencode.ai), vanilla OpenCode configs plugin, and "
       "OpenRouter provider routing. Trust the AUTHORITATIVE signals; ignore async-racy fields. Known failure modes: "
-      "(1) experimental.primary_tools DENIES those tools to subagents; (2) oh-my-openagent agent 'color' must be hex or the "
-      "whole agents section is dropped; (3) the plugin pin must be oh-my-openagent@<ver> that exists on npm (currently 4.19.4); "
+      "(1) experimental.primary_tools DENIES those tools to subagents; (2) agent 'color' must be hex or the "
+      "whole agents section is dropped; (3) no oh-my-* plugin may be pinned (currently 4.19.4); "
       "empty cache means agents will not load; (4) a max_price cap that excludes every non-ignored provider "
       "causes 'All providers have been ignored'; (5) require_parameters:true + temperature blackholes Claude; (6) plugin agents "
       "declaration/cache readiness and bounded runtime agent visibility are separate signals. An OpenAI 401/403 is an external "
@@ -320,7 +295,7 @@ if [[ $AGENTFIX -eq 1 ]]; then
   elif [[ -z "$ORKEY" ]]; then
     bad "no OpenRouter key — cannot run the coding agent"
   else
-    agent="hephaestus"
+    agent="build"
     # Pick a model that VERIFIABLY routes (the broken model may be the default the
     # agent would otherwise use). Prefer a cheap healthy one; fall back to flash.
     healthy="$(head -1 "$HEALTHYFILE" 2>/dev/null)"
@@ -328,7 +303,7 @@ if [[ $AGENTFIX -eq 1 ]]; then
     prompt="You are working in the OpenCode config repo at ${REPO} (this IS ~/.config/opencode). These issues were detected by ./diagnose.sh:
 ${issues}
 
-Fix them by editing opencode.json / oh-my-openagent.json. Rules: keep it cheap+agentic; the plugin pin must be oh-my-openagent@4.19.4; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
+Fix them by editing opencode.json and agents/*.md. Rules: keep it cheap+agentic; no oh-my-* plugin may be pinned.19.4; every model's max_price cap must admit at least one non-ignored provider (raise the cap if routing fails). After editing, run ./fix.sh then ./validate.sh then ./doctor.sh, and report exactly what you changed plus the final doctor summary."
     ok "using healthy model for the fixer: $fixmodel"
     if ask "dispatch 'opencode run --agent $agent --model $fixmodel' to fix ${REPO}?"; then
       ( set +u; cd "$REPO"; oc_export_env_file "$ENV_FILE"; "$OC_BIN" run --agent "$agent" --model "$fixmodel" "$prompt" ) \

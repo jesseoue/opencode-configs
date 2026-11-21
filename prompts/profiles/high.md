@@ -1,4 +1,4 @@
-# Profile: high (GLM 5.3 / sisyphus)
+# Profile: high (GLM 5.3 / lead)
 
 Default OpenConfig path for app work (`oc new --profile high`). Parallel delegation. GLM 5.3 for tool-call quality.
 
@@ -6,16 +6,12 @@ Default OpenConfig path for app work (`oc new --profile high`). Parallel delegat
 
 | Work | Delegate |
 | --- | --- |
-| Implementation bursts | Hephaestus (`task` or teammate) |
+| Implementation bursts | `build` |
 | Docs / APIs | librarian → Context7 |
 | Codebase map | explore / `explorers` |
 | Visual | `artistry` then `visual-engineering` |
-| Hard reasoning | ultrawork (GLM 5.3 max) — only when stuck |
 | Filters bite | `content-aware-*` / content-aware-research |
 
 ## Ops
 
 - Batch tools. Smallest diffs. Verify with real output.
-- Team subagent types: sisyphus / atlas / sisyphus-junior; hephaestus only when teammate permission is enabled; categories use `kind: category`.
-- Never team subagent types: explore · librarian · oracle · metis · momus · multimodal-looker · prometheus.
-- `/goal` off — plans via `/start-work` → Atlas.

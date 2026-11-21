@@ -3,8 +3,8 @@
   "product": "OpenConfig",
   "cli": "oc",
   "id": "jesseoue/opencode-configs",
-  "version": "1.5.80",
-  "tagline": "Pinned stack for OpenCode \u00b7 OpenRouter \u00b7 oh-my-openagent",
+  "version": "2.0.0",
+  "tagline": "Pinned stack for vanilla OpenCode \u00b7 OpenRouter \u00b7 Venice \u00b7 DeepSeek",
   "description": "Stable project identity. fingerprint = sha256 over sorted path=sha256(content) for files[]. Markers prove branding without hashing every prompt.",
   "markers": [
     {
@@ -16,15 +16,13 @@
         "do_test",
         "locate",
         "versions",
-        "do_plugin",
         "do_secrets"
       ]
     },
     {
       "path": "versions.sh",
       "contains": [
-        "OpenConfig versions",
-        "oh-my-openagent"
+        "OpenConfig versions"
       ]
     },
     {
@@ -37,21 +35,13 @@
     {
       "path": "opencode.json",
       "contains": [
-        "oh-my-openagent@"
-      ]
-    },
-    {
-      "path": "oh-my-openagent.json",
-      "contains": [
-        "sisyphus",
-        "oh-my-openagent"
+        "\"default_agent\": \"lead\""
       ]
     },
     {
       "path": "AGENTS.md",
       "contains": [
-        "OpenConfig",
-        "oh-my-openagent"
+        "OpenConfig"
       ]
     },
     {
@@ -61,8 +51,7 @@
         "oc_section",
         "oc_ensure_env_file",
         "oc_verify_signature",
-        "oc_secrets_sync",
-        "oc_omo_teams_ok"
+        "oc_secrets_sync"
       ]
     },
     {
@@ -96,6 +85,6 @@
     "t3-opencode.json",
     "vault.json"
   ],
-  "fingerprint": "58fe4cdb48262ac46a8d2d066ca725f4a8e85ca5afd24e74839abab1061389dd",
+  "fingerprint": "a2e85c3c9f43a72762bebe68f1603c08bcc544e7e9291f918e7ec31a58afab6d",
   "github_b64": "aHR0cHM6Ly9naXRodWIuY29tL2plc3Nlb3VlL29wZW5jb2RlLWNvbmZpZ3M="
 }
